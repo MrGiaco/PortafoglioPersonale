@@ -61,21 +61,27 @@ const App = (() => {
       }
     });
 
-    // Nav items
-    document.querySelectorAll('.nav-item[data-section]').forEach(el => {
+    // Nav items sidebar + tab bar
+    document.querySelectorAll('[data-section]').forEach(el => {
       el.classList.toggle('active', el.dataset.section === section);
     });
 
-    // Topbar title
-    const titles = {
-      dashboard:     'Dashboard',
-      conto:         'Conto Corrente',
-      carta:         'Carta di Credito',
-      investimenti:  'Investimenti',
-      report:        'Report',
-      impostazioni:  'Impostazioni',
-    };
-    setEl('topbarTitle', titles[section] || section);
+    // Topbar: saluto su dashboard, titolo sulle altre
+    const greeting = $('topbarGreeting');
+    const titleEl  = $('topbarTitle');
+    const isDash   = section === 'dashboard';
+    greeting?.classList.toggle('hidden', !isDash);
+    titleEl?.classList.toggle('hidden', isDash);
+    const titles = { conto:'Conto Corrente', carta:'Carta di Credito', investimenti:'Investimenti', report:'Report', impostazioni:'Impostazioni' };
+    if (titleEl) titleEl.textContent = titles[section] || '';
+
+    // FAB icona contestuale
+    const fabIcons = { dashboard:'bi-plus-lg', conto:'bi-plus-lg', carta:'bi-plus-lg', investimenti:'bi-plus-lg', report:'bi-download', impostazioni:'' };
+    const fab = $('fabBtn');
+    if (fab) {
+      fab.classList.toggle('hidden', section === 'impostazioni');
+      fab.innerHTML = `<i class="bi ${fabIcons[section] || 'bi-plus-lg'}"></i>`;
+    }
 
     // Chiudi sidebar su mobile
     closeSidebar();
