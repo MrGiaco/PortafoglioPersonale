@@ -148,10 +148,28 @@ const Portfolio = (() => {
     filterMovimenti();
   }
 
+  let _contoFilterTipo = '';
+  let _contoFilterMese = '';
+
+  function setContoFilter(tipo, btn) {
+    _contoFilterTipo = tipo;
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    filterMovimenti();
+  }
+
+  function setContoFilterMonth(btn) {
+    const now = new Date();
+    _contoFilterMese = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    filterMovimenti();
+  }
+
   function filterMovimenti() {
     const search = ($('contoSearch')?.value || '').toLowerCase();
-    const tipo   = $('contoFilterType')?.value || '';
-    const mese   = $('contoFilterMonth')?.value || '';
+    const tipo   = _contoFilterTipo;
+    const mese   = _contoFilterMese;
 
     let list = [...data.conto.movimenti];
     if (search) list = list.filter(m => m.descrizione.toLowerCase().includes(search) || (m.note||'').toLowerCase().includes(search));
@@ -687,7 +705,7 @@ const Portfolio = (() => {
   return {
     loadData, getData, getTitoli, updateQuote,
     renderAll, renderDashboard, renderConto, renderCarta, renderInvestimenti,
-    filterMovimenti, filterSpese,
+    filterMovimenti, filterSpese, setContoFilter, setContoFilterMonth,
     setMovTipo, saveMovimento, deleteMovimento,
     saveSpesaCarta, deleteSpesaCarta, saveImpostazioniCarta,
     showTab, onTitoloTipoChange, saveTitolo,
