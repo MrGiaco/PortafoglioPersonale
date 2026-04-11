@@ -95,6 +95,19 @@ const App = (() => {
     else navigate('dashboard');
   }
 
+  // FAB contestuale per sezione
+  function fabAction() {
+    const fabMap = {
+      dashboard:    () => Modals.open('nuovoMovimento'),
+      conto:        () => Modals.open('nuovoMovimento'),
+      carta:        () => Modals.open('nuovaSpesaCarta'),
+      investimenti: () => Modals.open('nuovoTitolo'),
+      report:       () => Report.export(),
+      impostazioni: () => {},
+    };
+    (fabMap[currentSection] || fabMap.dashboard)();
+  }
+
   // ---- Sidebar ----
   function toggleSidebar() {
     const sidebar  = $('sidebar');
