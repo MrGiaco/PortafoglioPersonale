@@ -3,607 +3,471 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#2563EB" />
+  <meta name="theme-color" content="#1E3A8A" />
   <meta name="description" content="Gestione personale di conto corrente, carta di credito e investimenti" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Portafoglio" />
-
   <title>Portafoglio Personale</title>
-
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-
-  <!-- Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-  <!-- ===== SCHERMATA DI LOCK ===== -->
-  <div id="lockScreen" class="lock-screen">
-    <div class="lock-card">
-      <div class="lock-logo">
-        <i class="bi bi-shield-lock-fill"></i>
-      </div>
-      <h1 class="lock-title">Portafoglio Personale</h1>
-      <p class="lock-subtitle">Accedi per continuare</p>
+<!-- ===== LOCK SCREEN ===== -->
+<div id="lockScreen" class="lock-screen">
+  <div class="lock-card">
+    <div class="lock-logo"><i class="bi bi-shield-lock-fill"></i></div>
+    <h1 class="lock-title">Portafoglio Personale</h1>
+    <p class="lock-subtitle">Accedi per continuare</p>
 
-      <div id="pinSection">
-        <div class="pin-display" id="pinDisplay">
-          <span class="pin-dot" id="dot0"></span>
-          <span class="pin-dot" id="dot1"></span>
-          <span class="pin-dot" id="dot2"></span>
-          <span class="pin-dot" id="dot3"></span>
-          <span class="pin-dot" id="dot4"></span>
-          <span class="pin-dot" id="dot5"></span>
-        </div>
-        <p class="pin-label" id="pinLabel">Inserisci il PIN</p>
-        <div class="pin-keypad">
-          <button class="pin-key" onclick="Auth.pinInput('1')">1</button>
-          <button class="pin-key" onclick="Auth.pinInput('2')">2</button>
-          <button class="pin-key" onclick="Auth.pinInput('3')">3</button>
-          <button class="pin-key" onclick="Auth.pinInput('4')">4</button>
-          <button class="pin-key" onclick="Auth.pinInput('5')">5</button>
-          <button class="pin-key" onclick="Auth.pinInput('6')">6</button>
-          <button class="pin-key" onclick="Auth.pinInput('7')">7</button>
-          <button class="pin-key" onclick="Auth.pinInput('8')">8</button>
-          <button class="pin-key" onclick="Auth.pinInput('9')">9</button>
-          <button class="pin-key pin-key--bio" id="bioBtn" onclick="Auth.biometric()">
-            <i class="bi bi-fingerprint"></i>
-          </button>
-          <button class="pin-key" onclick="Auth.pinInput('0')">0</button>
-          <button class="pin-key pin-key--del" onclick="Auth.pinDelete()">
-            <i class="bi bi-backspace"></i>
-          </button>
-        </div>
+    <div id="pinSection">
+      <div class="pin-display" id="pinDisplay">
+        <span class="pin-dot" id="dot0"></span><span class="pin-dot" id="dot1"></span>
+        <span class="pin-dot" id="dot2"></span><span class="pin-dot" id="dot3"></span>
+        <span class="pin-dot" id="dot4"></span><span class="pin-dot" id="dot5"></span>
       </div>
+      <p class="pin-label" id="pinLabel">Inserisci il PIN</p>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="Auth.pinInput('1')">1</button>
+        <button class="pin-key" onclick="Auth.pinInput('2')">2</button>
+        <button class="pin-key" onclick="Auth.pinInput('3')">3</button>
+        <button class="pin-key" onclick="Auth.pinInput('4')">4</button>
+        <button class="pin-key" onclick="Auth.pinInput('5')">5</button>
+        <button class="pin-key" onclick="Auth.pinInput('6')">6</button>
+        <button class="pin-key" onclick="Auth.pinInput('7')">7</button>
+        <button class="pin-key" onclick="Auth.pinInput('8')">8</button>
+        <button class="pin-key" onclick="Auth.pinInput('9')">9</button>
+        <button class="pin-key pin-key--bio" id="bioBtn" onclick="Auth.biometric()"><i class="bi bi-fingerprint"></i></button>
+        <button class="pin-key" onclick="Auth.pinInput('0')">0</button>
+        <button class="pin-key pin-key--del" onclick="Auth.pinDelete()"><i class="bi bi-backspace"></i></button>
+      </div>
+    </div>
 
-      <!-- Setup PIN (primo avvio) -->
-      <div id="pinSetup" class="hidden">
-        <p class="setup-text">Benvenuto! Imposta un PIN a 6 cifre per proteggere l'app.</p>
-        <div class="pin-display" id="pinSetupDisplay">
-          <span class="pin-dot"></span><span class="pin-dot"></span>
-          <span class="pin-dot"></span><span class="pin-dot"></span>
-          <span class="pin-dot"></span><span class="pin-dot"></span>
-        </div>
-        <p class="pin-label" id="pinSetupLabel">Scegli il tuo PIN</p>
-        <div class="pin-keypad">
-          <button class="pin-key" onclick="Auth.setupInput('1')">1</button>
-          <button class="pin-key" onclick="Auth.setupInput('2')">2</button>
-          <button class="pin-key" onclick="Auth.setupInput('3')">3</button>
-          <button class="pin-key" onclick="Auth.setupInput('4')">4</button>
-          <button class="pin-key" onclick="Auth.setupInput('5')">5</button>
-          <button class="pin-key" onclick="Auth.setupInput('6')">6</button>
-          <button class="pin-key" onclick="Auth.setupInput('7')">7</button>
-          <button class="pin-key" onclick="Auth.setupInput('8')">8</button>
-          <button class="pin-key" onclick="Auth.setupInput('9')">9</button>
-          <button class="pin-key pin-key--empty"></button>
-          <button class="pin-key" onclick="Auth.setupInput('0')">0</button>
-          <button class="pin-key pin-key--del" onclick="Auth.setupDelete()">
-            <i class="bi bi-backspace"></i>
-          </button>
-        </div>
+    <div id="pinSetup" class="hidden">
+      <p class="setup-text">Benvenuto! Imposta un PIN a 6 cifre per proteggere l'app.</p>
+      <div class="pin-display" id="pinSetupDisplay">
+        <span class="pin-dot"></span><span class="pin-dot"></span>
+        <span class="pin-dot"></span><span class="pin-dot"></span>
+        <span class="pin-dot"></span><span class="pin-dot"></span>
+      </div>
+      <p class="pin-label" id="pinSetupLabel">Scegli il tuo PIN</p>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="Auth.setupInput('1')">1</button>
+        <button class="pin-key" onclick="Auth.setupInput('2')">2</button>
+        <button class="pin-key" onclick="Auth.setupInput('3')">3</button>
+        <button class="pin-key" onclick="Auth.setupInput('4')">4</button>
+        <button class="pin-key" onclick="Auth.setupInput('5')">5</button>
+        <button class="pin-key" onclick="Auth.setupInput('6')">6</button>
+        <button class="pin-key" onclick="Auth.setupInput('7')">7</button>
+        <button class="pin-key" onclick="Auth.setupInput('8')">8</button>
+        <button class="pin-key" onclick="Auth.setupInput('9')">9</button>
+        <button class="pin-key pin-key--empty"></button>
+        <button class="pin-key" onclick="Auth.setupInput('0')">0</button>
+        <button class="pin-key pin-key--del" onclick="Auth.setupDelete()"><i class="bi bi-backspace"></i></button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ===== APP PRINCIPALE ===== -->
-  <div id="app" class="hidden">
+<!-- ===== APP ===== -->
+<div id="app" class="hidden">
 
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <i class="bi bi-bar-chart-fill"></i>
-          <span>Portafoglio</span>
-        </div>
-        <button class="sidebar-close" onclick="App.toggleSidebar()">
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-
-      <nav class="sidebar-nav">
-        <a class="nav-item active" data-section="dashboard" onclick="App.navigate('dashboard')">
-          <i class="bi bi-grid-1x2-fill"></i>
-          <span>Dashboard</span>
-        </a>
-        <a class="nav-item" data-section="conto" onclick="App.navigate('conto')">
-          <i class="bi bi-bank2"></i>
-          <span>Conto Corrente</span>
-        </a>
-        <a class="nav-item" data-section="carta" onclick="App.navigate('carta')">
-          <i class="bi bi-credit-card-fill"></i>
-          <span>Carta di Credito</span>
-        </a>
-        <a class="nav-item" data-section="investimenti" onclick="App.navigate('investimenti')">
-          <i class="bi bi-graph-up-arrow"></i>
-          <span>Investimenti</span>
-        </a>
-        <a class="nav-item" data-section="report" onclick="App.navigate('report')">
-          <i class="bi bi-file-earmark-bar-graph-fill"></i>
-          <span>Report</span>
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <a class="nav-item" data-section="impostazioni" onclick="App.navigate('impostazioni')">
-          <i class="bi bi-gear-fill"></i>
-          <span>Impostazioni</span>
-        </a>
-        <button class="nav-item nav-item--danger" onclick="Auth.lock()">
-          <i class="bi bi-lock-fill"></i>
-          <span>Blocca</span>
-        </button>
-      </div>
-    </aside>
-
-    <!-- Overlay sidebar mobile -->
-    <div id="sidebarOverlay" class="sidebar-overlay hidden" onclick="App.toggleSidebar()"></div>
-
-    <!-- Main content -->
-    <div class="main-wrapper">
-
-      <!-- Header -->
-      <header class="topbar">
-        <button class="topbar-menu" onclick="App.toggleSidebar()">
-          <i class="bi bi-list"></i>
-        </button>
-        <div class="topbar-title" id="topbarTitle">Dashboard</div>
-        <div class="topbar-actions">
-          <button class="topbar-btn" id="syncBtn" onclick="Quotes.refreshAll()" title="Aggiorna quotazioni">
-            <i class="bi bi-arrow-clockwise"></i>
-          </button>
-          <button class="topbar-btn" id="driveBtn" onclick="Drive.sync()" title="Sincronizza Drive">
-            <i class="bi bi-cloud-arrow-up-fill"></i>
-          </button>
-          <div class="topbar-avatar" id="userAvatar">
-            <i class="bi bi-person-fill"></i>
-          </div>
-        </div>
-      </header>
-
-      <!-- Contenuto sezioni -->
-      <main class="content">
-
-        <!-- ===== DASHBOARD ===== -->
-        <section id="section-dashboard" class="section active">
-          <div class="section-header">
-            <h2>Benvenuto</h2>
-            <p class="section-subtitle" id="dashDate"></p>
-          </div>
-
-          <!-- Patrimonio totale -->
-          <div class="patrimonio-card">
-            <div class="patrimonio-label">Patrimonio Totale</div>
-            <div class="patrimonio-value" id="patrimonioTotale">€ 0,00</div>
-            <div class="patrimonio-change" id="patrimonioChange">
-              <i class="bi bi-arrow-up-right"></i>
-              <span>0,00%</span>
-            </div>
-          </div>
-
-          <!-- Riepilogo cards -->
-          <div class="cards-grid">
-            <div class="summary-card" onclick="App.navigate('conto')">
-              <div class="summary-card__icon summary-card__icon--blue">
-                <i class="bi bi-bank2"></i>
-              </div>
-              <div class="summary-card__body">
-                <div class="summary-card__label">Conto Corrente</div>
-                <div class="summary-card__value" id="summaryContoValue">€ 0,00</div>
-              </div>
-              <i class="bi bi-chevron-right summary-card__arrow"></i>
-            </div>
-
-            <div class="summary-card" onclick="App.navigate('carta')">
-              <div class="summary-card__icon summary-card__icon--purple">
-                <i class="bi bi-credit-card-fill"></i>
-              </div>
-              <div class="summary-card__body">
-                <div class="summary-card__label">Carta di Credito</div>
-                <div class="summary-card__value" id="summaryCreditValue">€ 0,00</div>
-              </div>
-              <i class="bi bi-chevron-right summary-card__arrow"></i>
-            </div>
-
-            <div class="summary-card" onclick="App.navigate('investimenti')">
-              <div class="summary-card__icon summary-card__icon--green">
-                <i class="bi bi-graph-up-arrow"></i>
-              </div>
-              <div class="summary-card__body">
-                <div class="summary-card__label">Investimenti</div>
-                <div class="summary-card__value" id="summaryInvValue">€ 0,00</div>
-              </div>
-              <i class="bi bi-chevron-right summary-card__arrow"></i>
-            </div>
-          </div>
-
-          <!-- Grafici -->
-          <div class="charts-grid">
-            <div class="chart-card">
-              <div class="chart-card__header">
-                <h3>Andamento Patrimonio</h3>
-                <div class="chart-period">
-                  <button class="period-btn active" onclick="Charts.setPeriod('1M', this)">1M</button>
-                  <button class="period-btn" onclick="Charts.setPeriod('3M', this)">3M</button>
-                  <button class="period-btn" onclick="Charts.setPeriod('6M', this)">6M</button>
-                  <button class="period-btn" onclick="Charts.setPeriod('1A', this)">1A</button>
-                </div>
-              </div>
-              <canvas id="chartPatrimonio"></canvas>
-            </div>
-
-            <div class="chart-card">
-              <div class="chart-card__header">
-                <h3>Allocazione</h3>
-              </div>
-              <canvas id="chartAllocazione"></canvas>
-            </div>
-          </div>
-
-          <!-- Ultime transazioni -->
-          <div class="table-card">
-            <div class="table-card__header">
-              <h3>Ultime Transazioni</h3>
-              <button class="btn btn--ghost btn--sm" onclick="App.navigate('conto')">Vedi tutte</button>
-            </div>
-            <div id="lastTransazioni" class="transaction-list"></div>
-          </div>
-        </section>
-
-        <!-- ===== CONTO CORRENTE ===== -->
-        <section id="section-conto" class="section hidden">
-          <div class="section-header">
-            <h2>Conto Corrente</h2>
-            <button class="btn btn--primary" onclick="Modals.open('nuovoMovimento')">
-              <i class="bi bi-plus-lg"></i> Nuovo Movimento
-            </button>
-          </div>
-
-          <div class="account-hero">
-            <div class="account-hero__label">Saldo Disponibile</div>
-            <div class="account-hero__value" id="contoSaldo">€ 0,00</div>
-            <div class="account-hero__stats">
-              <div class="hero-stat">
-                <i class="bi bi-arrow-down-circle-fill text-green"></i>
-                <div>
-                  <div class="hero-stat__label">Entrate (mese)</div>
-                  <div class="hero-stat__value" id="contoEntrate">€ 0,00</div>
-                </div>
-              </div>
-              <div class="hero-stat">
-                <i class="bi bi-arrow-up-circle-fill text-red"></i>
-                <div>
-                  <div class="hero-stat__label">Uscite (mese)</div>
-                  <div class="hero-stat__value" id="contoUscite">€ 0,00</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Filtri -->
-          <div class="filter-bar">
-            <div class="filter-search">
-              <i class="bi bi-search"></i>
-              <input type="text" id="contoSearch" placeholder="Cerca movimenti..." oninput="Portfolio.filterMovimenti()" />
-            </div>
-            <select id="contoFilterType" onchange="Portfolio.filterMovimenti()">
-              <option value="">Tutti</option>
-              <option value="entrata">Entrate</option>
-              <option value="uscita">Uscite</option>
-            </select>
-            <input type="month" id="contoFilterMonth" onchange="Portfolio.filterMovimenti()" />
-          </div>
-
-          <div class="table-card">
-            <div id="contoMovimenti" class="transaction-list"></div>
-          </div>
-        </section>
-
-        <!-- ===== CARTA DI CREDITO ===== -->
-        <section id="section-carta" class="section hidden">
-          <div class="section-header">
-            <h2>Carta di Credito</h2>
-            <button class="btn btn--primary" onclick="Modals.open('nuovaSpesaCarta')">
-              <i class="bi bi-plus-lg"></i> Nuova Spesa
-            </button>
-          </div>
-
-          <div class="credit-card-visual">
-            <div class="credit-card-bg">
-              <div class="cc-top">
-                <span class="cc-bank">Portafoglio Personale</span>
-                <i class="bi bi-credit-card-2-front-fill cc-logo"></i>
-              </div>
-              <div class="cc-number">•••• •••• •••• <span id="ccLastDigits">0000</span></div>
-              <div class="cc-bottom">
-                <div>
-                  <div class="cc-label">Titolare</div>
-                  <div class="cc-value" id="ccHolder">—</div>
-                </div>
-                <div>
-                  <div class="cc-label">Scadenza</div>
-                  <div class="cc-value" id="ccExpiry">—</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="cards-grid">
-            <div class="summary-card">
-              <div class="summary-card__icon summary-card__icon--red">
-                <i class="bi bi-receipt"></i>
-              </div>
-              <div class="summary-card__body">
-                <div class="summary-card__label">Spese del mese</div>
-                <div class="summary-card__value" id="cartaSpeseMese">€ 0,00</div>
-              </div>
-            </div>
-            <div class="summary-card">
-              <div class="summary-card__icon summary-card__icon--orange">
-                <i class="bi bi-calendar-check"></i>
-              </div>
-              <div class="summary-card__body">
-                <div class="summary-card__label">Prossima scadenza</div>
-                <div class="summary-card__value" id="cartaScadenza">—</div>
-              </div>
-            </div>
-            <div class="summary-card">
-              <div class="summary-card__icon summary-card__icon--blue">
-                <i class="bi bi-bar-chart"></i>
-              </div>
-              <div class="summary-card__body">
-                <div class="summary-card__label">Plafond utilizzato</div>
-                <div class="summary-card__value" id="cartaPlafond">0%</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="filter-bar">
-            <div class="filter-search">
-              <i class="bi bi-search"></i>
-              <input type="text" id="cartaSearch" placeholder="Cerca spese..." oninput="Portfolio.filterSpese()" />
-            </div>
-            <input type="month" id="cartaFilterMonth" onchange="Portfolio.filterSpese()" />
-          </div>
-
-          <div class="table-card">
-            <div id="cartaMovimenti" class="transaction-list"></div>
-          </div>
-        </section>
-
-        <!-- ===== INVESTIMENTI ===== -->
-        <section id="section-investimenti" class="section hidden">
-          <div class="section-header">
-            <h2>Investimenti</h2>
-            <button class="btn btn--primary" onclick="Modals.open('nuovoTitolo')">
-              <i class="bi bi-plus-lg"></i> Aggiungi Titolo
-            </button>
-          </div>
-
-          <!-- Tab categorie -->
-          <div class="tabs">
-            <button class="tab active" onclick="Portfolio.showTab('azioni', this)">
-              <i class="bi bi-graph-up"></i> Azioni
-            </button>
-            <button class="tab" onclick="Portfolio.showTab('fondi', this)">
-              <i class="bi bi-pie-chart-fill"></i> Fondi
-            </button>
-            <button class="tab" onclick="Portfolio.showTab('certificates', this)">
-              <i class="bi bi-award-fill"></i> Certificates
-            </button>
-            <button class="tab" onclick="Portfolio.showTab('pir', this)">
-              <i class="bi bi-shield-fill-check"></i> PIR
-            </button>
-            <button class="tab" onclick="Portfolio.showTab('polizze', this)">
-              <i class="bi bi-umbrella-fill"></i> Polizze
-            </button>
-          </div>
-
-          <!-- Riepilogo investimenti -->
-          <div class="inv-summary-bar">
-            <div class="inv-summary-item">
-              <span class="inv-summary-label">Valore attuale</span>
-              <span class="inv-summary-value" id="invValoreAttuale">€ 0,00</span>
-            </div>
-            <div class="inv-summary-item">
-              <span class="inv-summary-label">Costo totale</span>
-              <span class="inv-summary-value" id="invCostoTotale">€ 0,00</span>
-            </div>
-            <div class="inv-summary-item">
-              <span class="inv-summary-label">Guadagno/Perdita</span>
-              <span class="inv-summary-value" id="invPL">€ 0,00</span>
-            </div>
-            <div class="inv-summary-item">
-              <span class="inv-summary-label">Rendimento</span>
-              <span class="inv-summary-value" id="invRendimento">0,00%</span>
-            </div>
-          </div>
-
-          <!-- Lista titoli per tab -->
-          <div id="tab-azioni" class="tab-content active">
-            <div class="table-card">
-              <div id="listaAzioni" class="titoli-list"></div>
-            </div>
-          </div>
-          <div id="tab-fondi" class="tab-content hidden">
-            <div class="table-card">
-              <div id="listaFondi" class="titoli-list"></div>
-            </div>
-          </div>
-          <div id="tab-certificates" class="tab-content hidden">
-            <div class="table-card">
-              <div id="listaCertificates" class="titoli-list"></div>
-            </div>
-          </div>
-          <div id="tab-pir" class="tab-content hidden">
-            <div class="table-card">
-              <div id="listaPir" class="titoli-list"></div>
-            </div>
-          </div>
-          <div id="tab-polizze" class="tab-content hidden">
-            <div class="table-card">
-              <div id="listaPolizze" class="titoli-list"></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ===== REPORT ===== -->
-        <section id="section-report" class="section hidden">
-          <div class="section-header">
-            <h2>Report</h2>
-            <button class="btn btn--ghost" onclick="Report.export()">
-              <i class="bi bi-download"></i> Esporta CSV
-            </button>
-          </div>
-
-          <div class="filter-bar">
-            <select id="reportAnno" onchange="Report.render()"></select>
-            <select id="reportTipo" onchange="Report.render()">
-              <option value="tutti">Tutti</option>
-              <option value="conto">Conto Corrente</option>
-              <option value="carta">Carta</option>
-              <option value="investimenti">Investimenti</option>
-            </select>
-          </div>
-
-          <div class="charts-grid">
-            <div class="chart-card">
-              <div class="chart-card__header"><h3>Entrate vs Uscite</h3></div>
-              <canvas id="chartEntrateUscite"></canvas>
-            </div>
-            <div class="chart-card">
-              <div class="chart-card__header"><h3>Spese per Categoria</h3></div>
-              <canvas id="chartCategorie"></canvas>
-            </div>
-          </div>
-
-          <div class="table-card">
-            <div class="table-card__header">
-              <h3>Riepilogo Mensile</h3>
-            </div>
-            <div id="reportTable"></div>
-          </div>
-        </section>
-
-        <!-- ===== IMPOSTAZIONI ===== -->
-        <section id="section-impostazioni" class="section hidden">
-          <div class="section-header">
-            <h2>Impostazioni</h2>
-          </div>
-
-          <div class="settings-grid">
-
-            <div class="settings-card">
-              <h3><i class="bi bi-google"></i> Google Drive</h3>
-              <p>Collega il tuo Google Drive per salvare e sincronizzare i dati.</p>
-              <div id="driveStatus" class="status-badge status-badge--off">Non connesso</div>
-              <button class="btn btn--primary mt-2" onclick="Drive.connect()">
-                <i class="bi bi-cloud-arrow-up-fill"></i> Connetti Drive
-              </button>
-            </div>
-
-            <div class="settings-card">
-              <h3><i class="bi bi-shield-lock-fill"></i> Sicurezza</h3>
-              <p>Modifica il PIN o gestisci l'accesso biometrico.</p>
-              <button class="btn btn--ghost mt-2" onclick="Auth.changePin()">
-                <i class="bi bi-key-fill"></i> Cambia PIN
-              </button>
-              <button class="btn btn--ghost mt-2" id="bioToggleBtn" onclick="Auth.toggleBiometric()">
-                <i class="bi bi-fingerprint"></i> <span id="bioToggleLabel">Abilita Biometria</span>
-              </button>
-            </div>
-
-            <div class="settings-card">
-              <h3><i class="bi bi-credit-card-fill"></i> Carta di Credito</h3>
-              <p>Configura i dati della tua carta.</p>
-              <button class="btn btn--ghost mt-2" onclick="Modals.open('impostazioniCarta')">
-                <i class="bi bi-pencil-fill"></i> Configura Carta
-              </button>
-            </div>
-
-            <div class="settings-card">
-              <h3><i class="bi bi-arrow-repeat"></i> Quotazioni</h3>
-              <p>Aggiorna manualmente le quotazioni dei titoli.</p>
-              <button class="btn btn--primary mt-2" onclick="Quotes.refreshAll()">
-                <i class="bi bi-arrow-clockwise"></i> Aggiorna Ora
-              </button>
-              <div class="settings-info mt-2" id="lastQuoteUpdate">Ultimo aggiornamento: mai</div>
-            </div>
-
-            <div class="settings-card">
-              <h3><i class="bi bi-database"></i> Dati</h3>
-              <p>Esporta o importa i tuoi dati locali.</p>
-              <button class="btn btn--ghost mt-2" onclick="App.exportData()">
-                <i class="bi bi-download"></i> Esporta Backup
-              </button>
-              <button class="btn btn--ghost mt-2" onclick="App.importData()">
-                <i class="bi bi-upload"></i> Importa Backup
-              </button>
-            </div>
-
-            <div class="settings-card settings-card--danger">
-              <h3><i class="bi bi-trash3-fill"></i> Reimposta App</h3>
-              <p>Cancella tutti i dati locali. I dati su Drive non vengono eliminati.</p>
-              <button class="btn btn--danger mt-2" onclick="App.resetApp()">
-                <i class="bi bi-exclamation-triangle-fill"></i> Reimposta
-              </button>
-            </div>
-
-          </div>
-        </section>
-
-      </main>
+  <!-- Sidebar (solo desktop) -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon"><i class="bi bi-bar-chart-fill"></i></div>
+      <div class="sidebar-logo-text">Portafoglio</div>
     </div>
-  </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-section="dashboard" onclick="App.navigate('dashboard')"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
+      <a class="nav-item" data-section="conto" onclick="App.navigate('conto')"><i class="bi bi-bank2"></i><span>Conto Corrente</span></a>
+      <a class="nav-item" data-section="carta" onclick="App.navigate('carta')"><i class="bi bi-credit-card-fill"></i><span>Carta di Credito</span></a>
+      <a class="nav-item" data-section="investimenti" onclick="App.navigate('investimenti')"><i class="bi bi-graph-up-arrow"></i><span>Investimenti</span></a>
+      <a class="nav-item" data-section="report" onclick="App.navigate('report')"><i class="bi bi-file-earmark-bar-graph-fill"></i><span>Report</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" data-section="impostazioni" onclick="App.navigate('impostazioni')"><i class="bi bi-gear-fill"></i><span>Impostazioni</span></a>
+      <button class="nav-item nav-item--danger" onclick="Auth.lock()"><i class="bi bi-lock-fill"></i><span>Blocca</span></button>
+    </div>
+  </aside>
 
-  <!-- ===== MODALI ===== -->
-  <div id="modalOverlay" class="modal-overlay hidden" onclick="Modals.closeOnOverlay(event)">
+  <div class="main-wrapper">
 
-    <!-- Nuovo Movimento Conto -->
-    <div id="modal-nuovoMovimento" class="modal hidden">
-      <div class="modal-header">
-        <h3>Nuovo Movimento</h3>
-        <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    <!-- Topbar -->
+    <header class="topbar" id="topbar">
+      <!-- Dashboard: saluto -->
+      <div class="topbar-left" id="topbarGreeting">
+        <div class="topbar-greeting">Buongiorno,</div>
+        <div class="topbar-name" id="topbarName">Roberto</div>
       </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Tipo</label>
-          <div class="toggle-group">
-            <button class="toggle-btn active" id="movTipoEntrata" onclick="Portfolio.setMovTipo('entrata')">
-              <i class="bi bi-arrow-down-circle"></i> Entrata
-            </button>
-            <button class="toggle-btn" id="movTipoUscita" onclick="Portfolio.setMovTipo('uscita')">
-              <i class="bi bi-arrow-up-circle"></i> Uscita
-            </button>
+      <!-- Altre sezioni: titolo -->
+      <div class="topbar-section-title hidden" id="topbarTitle"></div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" id="syncBtn" onclick="Quotes.refreshAll()" title="Aggiorna quotazioni"><i class="bi bi-arrow-clockwise"></i></button>
+        <button class="topbar-btn" onclick="Drive.sync()" title="Sincronizza Drive"><i class="bi bi-cloud-arrow-up-fill"></i></button>
+        <div class="topbar-avatar" onclick="App.navigate('impostazioni')"><i class="bi bi-person-fill"></i></div>
+      </div>
+    </header>
+
+    <!-- Contenuto -->
+    <main class="content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section id="section-dashboard" class="section active">
+
+        <div class="patrimonio-card">
+          <div class="patrimonio-label">Patrimonio Totale</div>
+          <div class="patrimonio-value" id="patrimonioTotale">€ 0,00</div>
+          <div class="patrimonio-badge" id="patrimonioChange"><i class="bi bi-arrow-up-right"></i> 0,00%</div>
+          <div class="patrimonio-pills">
+            <div class="patrimonio-pill">
+              <div class="patrimonio-pill__label">Conto</div>
+              <div class="patrimonio-pill__value" id="summaryContoValue">€ 0</div>
+            </div>
+            <div class="patrimonio-pill">
+              <div class="patrimonio-pill__label">Investimenti</div>
+              <div class="patrimonio-pill__value" id="summaryInvValue">€ 0</div>
+            </div>
+            <div class="patrimonio-pill">
+              <div class="patrimonio-pill__label">Carta</div>
+              <div class="patrimonio-pill__value" id="summaryCreditValue">€ 0</div>
+            </div>
           </div>
         </div>
-        <div class="form-group">
+
+        <div class="quick-actions">
+          <div class="qa-btn" onclick="App.navigate('conto'); Modals.open('nuovoMovimento')">
+            <div class="qa-icon qa-icon--green"><i class="bi bi-arrow-down-circle-fill"></i></div>
+            <div class="qa-label">Entrata</div>
+          </div>
+          <div class="qa-btn" onclick="App.navigate('conto'); Modals.open('nuovoMovimento')">
+            <div class="qa-icon qa-icon--red"><i class="bi bi-arrow-up-circle-fill"></i></div>
+            <div class="qa-label">Uscita</div>
+          </div>
+          <div class="qa-btn" onclick="App.navigate('investimenti'); Modals.open('nuovoTitolo')">
+            <div class="qa-icon qa-icon--blue"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="qa-label">Acquista</div>
+          </div>
+          <div class="qa-btn" onclick="App.navigate('report')">
+            <div class="qa-icon qa-icon--orange"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
+            <div class="qa-label">Report</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-card__header">
+              <h3>Andamento Patrimonio</h3>
+              <div class="chart-period">
+                <button class="period-btn active" onclick="Charts.setPeriod('1M',this)">1M</button>
+                <button class="period-btn" onclick="Charts.setPeriod('3M',this)">3M</button>
+                <button class="period-btn" onclick="Charts.setPeriod('6M',this)">6M</button>
+                <button class="period-btn" onclick="Charts.setPeriod('1A',this)">1A</button>
+              </div>
+            </div>
+            <canvas id="chartPatrimonio"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card__header"><h3>Allocazione</h3></div>
+            <canvas id="chartAllocazione"></canvas>
+          </div>
+        </div>
+
+        <div class="sec-header">
+          <div class="sec-title">Ultime transazioni</div>
+          <div class="sec-link" onclick="App.navigate('conto')">Vedi tutte</div>
+        </div>
+        <div class="card">
+          <div id="lastTransazioni" class="transaction-list"></div>
+        </div>
+
+      </section>
+
+      <!-- ===== CONTO CORRENTE ===== -->
+      <section id="section-conto" class="section hidden">
+
+        <div class="account-hero">
+          <div class="account-hero__label">Saldo Disponibile</div>
+          <div class="account-hero__value" id="contoSaldo">€ 0,00</div>
+          <div class="account-hero__stats">
+            <div class="hero-stat">
+              <i class="bi bi-arrow-down-circle-fill text-green-light"></i>
+              <div>
+                <div class="hero-stat__label">Entrate (mese)</div>
+                <div class="hero-stat__value" id="contoEntrate">€ 0,00</div>
+              </div>
+            </div>
+            <div class="hero-stat">
+              <i class="bi bi-arrow-up-circle-fill text-red-light"></i>
+              <div>
+                <div class="hero-stat__label">Uscite (mese)</div>
+                <div class="hero-stat__value" id="contoUscite">€ 0,00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="search-bar">
+          <i class="bi bi-search"></i>
+          <input type="text" id="contoSearch" placeholder="Cerca movimenti..." oninput="Portfolio.filterMovimenti()" />
+        </div>
+
+        <div class="filter-pills">
+          <div class="filter-pill active" onclick="Portfolio.setContoFilter('',this)">Tutti</div>
+          <div class="filter-pill" onclick="Portfolio.setContoFilter('entrata',this)">Entrate</div>
+          <div class="filter-pill" onclick="Portfolio.setContoFilter('uscita',this)">Uscite</div>
+          <div class="filter-pill" onclick="Portfolio.setContoFilterMonth(this)">Questo mese</div>
+        </div>
+
+        <div class="card">
+          <div id="contoMovimenti" class="transaction-list"></div>
+        </div>
+
+      </section>
+
+      <!-- ===== CARTA DI CREDITO ===== -->
+      <section id="section-carta" class="section hidden">
+
+        <div class="credit-card-visual">
+          <div class="credit-card-bg">
+            <div class="cc-top">
+              <span class="cc-bank">Portafoglio Personale</span>
+              <i class="bi bi-credit-card-2-front-fill cc-logo"></i>
+            </div>
+            <div class="cc-number">•••• •••• •••• <span id="ccLastDigits">0000</span></div>
+            <div class="cc-bottom">
+              <div><div class="cc-label">Titolare</div><div class="cc-value" id="ccHolder">—</div></div>
+              <div><div class="cc-label">Scadenza</div><div class="cc-value" id="ccExpiry">—</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-mini">
+            <div class="stat-mini__icon" style="background:var(--danger-light);color:var(--danger)"><i class="bi bi-receipt"></i></div>
+            <div class="stat-mini__label">Spese mese</div>
+            <div class="stat-mini__value" id="cartaSpeseMese">€ 0</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini__icon" style="background:var(--warning-light);color:var(--warning)"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-mini__label">Prossima scad.</div>
+            <div class="stat-mini__value" id="cartaScadenza">—</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini__icon" style="background:var(--primary-light);color:var(--primary-mid)"><i class="bi bi-pie-chart-fill"></i></div>
+            <div class="stat-mini__label">Plafond usato</div>
+            <div class="stat-mini__value" id="cartaPlafond">0%</div>
+          </div>
+        </div>
+
+        <div class="search-bar">
+          <i class="bi bi-search"></i>
+          <input type="text" id="cartaSearch" placeholder="Cerca spese..." oninput="Portfolio.filterSpese()" />
+        </div>
+
+        <div class="card">
+          <div id="cartaMovimenti" class="transaction-list"></div>
+        </div>
+
+      </section>
+
+      <!-- ===== INVESTIMENTI ===== -->
+      <section id="section-investimenti" class="section hidden">
+
+        <div class="inv-summary-bar">
+          <div class="inv-sum-item">
+            <div class="inv-sum-label">Valore</div>
+            <div class="inv-sum-val" id="invValoreAttuale">€ 0</div>
+          </div>
+          <div class="inv-sum-item">
+            <div class="inv-sum-label">Costo</div>
+            <div class="inv-sum-val" id="invCostoTotale">€ 0</div>
+          </div>
+          <div class="inv-sum-item">
+            <div class="inv-sum-label">P&amp;L</div>
+            <div class="inv-sum-val" id="invPL">€ 0</div>
+          </div>
+          <div class="inv-sum-item">
+            <div class="inv-sum-label">Rend.</div>
+            <div class="inv-sum-val" id="invRendimento">0%</div>
+          </div>
+        </div>
+
+        <div class="inv-tabs">
+          <div class="inv-tab active" onclick="Portfolio.showTab('azioni',this)"><i class="bi bi-graph-up"></i> Azioni</div>
+          <div class="inv-tab" onclick="Portfolio.showTab('fondi',this)"><i class="bi bi-pie-chart-fill"></i> Fondi</div>
+          <div class="inv-tab" onclick="Portfolio.showTab('certificates',this)"><i class="bi bi-award-fill"></i> Certificates</div>
+          <div class="inv-tab" onclick="Portfolio.showTab('pir',this)"><i class="bi bi-shield-fill-check"></i> PIR</div>
+          <div class="inv-tab" onclick="Portfolio.showTab('polizze',this)"><i class="bi bi-umbrella-fill"></i> Polizze</div>
+        </div>
+
+        <div id="tab-azioni" class="tab-content active"><div id="listaAzioni"></div></div>
+        <div id="tab-fondi" class="tab-content hidden"><div id="listaFondi"></div></div>
+        <div id="tab-certificates" class="tab-content hidden"><div id="listaCertificates"></div></div>
+        <div id="tab-pir" class="tab-content hidden"><div id="listaPir"></div></div>
+        <div id="tab-polizze" class="tab-content hidden"><div id="listaPolizze"></div></div>
+
+      </section>
+
+      <!-- ===== REPORT ===== -->
+      <section id="section-report" class="section hidden">
+
+        <div class="report-filters">
+          <select id="reportAnno" onchange="Report.render()"></select>
+          <select id="reportTipo" onchange="Report.render()">
+            <option value="tutti">Tutti</option>
+            <option value="conto">Conto</option>
+            <option value="carta">Carta</option>
+          </select>
+          <button class="btn btn--ghost btn--sm" onclick="Report.export()"><i class="bi bi-download"></i> CSV</button>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-card__header"><h3>Entrate vs Uscite</h3></div>
+            <canvas id="chartEntrateUscite"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card__header"><h3>Spese per categoria</h3></div>
+            <canvas id="chartCategorie"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Riepilogo mensile</h3></div>
+          <div id="reportTable"></div>
+        </div>
+
+      </section>
+
+      <!-- ===== IMPOSTAZIONI ===== -->
+      <section id="section-impostazioni" class="section hidden">
+
+        <div class="settings-grid">
+
+          <div class="settings-card">
+            <h3><i class="bi bi-google"></i> Google Drive</h3>
+            <p>Connetti il tuo Drive per salvare e sincronizzare i dati cifrati.</p>
+            <div id="driveStatus" class="status-badge status-badge--off">Non connesso</div>
+            <button class="btn btn--primary btn--block" onclick="Drive.connect()"><i class="bi bi-cloud-arrow-up-fill"></i> Connetti Drive</button>
+          </div>
+
+          <div class="settings-card">
+            <h3><i class="bi bi-shield-lock-fill"></i> Sicurezza</h3>
+            <p>Modifica il PIN o gestisci l'accesso biometrico.</p>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Auth.changePin()"><i class="bi bi-key-fill"></i> Cambia PIN</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Auth.toggleBiometric()"><i class="bi bi-fingerprint"></i> <span id="bioToggleLabel">Abilita Biometria</span></button>
+          </div>
+
+          <div class="settings-card">
+            <h3><i class="bi bi-credit-card-fill"></i> Carta di Credito</h3>
+            <p>Configura i dati della tua carta di credito.</p>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('impostazioniCarta')"><i class="bi bi-pencil-fill"></i> Configura Carta</button>
+          </div>
+
+          <div class="settings-card">
+            <h3><i class="bi bi-arrow-repeat"></i> Quotazioni</h3>
+            <p>Aggiorna manualmente le quotazioni dei titoli in portafoglio.</p>
+            <button class="btn btn--primary btn--block mt-2" onclick="Quotes.refreshAll()"><i class="bi bi-arrow-clockwise"></i> Aggiorna Ora</button>
+            <div class="settings-info" id="lastQuoteUpdate">Ultimo aggiornamento: mai</div>
+          </div>
+
+          <div class="settings-card">
+            <h3><i class="bi bi-database"></i> Dati</h3>
+            <p>Esporta o importa i tuoi dati come backup locale.</p>
+            <button class="btn btn--ghost btn--block mt-2" onclick="App.exportData()"><i class="bi bi-download"></i> Esporta Backup</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="App.importData()"><i class="bi bi-upload"></i> Importa Backup</button>
+          </div>
+
+          <div class="settings-card settings-card--danger">
+            <h3><i class="bi bi-trash3-fill"></i> Reimposta App</h3>
+            <p>Cancella tutti i dati locali. I dati su Drive non vengono eliminati.</p>
+            <button class="btn btn--danger btn--block mt-2" onclick="App.resetApp()"><i class="bi bi-exclamation-triangle-fill"></i> Reimposta</button>
+          </div>
+
+        </div>
+      </section>
+
+    </main><!-- /content -->
+
+    <!-- Tab Bar (mobile) -->
+    <nav class="tab-bar">
+      <div class="tab-bar-item active" data-section="dashboard" onclick="App.navigate('dashboard')">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span class="tab-bar-label">Home</span>
+        <div class="tab-bar-dot"></div>
+      </div>
+      <div class="tab-bar-item" data-section="conto" onclick="App.navigate('conto')">
+        <i class="bi bi-bank2"></i>
+        <span class="tab-bar-label">Conto</span>
+        <div class="tab-bar-dot"></div>
+      </div>
+      <div class="tab-bar-item" data-section="investimenti" onclick="App.navigate('investimenti')">
+        <i class="bi bi-graph-up-arrow"></i>
+        <span class="tab-bar-label">Invest.</span>
+        <div class="tab-bar-dot"></div>
+      </div>
+      <div class="tab-bar-item" data-section="carta" onclick="App.navigate('carta')">
+        <i class="bi bi-credit-card-fill"></i>
+        <span class="tab-bar-label">Carta</span>
+        <div class="tab-bar-dot"></div>
+      </div>
+      <div class="tab-bar-item" data-section="impostazioni" onclick="App.navigate('impostazioni')">
+        <i class="bi bi-gear-fill"></i>
+        <span class="tab-bar-label">Altro</span>
+        <div class="tab-bar-dot"></div>
+      </div>
+    </nav>
+
+  </div><!-- /main-wrapper -->
+
+  <!-- FAB -->
+  <button class="fab" id="fabBtn" onclick="App.fabAction()" title="Aggiungi">
+    <i class="bi bi-plus-lg"></i>
+  </button>
+
+</div><!-- /app -->
+
+<!-- ===== MODALI ===== -->
+<div id="modalOverlay" class="modal-overlay hidden" onclick="Modals.closeOnOverlay(event)">
+
+  <!-- Nuovo Movimento Conto -->
+  <div id="modal-nuovoMovimento" class="modal hidden">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>Nuovo Movimento</h3>
+      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Tipo</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active" id="movTipoEntrata" onclick="Portfolio.setMovTipo('entrata')"><i class="bi bi-arrow-down-circle"></i> Entrata</button>
+          <button class="toggle-btn" id="movTipoUscita" onclick="Portfolio.setMovTipo('uscita')"><i class="bi bi-arrow-up-circle"></i> Uscita</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Importo (€)</label>
+        <input type="number" id="movImporto" class="form-control" placeholder="0,00" min="0" step="0.01" style="font-size:20px;font-weight:700" />
+      </div>
+      <div class="form-group">
+        <label>Descrizione</label>
+        <input type="text" id="movDescrizione" class="form-control" placeholder="Es. Stipendio, Affitto..." />
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
           <label>Data</label>
           <input type="date" id="movData" class="form-control" />
         </div>
-        <div class="form-group">
-          <label>Descrizione</label>
-          <input type="text" id="movDescrizione" class="form-control" placeholder="Es. Stipendio, Affitto..." />
-        </div>
-        <div class="form-group">
-          <label>Importo (€)</label>
-          <input type="number" id="movImporto" class="form-control" placeholder="0,00" min="0" step="0.01" />
-        </div>
-        <div class="form-group">
+        <div class="form-group" style="flex:1">
           <label>Categoria</label>
           <select id="movCategoria" class="form-control">
             <option value="stipendio">Stipendio</option>
@@ -617,37 +481,40 @@
             <option value="altro">Altro</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Note</label>
-          <textarea id="movNote" class="form-control" rows="2" placeholder="Opzionale..."></textarea>
-        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-        <button class="btn btn--primary" onclick="Portfolio.saveMovimento()">Salva</button>
+      <div class="form-group">
+        <label>Note</label>
+        <textarea id="movNote" class="form-control" rows="2" placeholder="Opzionale..."></textarea>
       </div>
     </div>
+    <div class="modal-footer">
+      <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
+      <button class="btn btn--primary" onclick="Portfolio.saveMovimento()"><i class="bi bi-check-lg"></i> Salva</button>
+    </div>
+  </div>
 
-    <!-- Nuova Spesa Carta -->
-    <div id="modal-nuovaSpesaCarta" class="modal hidden">
-      <div class="modal-header">
-        <h3>Nuova Spesa Carta</h3>
-        <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+  <!-- Nuova Spesa Carta -->
+  <div id="modal-nuovaSpesaCarta" class="modal hidden">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>Nuova Spesa Carta</h3>
+      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Importo (€)</label>
+        <input type="number" id="cartaImporto" class="form-control" placeholder="0,00" min="0" step="0.01" style="font-size:20px;font-weight:700" />
       </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Data</label>
+      <div class="form-group">
+        <label>Descrizione</label>
+        <input type="text" id="cartaDescrizione" class="form-control" placeholder="Es. Amazon, Ristorante..." />
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
+          <label>Data spesa</label>
           <input type="date" id="cartaData" class="form-control" />
         </div>
-        <div class="form-group">
-          <label>Descrizione</label>
-          <input type="text" id="cartaDescrizione" class="form-control" placeholder="Es. Amazon, Ristorante..." />
-        </div>
-        <div class="form-group">
-          <label>Importo (€)</label>
-          <input type="number" id="cartaImporto" class="form-control" placeholder="0,00" min="0" step="0.01" />
-        </div>
-        <div class="form-group">
+        <div class="form-group" style="flex:1">
           <label>Categoria</label>
           <select id="cartaCategoria" class="form-control">
             <option value="shopping">Shopping</option>
@@ -659,139 +526,130 @@
             <option value="altro">Altro</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Addebito su conto</label>
-          <input type="date" id="cartaAddebito" class="form-control" />
-        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-        <button class="btn btn--primary" onclick="Portfolio.saveSpesaCarta()">Salva</button>
+      <div class="form-group">
+        <label>Data addebito su conto</label>
+        <input type="date" id="cartaAddebito" class="form-control" />
       </div>
     </div>
+    <div class="modal-footer">
+      <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
+      <button class="btn btn--primary" onclick="Portfolio.saveSpesaCarta()"><i class="bi bi-check-lg"></i> Salva</button>
+    </div>
+  </div>
 
-    <!-- Nuovo Titolo -->
-    <div id="modal-nuovoTitolo" class="modal hidden">
-      <div class="modal-header">
-        <h3>Aggiungi Titolo</h3>
-        <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+  <!-- Nuovo Titolo -->
+  <div id="modal-nuovoTitolo" class="modal hidden">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>Aggiungi Titolo</h3>
+      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="titoloTipo" class="form-control" onchange="Portfolio.onTitoloTipoChange()">
+          <option value="azione">Azione</option>
+          <option value="fondo">Fondo</option>
+          <option value="certificate">Certificate</option>
+          <option value="pir">PIR</option>
+          <option value="polizza">Polizza Vita</option>
+        </select>
       </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Tipo</label>
-          <select id="titoloTipo" class="form-control" onchange="Portfolio.onTitoloTipoChange()">
-            <option value="azione">Azione</option>
-            <option value="fondo">Fondo</option>
-            <option value="certificate">Certificate</option>
-            <option value="pir">PIR</option>
-            <option value="polizza">Polizza Vita</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Nome / Descrizione</label>
-          <input type="text" id="titoloNome" class="form-control" placeholder="Es. ENI, Fondo Azionario..." />
-        </div>
-        <div id="titoloYahooGroup" class="form-group">
-          <label>Ticker Yahoo Finance <span class="label-hint">(es. ENI.MI, VEUR.AS)</span></label>
-          <input type="text" id="titoloTicker" class="form-control" placeholder="Es. ENI.MI" />
-        </div>
-        <div id="titoloZBGroup" class="form-group hidden">
-          <label>Codice Zonebourse <span class="label-hint">(es. 184320628)</span></label>
-          <input type="text" id="titoloCodeZB" class="form-control" placeholder="Es. 184320628" />
-        </div>
-        <div class="form-group">
+      <div class="form-group">
+        <label>Nome / Descrizione</label>
+        <input type="text" id="titoloNome" class="form-control" placeholder="Es. ENI, Fondo Azionario..." />
+      </div>
+      <div id="titoloYahooGroup" class="form-group">
+        <label>Ticker Yahoo Finance <span class="label-hint">(es. ENI.MI)</span></label>
+        <input type="text" id="titoloTicker" class="form-control" placeholder="Es. ENI.MI" />
+      </div>
+      <div id="titoloZBGroup" class="form-group hidden">
+        <label>Codice Zonebourse <span class="label-hint">(es. 184320628)</span></label>
+        <input type="text" id="titoloCodeZB" class="form-control" placeholder="Es. 184320628" />
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1">
           <label>Data acquisto</label>
           <input type="date" id="titoloDataAcquisto" class="form-control" />
         </div>
-        <div class="form-group">
+        <div class="form-group" style="flex:1">
           <label>Quantità</label>
-          <input type="number" id="titoloQuantita" class="form-control" placeholder="Es. 100" min="0" step="0.001" />
+          <input type="number" id="titoloQuantita" class="form-control" placeholder="100" min="0" step="0.001" />
         </div>
-        <div class="form-group">
-          <label>Prezzo di acquisto (€)</label>
-          <input type="number" id="titoloPrezzoAcquisto" class="form-control" placeholder="0,00" min="0" step="0.0001" />
-        </div>
-        <div class="form-group">
-          <label>Addebito conto corrente</label>
+      </div>
+      <div class="form-group">
+        <label>Prezzo di acquisto (€)</label>
+        <input type="number" id="titoloPrezzoAcquisto" class="form-control" placeholder="0,00" min="0" step="0.0001" />
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="titoloAddebitoConto" checked />
-          <span class="checkbox-label">Registra automaticamente il movimento sul conto</span>
-        </div>
-        <div class="form-group">
-          <label>Note</label>
-          <textarea id="titoloNote" class="form-control" rows="2" placeholder="Opzionale..."></textarea>
-        </div>
+          <span class="checkbox-label">Registra automaticamente uscita sul conto</span>
+        </label>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-        <button class="btn btn--primary" onclick="Portfolio.saveTitolo()">Aggiungi</button>
+      <div class="form-group">
+        <label>Note</label>
+        <textarea id="titoloNote" class="form-control" rows="2" placeholder="Opzionale..."></textarea>
       </div>
     </div>
-
-    <!-- Dettaglio Titolo -->
-    <div id="modal-dettaglioTitolo" class="modal hidden">
-      <div class="modal-header">
-        <h3 id="detTitoloNome">Dettaglio Titolo</h3>
-        <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <div class="modal-body" id="detTitoloBody"></div>
-      <div class="modal-footer">
-        <button class="btn btn--danger" onclick="Portfolio.vendeTitolo()">
-          <i class="bi bi-cash-coin"></i> Vendi
-        </button>
-        <button class="btn btn--ghost" onclick="Modals.close()">Chiudi</button>
-      </div>
+    <div class="modal-footer">
+      <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
+      <button class="btn btn--primary" onclick="Portfolio.saveTitolo()"><i class="bi bi-plus-lg"></i> Aggiungi</button>
     </div>
-
-    <!-- Impostazioni Carta -->
-    <div id="modal-impostazioniCarta" class="modal hidden">
-      <div class="modal-header">
-        <h3>Configura Carta</h3>
-        <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Titolare</label>
-          <input type="text" id="ccHolderInput" class="form-control" placeholder="Nome Cognome" />
-        </div>
-        <div class="form-group">
-          <label>Ultime 4 cifre</label>
-          <input type="text" id="ccLastInput" class="form-control" placeholder="1234" maxlength="4" />
-        </div>
-        <div class="form-group">
-          <label>Scadenza (MM/AA)</label>
-          <input type="text" id="ccExpiryInput" class="form-control" placeholder="12/27" maxlength="5" />
-        </div>
-        <div class="form-group">
-          <label>Plafond (€)</label>
-          <input type="number" id="ccPlafondInput" class="form-control" placeholder="5000" />
-        </div>
-        <div class="form-group">
-          <label>Giorno addebito mensile</label>
-          <input type="number" id="ccGiornoAddebito" class="form-control" placeholder="15" min="1" max="31" />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-        <button class="btn btn--primary" onclick="Portfolio.saveImpostazioniCarta()">Salva</button>
-      </div>
-    </div>
-
   </div>
 
-  <!-- ===== TOAST NOTIFICHE ===== -->
-  <div id="toastContainer" class="toast-container"></div>
-
-  <!-- ===== LOADING SPINNER ===== -->
-  <div id="loadingSpinner" class="loading-spinner hidden">
-    <div class="spinner"></div>
+  <!-- Dettaglio Titolo -->
+  <div id="modal-dettaglioTitolo" class="modal hidden">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 id="detTitoloNome">Dettaglio</h3>
+      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body" id="detTitoloBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn--danger" onclick="Portfolio.vendeTitolo()"><i class="bi bi-cash-coin"></i> Vendi</button>
+      <button class="btn btn--ghost" onclick="Modals.close()">Chiudi</button>
+    </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="js/auth.js"></script>
-  <script src="js/drive.js"></script>
-  <script src="js/quotes.js"></script>
-  <script src="js/portfolio.js"></script>
-  <script src="js/charts.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Impostazioni Carta -->
+  <div id="modal-impostazioniCarta" class="modal hidden">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>Configura Carta</h3>
+      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Titolare</label><input type="text" id="ccHolderInput" class="form-control" placeholder="Nome Cognome" /></div>
+      <div class="form-group"><label>Ultime 4 cifre</label><input type="text" id="ccLastInput" class="form-control" placeholder="1234" maxlength="4" /></div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1"><label>Scadenza (MM/AA)</label><input type="text" id="ccExpiryInput" class="form-control" placeholder="12/27" maxlength="5" /></div>
+        <div class="form-group" style="flex:1"><label>Plafond (€)</label><input type="number" id="ccPlafondInput" class="form-control" placeholder="5000" /></div>
+      </div>
+      <div class="form-group"><label>Giorno addebito mensile</label><input type="number" id="ccGiornoAddebito" class="form-control" placeholder="15" min="1" max="31" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
+      <button class="btn btn--primary" onclick="Portfolio.saveImpostazioniCarta()"><i class="bi bi-check-lg"></i> Salva</button>
+    </div>
+  </div>
+
+</div><!-- /modal overlay -->
+
+<!-- Toast -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Loading -->
+<div id="loadingSpinner" class="loading-spinner hidden">
+  <div class="spinner"></div>
+</div>
+
+<script src="js/auth.js"></script>
+<script src="js/drive.js"></script>
+<script src="js/quotes.js"></script>
+<script src="js/portfolio.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
