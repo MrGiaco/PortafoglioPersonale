@@ -1,27 +1,83 @@
 {
-  "name": "Portafoglio Roberto",
+  "name": "Portafoglio Personale",
   "short_name": "Portafoglio",
-  "description": "Monitoraggio investimenti personale",
-  "start_url": "/portafoglio-/",
-  "scope": "/portafoglio-/",
+  "description": "Gestione personale di conto corrente, carta di credito e investimenti",
+  "start_url": "/PortafoglioPersonale/",
+  "scope": "/PortafoglioPersonale/",
   "display": "standalone",
-  "background_color": "#0D1628",
-  "theme_color": "#0D1628",
   "orientation": "portrait-primary",
+  "theme_color": "#2563EB",
+  "background_color": "#F8FAFC",
+  "lang": "it",
+  "categories": ["finance", "productivity"],
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
+      "src": "icons/icon-72.png",
+      "sizes": "72x72",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable any"
     }
   ],
-  "categories": ["finance", "productivity"],
-  "lang": "it"
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/PortafoglioPersonale/#dashboard",
+      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Conto Corrente",
+      "short_name": "Conto",
+      "url": "/PortafoglioPersonale/#conto",
+      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Investimenti",
+      "short_name": "Investimenti",
+      "url": "/PortafoglioPersonale/#investimenti",
+      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+    }
+  ]
 }
