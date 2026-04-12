@@ -17,16 +17,15 @@ const App = (() => {
 
   // ---- Init (chiamato dopo unlock) ----
   async function init() {
-    // Imposta data dashboard
     const el = $('dashDate');
     if (el) el.textContent = new Date().toLocaleDateString('it-IT', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
 
-    // Carica dati locali prima
-    const local = Drive.loadLocal();
+    // Carica dati locali
+    Drive.loadLocal();
 
-    // Tenta connessione automatica Drive
+    // Tenta connessione automatica Drive (disabilitata, carica solo locale)
     await Drive.tryAutoConnect();
 
     // Inizializza grafici
@@ -72,11 +71,24 @@ const App = (() => {
     const isDash   = section === 'dashboard';
     greeting?.classList.toggle('hidden', !isDash);
     titleEl?.classList.toggle('hidden', isDash);
-    const titles = { conto:'Conto Corrente', carta:'Carta di Credito', investimenti:'Investimenti', report:'Report', impostazioni:'Impostazioni' };
+    const titles = {
+      conto:         'Conto Corrente',
+      carta:         'Carta di Credito',
+      investimenti:  'Investimenti',
+      report:        'Report',
+      impostazioni:  'Impostazioni',
+    };
     if (titleEl) titleEl.textContent = titles[section] || '';
 
     // FAB icona contestuale
-    const fabIcons = { dashboard:'bi-plus-lg', conto:'bi-plus-lg', carta:'bi-plus-lg', investimenti:'bi-plus-lg', report:'bi-download', impostazioni:'' };
+    const fabIcons = {
+      dashboard:    'bi-plus-lg',
+      conto:        'bi-plus-lg',
+      carta:        'bi-plus-lg',
+      investimenti: 'bi-plus-lg',
+      report:       'bi-download',
+      impostazioni: '',
+    };
     const fab = $('fabBtn');
     if (fab) {
       fab.classList.toggle('hidden', section === 'impostazioni');
@@ -87,9 +99,9 @@ const App = (() => {
     closeSidebar();
 
     // Azioni specifiche per sezione
-    if (section === 'report') Report.render();
-    if (section === 'impostazioni') renderImpostazioni();
-    if (section === 'investimenti') Portfolio.renderInvestimenti();
+    if (section === 'report')        Report.render();
+    if (section === 'impostazioni')  renderImpostazioni();
+    if (section === 'investimenti')  Portfolio.renderInvestimenti();
 
     // Aggiorna hash URL
     window.location.hash = section;
@@ -101,24 +113,29 @@ const App = (() => {
     else navigate('dashboard');
   }
 
-  // FAB contestuale per sezione
+  // ---- FAB contestuale per sezione ----
   function fabAction() {
     const fabMap = {
-      dashboard:    () => Modals.open('nuovoMovimento'),
-      conto:        () => Modals.open('nuovoMovimento'),
-      carta:        () => Modals.open('nuovaSpesaCarta'),
-      investimenti: () => Modals.open('nuovoTitolo'),
-      report:       () => Report.export(),
-      impostazioni: () => {},
+      dashboard:    'nuovoMovimento',
+      conto:        'nuovoMovimento',
+      carta:        'nuovaSpesaCarta',
+      investimenti: 'nuovoTitolo',
+      report:       null,
+      impostazioni: null,
     };
-    (fabMap[currentSection] || fabMap.dashboard)();
+    const modalId = fabMap[currentSection];
+    if (modalId) {
+      Modals.open(modalId);
+    } else if (currentSection === 'report') {
+      Report.export();
+    }
   }
 
   // ---- Sidebar ----
   function toggleSidebar() {
-    const sidebar  = $('sidebar');
-    const overlay  = $('sidebarOverlay');
-    const isOpen   = sidebar?.classList.contains('open');
+    const sidebar = $('sidebar');
+    const overlay = $('sidebarOverlay');
+    const isOpen  = sidebar?.classList.contains('open');
     sidebar?.classList.toggle('open', !isOpen);
     overlay?.classList.toggle('hidden', isOpen);
   }
@@ -138,7 +155,6 @@ const App = (() => {
     const ts   = localStorage.getItem('pp_last_quote_ts');
     if (last && ts) last.textContent = `Ultimo aggiornamento: ${new Date(parseInt(ts)).toLocaleString('it-IT')}`;
 
-    // Pre-compila modal carta
     const d = Portfolio.getData().carta;
     const fields = {
       ccHolderInput:    d.holder,
@@ -147,12 +163,19 @@ const App = (() => {
       ccPlafondInput:   d.plafond,
       ccGiornoAddebito: d.giornoAddebito,
     };
-    Object.entries(fields).forEach(([id, val]) => { const el = $(id); if (el) el.value = val || ''; });
+    Object.entries(fields).forEach(([id, val]) => {
+      const el = $(id); if (el) el.value = val || '';
+    });
   }
 
   // ---- Toast ----
   function showToast(msg, type = 'info', duration = 3500) {
-    const icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', warning: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
+    const icons = {
+      success: 'bi-check-circle-fill',
+      error:   'bi-x-circle-fill',
+      warning: 'bi-exclamation-triangle-fill',
+      info:    'bi-info-circle-fill',
+    };
     const container = $('toastContainer');
     if (!container) return;
 
@@ -162,8 +185,8 @@ const App = (() => {
     container.appendChild(toast);
 
     setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateX(20px)';
+      toast.style.opacity   = '0';
+      toast.style.transform = 'translateY(8px)';
       toast.style.transition = '.3s ease';
       setTimeout(() => toast.remove(), 300);
     }, duration);
@@ -201,14 +224,12 @@ const App = (() => {
     setTimeout(() => location.reload(), 1500);
   }
 
-  // ---- Helper DOM ----
-  function setEl(id, val) { const e = $(id); if (e) e.textContent = val; }
-
   // ---- API pubblica ----
   return {
     init, navigate, toggleSidebar, closeSidebar,
     showToast, showLoading,
     exportData, importData, resetApp,
+    fabAction,
   };
 
 })();
@@ -226,10 +247,8 @@ const Modals = (() => {
     const overlay = $('modalOverlay');
     if (!overlay) return;
 
-    // Chiudi eventuale modale aperta
     if (current) close();
 
-    // Prepopola campi se necessario
     prefill(id);
 
     overlay.classList.remove('hidden');
@@ -237,7 +256,6 @@ const Modals = (() => {
     if (modal) modal.classList.remove('hidden');
     current = id;
 
-    // Blocca scroll body
     document.body.style.overflow = 'hidden';
   }
 
@@ -272,7 +290,6 @@ const Modals = (() => {
       const el = $('cartaData'); if (el) el.value = today;
       const imp = $('cartaImporto'); if (imp) imp.value = '';
       const desc = $('cartaDescrizione'); if (desc) desc.value = '';
-      // Calcola data addebito automatica
       const d = Portfolio.getData().carta;
       const giorno = d.giornoAddebito || 15;
       const now = new Date();
@@ -283,8 +300,12 @@ const Modals = (() => {
 
     if (id === 'nuovoTitolo') {
       const el = $('titoloDataAcquisto'); if (el) el.value = today;
-      ['titoloNome','titoloTicker','titoloCodeZB','titoloNote'].forEach(f => { const e = $(f); if (e) e.value = ''; });
-      ['titoloQuantita','titoloPrezzoAcquisto'].forEach(f => { const e = $(f); if (e) e.value = ''; });
+      ['titoloNome','titoloTicker','titoloCodeZB','titoloNote'].forEach(f => {
+        const e = $(f); if (e) e.value = '';
+      });
+      ['titoloQuantita','titoloPrezzoAcquisto'].forEach(f => {
+        const e = $(f); if (e) e.value = '';
+      });
       const tipo = $('titoloTipo'); if (tipo) tipo.value = 'azione';
       Portfolio.onTitoloTipoChange();
       const addebito = $('titoloAddebitoConto'); if (addebito) addebito.checked = true;
@@ -292,8 +313,16 @@ const Modals = (() => {
 
     if (id === 'impostazioniCarta') {
       const d = Portfolio.getData().carta;
-      const map = { ccHolderInput: d.holder, ccLastInput: d.lastDigits, ccExpiryInput: d.expiry, ccPlafondInput: d.plafond, ccGiornoAddebito: d.giornoAddebito };
-      Object.entries(map).forEach(([k, v]) => { const e = $(k); if (e) e.value = v || ''; });
+      const map = {
+        ccHolderInput:    d.holder,
+        ccLastInput:      d.lastDigits,
+        ccExpiryInput:    d.expiry,
+        ccPlafondInput:   d.plafond,
+        ccGiornoAddebito: d.giornoAddebito,
+      };
+      Object.entries(map).forEach(([k, v]) => {
+        const e = $(k); if (e) e.value = v || '';
+      });
     }
   }
 
@@ -320,26 +349,25 @@ const Report = (() => {
     const container = $('reportTable');
     if (!container) return;
 
-    const data   = Portfolio.getData();
+    const data      = Portfolio.getData();
     const movimenti = (data.conto.movimenti || []).filter(m => m.data?.startsWith(String(anno)));
-    const spese  = (data.carta.spese || []).filter(s => s.data?.startsWith(String(anno)));
+    const spese     = (data.carta.spese     || []).filter(s => s.data?.startsWith(String(anno)));
 
-    // Raggruppa per mese
     const mesi = Array.from({ length: 12 }, (_, i) => {
       const d = new Date(anno, i, 1);
       return {
-        label:   d.toLocaleDateString('it-IT', { month: 'long' }),
-        ym:      `${anno}-${String(i + 1).padStart(2, '0')}`,
+        label: d.toLocaleDateString('it-IT', { month: 'long' }),
+        ym:    `${anno}-${String(i + 1).padStart(2, '0')}`,
       };
     });
 
     const header = `
-      <div class="report-table-row report-table-header">
+      <div class="report-row report-row--header">
         <span>Mese</span>
         <span>Entrate</span>
-        <span>Uscite Conto</span>
-        <span>Spese Carta</span>
-        <span>Saldo Mese</span>
+        <span>Uscite</span>
+        <span>Carta</span>
+        <span>Saldo</span>
       </div>`;
 
     const rows = mesi.map(({ label, ym }) => {
@@ -349,8 +377,8 @@ const Report = (() => {
       const saldo   = entrate - uscite - cartaM;
       const cls     = saldo >= 0 ? 'color:var(--success)' : 'color:var(--danger)';
       return `
-        <div class="report-table-row">
-          <span style="font-weight:600;text-transform:capitalize">${label}</span>
+        <div class="report-row">
+          <span style="font-weight:700;text-transform:capitalize">${label}</span>
           <span style="color:var(--success)">${Portfolio.formatEur(entrate)}</span>
           <span style="color:var(--danger)">${Portfolio.formatEur(uscite)}</span>
           <span style="color:var(--danger)">${Portfolio.formatEur(cartaM)}</span>
@@ -364,7 +392,7 @@ const Report = (() => {
   function exportCSV() {
     const anno = $('reportAnno')?.value || new Date().getFullYear();
     const data = Portfolio.getData();
-    const rows = [['Data', 'Tipo', 'Descrizione', 'Categoria', 'Importo', 'Note']];
+    const rows = [['Data','Tipo','Descrizione','Categoria','Importo','Note']];
 
     (data.conto.movimenti || [])
       .filter(m => m.data?.startsWith(String(anno)))
@@ -376,7 +404,7 @@ const Report = (() => {
       .sort((a, b) => new Date(a.data) - new Date(b.data))
       .forEach(s => rows.push([s.data, 'spesa-carta', s.descrizione, s.categoria, -s.importo, s.addebitoData || '']));
 
-    const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
@@ -417,7 +445,6 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/PortafoglioPersonale/sw.js')
       .then(reg => {
         console.log('SW registrato:', reg.scope);
-        // Ascolta messaggi dal SW
         navigator.serviceWorker.addEventListener('message', e => {
           if (e.data?.type === 'SYNC_QUOTES') Quotes.refreshAll();
         });
@@ -432,11 +459,7 @@ if ('serviceWorker' in navigator) {
 
 document.addEventListener('keydown', e => {
   if (Auth.isLocked()) return;
-
-  // ESC → chiudi modale
   if (e.key === 'Escape') Modals.close();
-
-  // Ctrl+S → salva su Drive
   if (e.ctrlKey && e.key === 's') {
     e.preventDefault();
     Drive.sync();
@@ -448,5 +471,8 @@ document.addEventListener('keydown', e => {
 // =============================================
 
 window.addEventListener('hashchange', () => {
-  if (!Auth.isLocked()) App.handleHash?.() || App.navigate(location.hash.replace('#',''));
+  if (!Auth.isLocked()) {
+    const hash = location.hash.replace('#', '');
+    App.navigate(hash);
+  }
 });
