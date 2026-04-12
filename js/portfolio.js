@@ -10,7 +10,7 @@ const Portfolio = (() => {
   // =============================================
 
   let data = {
-    conto: { saldo: 0, movimenti: [] },
+    conto: { saldoIniziale: 0, saldo: 0, movimenti: [] },
     carta: { holder:'', lastDigits:'0000', expiry:'', plafond:5000, giornoAddebito:15, spese:[] },
     investimenti: { titoli:[] },
     impostazioni: { ultimoAggiornamento: null },
@@ -406,7 +406,7 @@ const Portfolio = (() => {
 
   function loadData(incoming) {
     if (!incoming) return;
-    if (incoming.conto)        data.conto        = Object.assign({}, data.conto,        incoming.conto);
+    if (incoming.conto)        data.conto        = Object.assign({ saldoIniziale: 0 }, data.conto,        incoming.conto);
     if (incoming.carta)        data.carta        = Object.assign({}, data.carta,        incoming.carta);
     if (incoming.investimenti) data.investimenti = Object.assign({}, data.investimenti, incoming.investimenti);
     if (incoming.impostazioni) data.impostazioni = Object.assign({}, data.impostazioni, incoming.impostazioni);
@@ -414,6 +414,17 @@ const Portfolio = (() => {
   }
 
   function getData() { return JSON.parse(JSON.stringify(data)); }
+
+  // Saldo reale = saldo iniziale + movimenti
+  function getSaldoConto() {
+    return (data.conto.saldoIniziale || 0) + (data.conto.saldo || 0);
+  }
+
+  function saveSaldoIniziale(valore) {
+    data.conto.saldoIniziale = valore;
+    renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
+    App.showToast('Saldo iniziale salvato', 'success');
+  }
   function getTitoli() { return data.investimenti.titoli.filter(function(t){ return !t.venduto; }); }
 
   function updateQuote(id, quote) {
@@ -446,7 +457,7 @@ const Portfolio = (() => {
     var el = $('dashDate');
     if (el) el.textContent = new Date().toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-    var saldoConto = data.conto.saldo;
+    var saldoConto = getSaldoConto();
     var totInv     = getTotaleInvestimenti();
     var totale     = saldoConto + totInv;
     var debitoCarta = getDebitoCarta();
@@ -478,7 +489,7 @@ const Portfolio = (() => {
   var _contoFilterMese = '';
 
   function renderConto() {
-    setEl('contoSaldo', formatEur(data.conto.saldo));
+    setEl('contoSaldo', formatEur(getSaldoConto()));
     var now = new Date();
     var meseMov = data.conto.movimenti.filter(function(m){
       var d = new Date(m.data);
@@ -1172,7 +1183,7 @@ const Portfolio = (() => {
 
   // ---- API pubblica ----
   return {
-    loadData, getData, getTitoli, updateQuote,
+    loadData, getData, getTitoli, updateQuote, getSaldoConto, saveSaldoIniziale,
     renderAll, renderDashboard, renderConto, renderCarta, renderInvestimenti,
     filterMovimenti, filterSpese, setContoFilter, setContoFilterMonth,
     setMovTipo, saveMovimento, deleteMovimento, editMovimento,
