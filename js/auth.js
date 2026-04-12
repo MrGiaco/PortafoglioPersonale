@@ -5,35 +5,31 @@
 
 const Auth = (() => {
 
-  // ---- Costanti ----
-  const PIN_KEY       = 'pp_pin_hash';
-  const BIO_KEY       = 'pp_bio_enabled';
-  const BIO_CRED_KEY  = 'pp_bio_cred_id';
-  const LOCK_TIMEOUT  = 5 * 60 * 1000; // 5 minuti di inattività → blocco
-  const PIN_LENGTH    = 6;
+  const PIN_KEY      = 'pp_pin_hash';
+  const BIO_KEY      = 'pp_bio_enabled';
+  const BIO_CRED_KEY = 'pp_bio_cred_id';
+  const LOCK_TIMEOUT = 5 * 60 * 1000;
+  const PIN_LENGTH   = 6;
 
-  // ---- Stato ----
-  let currentPin     = '';
-  let setupPin       = '';
-  let setupStep      = 1;       // 1 = inserisci, 2 = conferma
-  let lockTimer      = null;
-  let isLocked       = true;
-  let changingPin    = false;
+  let currentPin  = '';
+  let _firstSetupPin = '';
+  let setupPin    = '';
+  let setupStep   = 1;
+  let lockTimer   = null;
+  let isLocked    = true;
+  let changingPin = false;
 
-  // ---- Utility: hash SHA-256 ----
   async function sha256(str) {
     const buf = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(str)
+      'SHA-256', new TextEncoder().encode(str)
     );
     return Array.from(new Uint8Array(buf))
       .map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // ---- Utility: DOM ----
   const $ = id => document.getElementById(id);
 
-  function updateDots(containerId, length) {
+  function updateDots(containerId, length, color) {
     const dots = document.querySelectorAll(`#${containerId} .pin-dot`);
     dots.forEach((d, i) => {
       d.classList.toggle('filled', i < length);
@@ -44,7 +40,7 @@ const Auth = (() => {
   function showError(containerId, labelId, msg) {
     const dots = document.querySelectorAll(`#${containerId} .pin-dot`);
     dots.forEach(d => { d.classList.add('error'); d.classList.remove('filled'); });
-    if (labelId) $( labelId).textContent = msg;
+    if (labelId) $(labelId).textContent = msg;
     setTimeout(() => {
       dots.forEach(d => d.classList.remove('error'));
       if (labelId) $(labelId).textContent = isSetup() ? 'Scegli il tuo PIN' : 'Inserisci il PIN';
@@ -55,26 +51,46 @@ const Auth = (() => {
     return !localStorage.getItem(PIN_KEY);
   }
 
-  // ---- Init ----
-  async function init() {
-    if (isSetup()) {
-      // Primo avvio: mostra setup PIN
-      $('pinSection').classList.add('hidden');
-      $('pinSetup').classList.remove('hidden');
-      $('bioBtn').classList.add('hidden');
-    } else {
-      // PIN già impostato
-      $('pinSection').classList.remove('hidden');
-      $('pinSetup').classList.add('hidden');
-      // Mostra biometria se disponibile e abilitata
-      const bioEnabled = localStorage.getItem(BIO_KEY) === 'true';
-      $('bioBtn').classList.toggle('hidden', !bioEnabled);
-      // Tenta biometria automatica
-      if (bioEnabled) setTimeout(() => biometric(), 400);
+  // ---- Controlla se biometria è disponibile sul dispositivo ----
+  async function isBiometricAvailable() {
+    if (!window.PublicKeyCredential) return false;
+    try {
+      return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    } catch {
+      return false;
     }
   }
 
-  // ---- Inserimento PIN (login) ----
+  // ---- Init ----
+  async function init() {
+    const bioAvailable = await isBiometricAvailable();
+    const bioEnabled   = localStorage.getItem(BIO_KEY) === 'true';
+    const bioBtn       = $('bioBtn');
+
+    if (isSetup()) {
+      $('pinSection').classList.add('hidden');
+      $('pinSetup').classList.remove('hidden');
+      if (bioBtn) bioBtn.classList.add('hidden');
+    } else {
+      $('pinSection').classList.remove('hidden');
+      $('pinSetup').classList.add('hidden');
+
+      // Mostra il pulsante impronta se il dispositivo la supporta
+      if (bioBtn) {
+        if (bioAvailable) {
+          bioBtn.classList.remove('hidden');
+          // Se già abilitata, tenta automaticamente
+          if (bioEnabled) {
+            setTimeout(() => biometric(), 600);
+          }
+        } else {
+          bioBtn.classList.add('hidden');
+        }
+      }
+    }
+  }
+
+  // ---- PIN login ----
   function pinInput(digit) {
     if (currentPin.length >= PIN_LENGTH) return;
     currentPin += digit;
@@ -91,7 +107,7 @@ const Auth = (() => {
   }
 
   async function verifyPin() {
-    const hash = await sha256(currentPin);
+    const hash   = await sha256(currentPin);
     const stored = localStorage.getItem(PIN_KEY);
     if (hash === stored) {
       unlock();
@@ -101,7 +117,7 @@ const Auth = (() => {
     }
   }
 
-  // ---- Setup PIN (primo avvio / cambio PIN) ----
+  // ---- Setup PIN ----
   function setupInput(digit) {
     if (setupStep === 1) {
       if (_firstSetupPin.length >= PIN_LENGTH) return;
@@ -110,7 +126,7 @@ const Auth = (() => {
       if (_firstSetupPin.length === PIN_LENGTH) {
         setTimeout(() => {
           setupStep = 2;
-          setupPin = '';
+          setupPin  = '';
           updateDots('pinSetupDisplay', 0);
           $('pinSetupLabel').textContent = 'Conferma il PIN';
         }, 150);
@@ -138,15 +154,12 @@ const Auth = (() => {
   }
 
   async function confirmSetup() {
-    // Recupera il PIN originale (step 1)
-    // Usiamo una variabile separata per il primo PIN
-    const firstPin = _firstSetupPin;
-    const hash = await sha256(setupPin);
-    const firstHash = await sha256(firstPin);
+    const hashFirst  = await sha256(_firstSetupPin);
+    const hashSecond = await sha256(setupPin);
 
-    if (hash !== firstHash) {
-      setupPin = '';
-      setupStep = 1;
+    if (hashFirst !== hashSecond) {
+      setupPin       = '';
+      setupStep      = 1;
       _firstSetupPin = '';
       updateDots('pinSetupDisplay', 0);
       $('pinSetupLabel').textContent = 'Scegli il tuo PIN';
@@ -154,34 +167,45 @@ const Auth = (() => {
       return;
     }
 
-    localStorage.setItem(PIN_KEY, hash);
+    localStorage.setItem(PIN_KEY, hashFirst);
 
     if (changingPin) {
       changingPin = false;
-      App.showToast('PIN aggiornato con successo', 'success');
+      if (typeof App !== 'undefined') App.showToast('PIN aggiornato con successo', 'success');
       lock();
     } else {
-      App.showToast('PIN impostato! Benvenuto.', 'success');
-      unlock();
+      if (typeof App !== 'undefined') App.showToast('PIN impostato! Benvenuto.', 'success');
+      // Proponi biometria dopo il primo setup
+      const bioAvailable = await isBiometricAvailable();
+      if (bioAvailable) {
+        setTimeout(() => offerBiometric(), 800);
+      } else {
+        unlock();
+      }
     }
   }
 
-  // Variabile temporanea per il primo PIN nel setup
-  let _firstSetupPin = '';
-
-
+  // Proponi biometria al primo accesso
+  async function offerBiometric() {
+    const ok = confirm('Vuoi abilitare l\'accesso con impronta digitale o Face ID?');
+    if (ok) {
+      const registered = await registerBiometric();
+      if (registered) return; // unlock avviene dentro registerBiometric
+    }
+    unlock();
+  }
 
   // ---- Biometria (WebAuthn) ----
   async function biometric() {
     if (!window.PublicKeyCredential) {
-      App.showToast('Biometria non supportata su questo dispositivo', 'warning');
+      if (typeof App !== 'undefined') App.showToast('Biometria non supportata su questo dispositivo', 'warning');
       return;
     }
 
     const credIdB64 = localStorage.getItem(BIO_CRED_KEY);
 
     if (!credIdB64) {
-      // Prima volta: registra la credenziale biometrica
+      // Prima volta: registra
       await registerBiometric();
     } else {
       // Autenticazione
@@ -197,31 +221,46 @@ const Auth = (() => {
       const credential = await navigator.credentials.create({
         publicKey: {
           challenge,
-          rp: { name: 'Portafoglio Personale', id: location.hostname },
-          user: { id: userId, name: 'utente', displayName: 'Utente' },
+          rp: {
+            name: 'Portafoglio Personale',
+            id:   location.hostname,
+          },
+          user: {
+            id:          userId,
+            name:        'utente',
+            displayName: 'Utente',
+          },
           pubKeyCredParams: [
-            { type: 'public-key', alg: -7  },   // ES256
+            { type: 'public-key', alg: -7   },  // ES256
             { type: 'public-key', alg: -257 },  // RS256
           ],
           authenticatorSelection: {
             authenticatorAttachment: 'platform',
-            userVerification: 'required',
+            userVerification:        'required',
           },
           timeout: 60000,
         }
       });
 
-      // Salva l'ID della credenziale (base64)
       const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
       localStorage.setItem(BIO_CRED_KEY, credId);
       localStorage.setItem(BIO_KEY, 'true');
 
-      App.showToast('Biometria registrata con successo!', 'success');
+      if (typeof App !== 'undefined') App.showToast('Biometria abilitata!', 'success');
+
+      // Aggiorna UI impostazioni
+      const bioLabel = $('bioToggleLabel');
+      if (bioLabel) bioLabel.textContent = 'Disabilita Biometria';
+      const bioBtn = $('bioBtn');
+      if (bioBtn) bioBtn.classList.remove('hidden');
+
       unlock();
+      return true;
     } catch (err) {
       if (err.name !== 'NotAllowedError') {
-        App.showToast('Registrazione biometrica fallita', 'error');
+        if (typeof App !== 'undefined') App.showToast('Registrazione biometrica fallita', 'error');
       }
+      return false;
     }
   }
 
@@ -235,14 +274,14 @@ const Auth = (() => {
           challenge,
           allowCredentials: [{ type: 'public-key', id: credIdArr }],
           userVerification: 'required',
-          timeout: 60000,
+          timeout:          60000,
         }
       });
 
       unlock();
     } catch (err) {
       if (err.name !== 'NotAllowedError') {
-        App.showToast('Autenticazione biometrica fallita', 'error');
+        if (typeof App !== 'undefined') App.showToast('Autenticazione biometrica fallita', 'error');
       }
     }
   }
@@ -251,42 +290,39 @@ const Auth = (() => {
     const enabled = localStorage.getItem(BIO_KEY) === 'true';
 
     if (enabled) {
-      // Disabilita
       localStorage.removeItem(BIO_KEY);
       localStorage.removeItem(BIO_CRED_KEY);
-      $('bioToggleLabel').textContent = 'Abilita Biometria';
-      $('bioBtn').classList.add('hidden');
-      App.showToast('Biometria disabilitata', 'info');
+      const bioLabel = $('bioToggleLabel');
+      if (bioLabel) bioLabel.textContent = 'Abilita Biometria';
+      const bioBtn = $('bioBtn');
+      if (bioBtn) bioBtn.classList.add('hidden');
+      if (typeof App !== 'undefined') App.showToast('Biometria disabilitata', 'info');
     } else {
-      // Abilita: registra credenziale
-      if (!window.PublicKeyCredential) {
-        App.showToast('Biometria non supportata su questo dispositivo', 'warning');
+      const bioAvailable = await isBiometricAvailable();
+      if (!bioAvailable) {
+        if (typeof App !== 'undefined') App.showToast('Biometria non supportata su questo dispositivo', 'warning');
         return;
       }
       await registerBiometric();
-      if (localStorage.getItem(BIO_KEY) === 'true') {
-        $('bioToggleLabel').textContent = 'Disabilita Biometria';
-        $('bioBtn').classList.remove('hidden');
-      }
     }
   }
 
   // ---- Cambio PIN ----
   function changePin() {
-    changingPin = true;
-    setupStep = 1;
+    changingPin    = true;
+    setupStep      = 1;
     _firstSetupPin = '';
-    setupPin = '';
+    setupPin       = '';
     $('pinSection').classList.add('hidden');
     $('pinSetup').classList.remove('hidden');
     $('pinSetupLabel').textContent = 'Scegli il nuovo PIN';
     updateDots('pinSetupDisplay', 0);
-    lock(false); // blocca senza mostrare lock screen, solo UI
+    lock(false);
   }
 
   // ---- Lock / Unlock ----
   function unlock() {
-    isLocked = false;
+    isLocked   = false;
     currentPin = '';
     updateDots('pinDisplay', 0);
     $('lockScreen').classList.add('hidden');
@@ -295,15 +331,14 @@ const Auth = (() => {
 
     // Aggiorna UI biometria in impostazioni
     const bioEnabled = localStorage.getItem(BIO_KEY) === 'true';
-    const bioLabel = $('bioToggleLabel');
+    const bioLabel   = $('bioToggleLabel');
     if (bioLabel) bioLabel.textContent = bioEnabled ? 'Disabilita Biometria' : 'Abilita Biometria';
 
-    // Init app
     if (typeof App !== 'undefined') App.init();
   }
 
   function lock(showScreen = true) {
-    isLocked = true;
+    isLocked   = true;
     currentPin = '';
     updateDots('pinDisplay', 0);
     clearLockTimer();
@@ -311,14 +346,12 @@ const Auth = (() => {
     if (showScreen) {
       $('lockScreen').classList.remove('hidden');
       $('app').classList.add('hidden');
-      // Reset sezione login
       $('pinSection').classList.remove('hidden');
       $('pinSetup').classList.add('hidden');
       $('pinLabel').textContent = 'Inserisci il PIN';
     }
   }
 
-  // ---- Inattività → auto-lock ----
   function resetLockTimer() {
     clearLockTimer();
     lockTimer = setTimeout(() => lock(), LOCK_TIMEOUT);
@@ -328,12 +361,10 @@ const Auth = (() => {
     if (lockTimer) { clearTimeout(lockTimer); lockTimer = null; }
   }
 
-  // Ascolta interazioni utente per resettare timer
   ['click', 'touchstart', 'keydown', 'scroll'].forEach(ev =>
     document.addEventListener(ev, () => { if (!isLocked) resetLockTimer(); }, { passive: true })
   );
 
-  // ---- API pubblica ----
   return {
     init,
     pinInput,
@@ -350,5 +381,4 @@ const Auth = (() => {
 
 })();
 
-// Avvio autenticazione al caricamento pagina
 document.addEventListener('DOMContentLoaded', () => Auth.init());
