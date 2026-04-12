@@ -577,78 +577,91 @@
     </div>
   </div>
 
-  <!-- Nuovo Titolo -->
+  <!-- Nuovo Titolo — Wizard 3 step -->
   <div id="modal-nuovoTitolo" class="modal hidden">
     <div class="modal-handle"></div>
 
-    <!-- Hero header -->
     <div class="modal-hero">
       <div class="modal-hero-top">
         <div class="modal-hero-left">
           <div class="modal-hero-icon"><i class="bi bi-graph-up-arrow"></i></div>
           <div>
             <div class="modal-hero-title">Aggiungi Titolo</div>
-            <div class="modal-hero-sub">Nuovo investimento in portafoglio</div>
+            <div class="modal-hero-sub" id="wizardSub">Seleziona il tipo di strumento</div>
           </div>
         </div>
         <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
       </div>
+      <!-- Step indicator -->
+      <div style="display:flex;align-items:center;position:relative;margin-top:14px">
+        <div class="wizard-step active" id="ws1">
+          <div class="wizard-circle">1</div>
+          <div class="wizard-label">Tipo</div>
+        </div>
+        <div class="wizard-line" id="wl1"></div>
+        <div class="wizard-step" id="ws2">
+          <div class="wizard-circle">2</div>
+          <div class="wizard-label">Identità</div>
+        </div>
+        <div class="wizard-line" id="wl2"></div>
+        <div class="wizard-step" id="ws3">
+          <div class="wizard-circle">3</div>
+          <div class="wizard-label">Acquisto & Carico</div>
+        </div>
+      </div>
     </div>
 
-    <div class="modal-body">
+    <div class="modal-body" style="gap:0">
 
-      <!-- Tipo strumento -->
-      <div class="modal-sec">Tipo di strumento</div>
-      <div class="tipo-grid">
-        <div class="tipo-card active" data-tipo="azione" onclick="Portfolio.setTipoCard(this)">
-          <i class="bi bi-graph-up"></i>
-          <span class="tipo-label">Azione</span>
+      <!-- STEP 1: Tipo -->
+      <div class="wizard-content active" id="wstep1">
+        <div class="modal-sec">Tipo di strumento</div>
+        <div class="tipo-grid" style="margin-bottom:12px">
+          <div class="tipo-card active" data-tipo="azione" onclick="Portfolio.setTipoCard(this)">
+            <i class="bi bi-graph-up"></i><span class="tipo-label">Azione</span>
+          </div>
+          <div class="tipo-card" data-tipo="fondo" onclick="Portfolio.setTipoCard(this)">
+            <i class="bi bi-pie-chart-fill"></i><span class="tipo-label">Fondo</span>
+          </div>
+          <div class="tipo-card" data-tipo="certificate" onclick="Portfolio.setTipoCard(this)">
+            <i class="bi bi-award-fill"></i><span class="tipo-label">Certificate</span>
+          </div>
+          <div class="tipo-card" data-tipo="pir" onclick="Portfolio.setTipoCard(this)">
+            <i class="bi bi-shield-fill-check"></i><span class="tipo-label">PIR</span>
+          </div>
+          <div class="tipo-card" data-tipo="polizza" onclick="Portfolio.setTipoCard(this)">
+            <i class="bi bi-umbrella-fill"></i><span class="tipo-label">Polizza Vita</span>
+          </div>
         </div>
-        <div class="tipo-card" data-tipo="fondo" onclick="Portfolio.setTipoCard(this)">
-          <i class="bi bi-pie-chart-fill"></i>
-          <span class="tipo-label">Fondo</span>
-        </div>
-        <div class="tipo-card" data-tipo="certificate" onclick="Portfolio.setTipoCard(this)">
-          <i class="bi bi-award-fill"></i>
-          <span class="tipo-label">Certificate</span>
-        </div>
-        <div class="tipo-card" data-tipo="pir" onclick="Portfolio.setTipoCard(this)">
-          <i class="bi bi-shield-fill-check"></i>
-          <span class="tipo-label">PIR</span>
-        </div>
-        <div class="tipo-card" data-tipo="polizza" onclick="Portfolio.setTipoCard(this)">
-          <i class="bi bi-umbrella-fill"></i>
-          <span class="tipo-label">Polizza Vita</span>
+        <div class="wizard-hint">
+          <i class="bi bi-info-circle-fill"></i>
+          <span id="tipoHint">Le azioni quotate su Borsa Italiana usano il suffisso .MI nel ticker (es. ENI.MI).</span>
         </div>
       </div>
 
-      <!-- Identificazione -->
-      <div class="modal-sec">Identificazione</div>
-      <div class="modal-row">
-        <div class="form-group">
+      <!-- STEP 2: Identificazione -->
+      <div class="wizard-content hidden" id="wstep2">
+        <div class="modal-sec">Identificazione</div>
+        <div class="form-group" style="margin-bottom:10px">
           <label>Nome / Descrizione</label>
-          <input type="text" id="titoloNome" class="form-control" placeholder="Es. ENI S.p.A., Fondo Azionario..." />
+          <input type="text" id="titoloNome" class="form-control" placeholder="Es. ENI S.p.A., Fondo Azionario Italia..." />
         </div>
-      </div>
-      <div class="modal-row modal-r3">
-        <div class="form-group" id="titoloYahooGroup">
+        <div class="form-group" style="margin-bottom:10px" id="titoloYahooGroup">
           <label>Ticker Yahoo Finance</label>
-          <input type="text" id="titoloTicker" class="form-control mono" placeholder="Es. ENI.MI" />
+          <input type="text" id="titoloTicker" class="form-control" placeholder="Es. ENI.MI, VEUR.AS, ISP.MI" />
         </div>
-        <div class="form-group" id="titoloZBGroup" style="display:none">
+        <div class="form-group" style="margin-bottom:10px" id="titoloZBGroup">
           <label>Codice Zonebourse</label>
-          <input type="text" id="titoloCodeZB" class="form-control mono" placeholder="Es. 184320628" />
+          <input type="text" id="titoloCodeZB" class="form-control" placeholder="Es. 184320628" />
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:10px">
           <label>ISIN</label>
-          <input type="text" id="titoloIsin" class="form-control mono" placeholder="IT0003132476" />
+          <input type="text" id="titoloIsin" class="form-control mono" placeholder="Es. IT0003132476" />
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:10px">
           <label>WKN</label>
           <input type="text" id="titoloWkn" class="form-control mono" placeholder="Es. 897822" />
         </div>
-      </div>
-      <div class="modal-row modal-r2">
         <div class="form-group">
           <label>Mercato / Borsa</label>
           <select id="titoloMercato" class="form-control">
@@ -661,101 +674,106 @@
             <option value="altro">Altro</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Valuta</label>
-          <select id="titoloValuta" class="form-control" onchange="Portfolio.calcCostoCarico()">
-            <option value="EUR">EUR — Euro</option>
-            <option value="USD">USD — Dollaro</option>
-            <option value="GBP">GBP — Sterlina</option>
-            <option value="CHF">CHF — Franco Svizzero</option>
-          </select>
-        </div>
       </div>
 
-      <!-- Acquisto -->
-      <div class="modal-sec">Operazione di acquisto</div>
-      <div class="modal-row modal-r4">
-        <div class="form-group">
-          <label>Data acquisto</label>
-          <input type="date" id="titoloDataAcquisto" class="form-control" />
+      <!-- STEP 3: Acquisto + Costo di carico -->
+      <div class="wizard-content hidden" id="wstep3">
+        <div class="modal-sec">Operazione di acquisto</div>
+        <div class="modal-row modal-r2" style="margin-bottom:10px">
+          <div class="form-group">
+            <label>Data acquisto</label>
+            <input type="date" id="titoloDataAcquisto" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Valuta</label>
+            <select id="titoloValuta" class="form-control" onchange="Portfolio.calcCostoCarico()">
+              <option value="EUR">EUR — Euro</option>
+              <option value="USD">USD — Dollaro</option>
+              <option value="GBP">GBP — Sterlina</option>
+              <option value="CHF">CHF — Franco</option>
+            </select>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Quantità</label>
-          <input type="number" id="titoloQuantita" class="form-control" placeholder="100" min="0" step="0.001" oninput="Portfolio.calcCostoCarico()" />
+        <div class="modal-row modal-r2" style="margin-bottom:10px">
+          <div class="form-group">
+            <label>Quantità</label>
+            <input type="number" id="titoloQuantita" class="form-control" placeholder="Es. 100" min="0" step="0.001" oninput="Portfolio.calcCostoCarico()" />
+          </div>
+          <div class="form-group">
+            <label>Prezzo unitario</label>
+            <input type="number" id="titoloPrezzoAcquisto" class="form-control" placeholder="Es. 14,50" min="0" step="0.0001" oninput="Portfolio.calcCostoCarico()" />
+          </div>
         </div>
-        <div class="form-group">
-          <label>Prezzo unitario</label>
-          <input type="number" id="titoloPrezzoAcquisto" class="form-control" placeholder="0,00" min="0" step="0.0001" oninput="Portfolio.calcCostoCarico()" />
+        <div class="modal-row modal-r3" style="margin-bottom:10px">
+          <div class="form-group">
+            <label>Cambio</label>
+            <input type="number" id="titoloCambio" class="form-control" value="1" min="0" step="0.0001" oninput="Portfolio.calcCostoCarico()" />
+          </div>
+          <div class="form-group">
+            <label>Commissioni (€)</label>
+            <input type="number" id="titoloCommissioni" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+          </div>
+          <div class="form-group">
+            <label>Tasse / Bolli (€)</label>
+            <input type="number" id="titoloTasse" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+          </div>
         </div>
-        <div class="form-group">
-          <label>Cambio</label>
-          <input type="number" id="titoloCambio" class="form-control" value="1" min="0" step="0.0001" oninput="Portfolio.calcCostoCarico()" />
-        </div>
-      </div>
-      <div class="modal-row modal-r3">
-        <div class="form-group">
-          <label>Commissioni (€)</label>
-          <input type="number" id="titoloCommissioni" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
-        </div>
-        <div class="form-group">
-          <label>Tasse / Bolli (€)</label>
-          <input type="number" id="titoloTasse" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
-        </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:10px">
           <label>Rateo / Dietimi (€)</label>
-          <input type="number" id="titoloRateo" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+          <input type="number" id="titoloRateo" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" style="max-width:160px" />
         </div>
-      </div>
 
-      <!-- Costo di carico live -->
-      <div class="modal-sec">Costo di carico</div>
-      <div class="costo-card">
-        <div class="costo-top">
-          <div class="costo-item">
-            <div class="costo-item__label">Controvalore</div>
-            <div class="costo-item__val" id="costoControvalore">€ 0,00</div>
-          </div>
-          <div class="costo-item">
-            <div class="costo-item__label">Oneri totali</div>
-            <div class="costo-item__val" id="costoOneri">€ 0,00</div>
-          </div>
-          <div class="costo-item">
-            <div class="costo-item__label">Quantità</div>
-            <div class="costo-item__val" id="costoQty">0</div>
-          </div>
-        </div>
-        <div class="costo-bottom">
-          <div class="costo-bottom__left">
-            <div class="costo-bottom__label">Costo totale di carico</div>
-            <div class="costo-bottom__sub">Controvalore + commissioni + tasse + rateo</div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center">
-            <div class="costo-pmc">
-              <div class="costo-pmc__label">PMC unitario</div>
-              <div class="costo-pmc__val" id="costoPmc">€ 0,00</div>
+        <div class="modal-sec">Costo di carico</div>
+        <div class="costo-card" style="margin-bottom:10px">
+          <div class="costo-top">
+            <div class="costo-item">
+              <div class="costo-item__label">Controvalore</div>
+              <div class="costo-item__val" id="costoControvalore">€ 0,00</div>
             </div>
-            <div class="costo-total" id="costoTotale">€ 0,00</div>
+            <div class="costo-item">
+              <div class="costo-item__label">Oneri totali</div>
+              <div class="costo-item__val" id="costoOneri">€ 0,00</div>
+            </div>
+            <div class="costo-item">
+              <div class="costo-item__label">Quantità</div>
+              <div class="costo-item__val" id="costoQty">—</div>
+            </div>
+          </div>
+          <div class="costo-bottom">
+            <div class="costo-bottom__left">
+              <div class="costo-bottom__label">Costo totale di carico</div>
+              <div class="costo-bottom__sub">Controvalore + commissioni + tasse + rateo</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="costo-pmc">
+                <div class="costo-pmc__label">PMC unitario</div>
+                <div class="costo-pmc__val" id="costoPmc">€ 0,00</div>
+              </div>
+              <div class="costo-total" id="costoTotale">€ 0,00</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Note e checkbox -->
-      <div class="modal-row" style="margin-top:8px">
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:8px">
           <label>Note</label>
-          <input type="text" id="titoloNote" class="form-control" placeholder="Opzionale — es. target price, strategia..." />
+          <input type="text" id="titoloNote" class="form-control" placeholder="Es. target price, strategia di acquisto..." />
         </div>
-      </div>
-      <div class="check-row">
-        <input type="checkbox" id="titoloAddebitoConto" checked />
-        <span class="checkbox-label">Registra automaticamente l'uscita sul conto corrente</span>
+        <div class="check-row">
+          <input type="checkbox" id="titoloAddebitoConto" checked />
+          <span class="checkbox-label">Registra automaticamente l'uscita sul conto corrente</span>
+        </div>
       </div>
 
     </div>
-    <div class="modal-footer">
-      <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-      <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveTitolo()">
-        <i class="bi bi-check-lg"></i> Aggiungi al portafoglio
+
+    <!-- Footer wizard -->
+    <div class="modal-footer" style="align-items:center">
+      <button class="btn btn--ghost" id="wizardBack" onclick="Portfolio.wizardPrev()" style="display:none">
+        <i class="bi bi-chevron-left"></i> Indietro
+      </button>
+      <span style="font-size:11px;font-weight:600;color:var(--text-muted);font-family:'Plus Jakarta Sans',sans-serif" id="wizardCounter">Passo 1 di 3</span>
+      <button class="btn btn--primary" id="wizardNext" onclick="Portfolio.wizardNext()" style="flex:1;justify-content:center">
+        Avanti <i class="bi bi-chevron-right"></i>
       </button>
     </div>
   </div>
