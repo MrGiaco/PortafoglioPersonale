@@ -22,7 +22,9 @@ const CACHE_URLS = [
 // Install — precache assets
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(CACHE_URLS))
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.allSettled(CACHE_URLS.map(url => cache.add(url).catch(() => {})))
+    )
   );
   self.skipWaiting();
 });
@@ -43,6 +45,9 @@ self.addEventListener('fetch', e => {
 
   // Ignora richieste non GET
   if (e.request.method !== 'GET') return;
+
+  // Ignora schemi non supportati (chrome-extension, etc.)
+  if (!['http:', 'https:'].includes(url.protocol)) return;
 
   // Ignora Google APIs e Drive (sempre network)
   if (url.hostname.includes('googleapis.com') ||
