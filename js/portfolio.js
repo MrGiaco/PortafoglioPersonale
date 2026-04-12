@@ -696,7 +696,7 @@ const Portfolio = (() => {
     }
 
     setEl('detTitoloNome', t.nome);
-    setEl('detTitoloSub',  (ticker||'—') + ' · ' + (t.mercato||'Borsa Italiana') + ' · ' + formatNum(t.quantita) + (t.tipo==='azione'?' az.'>' quote'));
+    setEl('detTitoloSub', (ticker||'—') + ' · ' + (t.mercato||'Borsa Italiana') + ' · ' + formatNum(t.quantita) + (t.tipo==='azione' ? ' az.' : ' quote'));
     setEl('detPrezzo', formatEur(prezzo, 4));
 
     var chgBadge = $('detChgBadge');
