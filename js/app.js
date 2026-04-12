@@ -299,7 +299,8 @@ const Modals = (() => {
     }
 
     if (id === 'nuovoTitolo') {
-      const el = $('titoloDataAcquisto'); if (el) el.value = today;
+      const today2 = new Date().toISOString().slice(0, 10);
+      const el = $('titoloDataAcquisto'); if (el) el.value = today2;
       ['titoloNome','titoloTicker','titoloCodeZB','titoloIsin','titoloWkn','titoloNote'].forEach(f => {
         const e = $(f); if (e) e.value = '';
       });
@@ -312,11 +313,7 @@ const Modals = (() => {
       });
       const valuta = $('titoloValuta'); if (valuta) valuta.value = 'EUR';
       const mercato = $('titoloMercato'); if (mercato) mercato.value = 'MIL';
-      // Reset tipo card
-      document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('active'));
-      const first = document.querySelector('.tipo-card');
-      if (first) { first.classList.add('active'); Portfolio.setTipoCard(first); }
-      // Reset costo carico
+      Portfolio.wizardReset();
       Portfolio.calcCostoCarico();
       const addebito = $('titoloAddebitoConto'); if (addebito) addebito.checked = true;
     }
