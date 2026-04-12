@@ -257,6 +257,13 @@ const Portfolio = (() => {
 
     var wb   = XLSX.read(buffer, { type:'array', cellDates:true });
     var ws   = wb.Sheets[wb.SheetNames[0]];
+
+    // Forza lettura di tutto il foglio ignorando il range definito dal file
+    // (alcuni export bancari limitano !ref alle prime righe visibili)
+    var fullRange = XLSX.utils.decode_range(ws['!ref'] || 'A1:J400');
+    fullRange.e.r = Math.max(fullRange.e.r, 5000);
+    ws['!ref'] = XLSX.utils.encode_range(fullRange);
+
     var rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
 
     // Trova la riga header (contiene "Data" e "Operazione")
