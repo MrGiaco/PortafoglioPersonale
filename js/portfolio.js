@@ -189,6 +189,13 @@ const Portfolio = (() => {
     movTipo = tipo;
     $('movTipoEntrata')?.classList.toggle('active', tipo === 'entrata');
     $('movTipoUscita')?.classList.toggle('active', tipo === 'uscita');
+    // Aggiorna hero
+    const title = $('movHeroTitle');
+    const icon  = $('movHeroIcon');
+    if (title) title.textContent = tipo === 'entrata' ? 'Nuova Entrata' : 'Nuova Uscita';
+    if (icon)  icon.innerHTML = tipo === 'entrata'
+      ? '<i class="bi bi-arrow-down-circle-fill"></i>'
+      : '<i class="bi bi-arrow-up-circle-fill"></i>';
   }
 
   function saveMovimento() {
