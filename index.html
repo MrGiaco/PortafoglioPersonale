@@ -40,18 +40,18 @@
       </div>
       <p class="pin-label" id="pinLabel">Inserisci il PIN</p>
       <div class="pin-keypad">
-        <button class="pin-key" onclick="Auth.pinInput('1')">1</button>
-        <button class="pin-key" onclick="Auth.pinInput('2')">2</button>
-        <button class="pin-key" onclick="Auth.pinInput('3')">3</button>
-        <button class="pin-key" onclick="Auth.pinInput('4')">4</button>
-        <button class="pin-key" onclick="Auth.pinInput('5')">5</button>
-        <button class="pin-key" onclick="Auth.pinInput('6')">6</button>
-        <button class="pin-key" onclick="Auth.pinInput('7')">7</button>
-        <button class="pin-key" onclick="Auth.pinInput('8')">8</button>
-        <button class="pin-key" onclick="Auth.pinInput('9')">9</button>
-        <button class="pin-key pin-key--bio" id="bioBtn" onclick="Auth.biometric()"><i class="bi bi-fingerprint"></i></button>
-        <button class="pin-key" onclick="Auth.pinInput('0')">0</button>
-        <button class="pin-key pin-key--del" onclick="Auth.pinDelete()"><i class="bi bi-backspace"></i></button>
+        <button class="pin-key">1</button>
+        <button class="pin-key">2</button>
+        <button class="pin-key">3</button>
+        <button class="pin-key">4</button>
+        <button class="pin-key">5</button>
+        <button class="pin-key">6</button>
+        <button class="pin-key">7</button>
+        <button class="pin-key">8</button>
+        <button class="pin-key">9</button>
+        <button class="pin-key pin-key--bio" id="bioBtn"><i class="bi bi-fingerprint"></i></button>
+        <button class="pin-key">0</button>
+        <button class="pin-key pin-key--del"><i class="bi bi-backspace"></i></button>
       </div>
     </div>
 
@@ -64,18 +64,18 @@
       </div>
       <p class="pin-label" id="pinSetupLabel">Scegli il tuo PIN</p>
       <div class="pin-keypad">
-        <button class="pin-key" onclick="Auth.setupInput('1')">1</button>
-        <button class="pin-key" onclick="Auth.setupInput('2')">2</button>
-        <button class="pin-key" onclick="Auth.setupInput('3')">3</button>
-        <button class="pin-key" onclick="Auth.setupInput('4')">4</button>
-        <button class="pin-key" onclick="Auth.setupInput('5')">5</button>
-        <button class="pin-key" onclick="Auth.setupInput('6')">6</button>
-        <button class="pin-key" onclick="Auth.setupInput('7')">7</button>
-        <button class="pin-key" onclick="Auth.setupInput('8')">8</button>
-        <button class="pin-key" onclick="Auth.setupInput('9')">9</button>
+        <button class="pin-key">1</button>
+        <button class="pin-key">2</button>
+        <button class="pin-key">3</button>
+        <button class="pin-key">4</button>
+        <button class="pin-key">5</button>
+        <button class="pin-key">6</button>
+        <button class="pin-key">7</button>
+        <button class="pin-key">8</button>
+        <button class="pin-key">9</button>
         <button class="pin-key pin-key--empty"></button>
-        <button class="pin-key" onclick="Auth.setupInput('0')">0</button>
-        <button class="pin-key pin-key--del" onclick="Auth.setupDelete()"><i class="bi bi-backspace"></i></button>
+        <button class="pin-key">0</button>
+        <button class="pin-key pin-key--del"><i class="bi bi-backspace"></i></button>
       </div>
     </div>
   </div>
@@ -781,24 +781,75 @@
   </div>
 
   <!-- Dettaglio Titolo -->
-  <div id="modal-dettaglioTitolo" class="modal hidden">
+  <div id="modal-dettaglioTitolo" class="modal hidden" style="max-width:600px">
     <div class="modal-handle"></div>
-    <div class="modal-hero">
+    <div class="modal-hero" id="detHero">
       <div class="modal-hero-top">
         <div class="modal-hero-left">
-          <div class="modal-hero-icon"><i class="bi bi-bar-chart-fill"></i></div>
+          <div class="det-logo-wrap" id="detLogoWrap">
+            <img id="detLogoImg" src="" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:10px;display:none" />
+            <span id="detLogoFallback" style="font-size:13px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif"></span>
+          </div>
           <div>
             <div class="modal-hero-title" id="detTitoloNome">Dettaglio</div>
-            <div class="modal-hero-sub">Riepilogo posizione e operazioni</div>
+            <div class="modal-hero-sub" id="detTitoloSub">—</div>
           </div>
         </div>
         <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
       </div>
+      <!-- Prezzo e variazione -->
+      <div style="margin-top:14px;position:relative;z-index:1">
+        <div style="font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em;font-family:'Plus Jakarta Sans',sans-serif" id="detPrezzo">€ 0,00</div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:10px">
+          <div class="det-chg-badge" id="detChgBadge">— oggi</div>
+          <div class="det-tipo-badge" id="detTipoBadge">—</div>
+        </div>
+      </div>
+      <!-- 6 statistiche -->
+      <div class="det-stats-grid" id="detStatsGrid"></div>
     </div>
-    <div class="modal-body" id="detTitoloBody"></div>
+
+    <div class="modal-body" style="padding:14px 18px 20px;gap:0">
+
+      <!-- Periodo grafico -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif">Andamento storico</div>
+        <div class="det-period-pills" id="detPeriodPills">
+          <button class="det-pp active" onclick="Portfolio.setDetPeriod('1M',this)">1M</button>
+          <button class="det-pp" onclick="Portfolio.setDetPeriod('3M',this)">3M</button>
+          <button class="det-pp" onclick="Portfolio.setDetPeriod('6M',this)">6M</button>
+          <button class="det-pp" onclick="Portfolio.setDetPeriod('1A',this)">1A</button>
+        </div>
+      </div>
+      <div style="position:relative;margin-bottom:14px">
+        <canvas id="detChart" height="140"></canvas>
+        <div id="detChartLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg-card);border-radius:10px">
+          <div class="spinner"></div>
+        </div>
+      </div>
+
+      <!-- Info aggiuntive -->
+      <div class="det-info-grid" id="detInfoGrid"></div>
+
+      <!-- Storico operazioni -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
+        <div style="font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif">Storico operazioni</div>
+        <button class="btn btn--ghost btn--sm" onclick="Portfolio.nuovoAcquisto(Portfolio.getDettaglioId()); Modals.close()">
+          <i class="bi bi-plus-circle"></i> Acquisto
+        </button>
+      </div>
+      <div id="detOperazioni" class="det-ops-list"></div>
+
+    </div>
+
     <div class="modal-footer">
-      <button class="btn btn--danger" onclick="Portfolio.vendeTitolo()"><i class="bi bi-cash-coin"></i> Vendi</button>
-      <button class="btn btn--ghost" style="flex:1;justify-content:center" onclick="Modals.close()">Chiudi</button>
+      <button class="btn btn--ghost" onclick="Modals.close()">Chiudi</button>
+      <button class="btn btn--ghost" onclick="Portfolio.editTitolo(Portfolio.getDettaglioId()); Modals.close()">
+        <i class="bi bi-pencil"></i> Modifica
+      </button>
+      <button class="btn btn--danger" onclick="Portfolio.vendeTitolo()">
+        <i class="bi bi-cash-coin"></i> Vendi
+      </button>
     </div>
   </div>
 
