@@ -394,12 +394,48 @@ const Portfolio = (() => {
     return getTitoli().reduce((s, t) => s + (t.prezzoAttuale || t.prezzoAcquisto) * t.quantita, 0);
   }
 
-  // ---- Aggiungi Titolo ----
-  function onTitoloTipoChange() {
-    const tipo = $('titoloTipo')?.value;
-    const isCert = tipo === 'certificate';
-    $('titoloYahooGroup')?.classList.toggle('hidden', isCert);
-    $('titoloZBGroup')?.classList.toggle('hidden', !isCert);
+  // ---- Selettore tipo a card ----
+  function setTipoCard(el) {
+    document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    const tipo = el.dataset.tipo;
+    // Mostra/nasconde campo Zonebourse o Yahoo
+    const zbG = document.getElementById('titoloZBGroup');
+    const yhG = document.getElementById('titoloYahooGroup');
+    if (tipo === 'certificate') {
+      if (zbG) zbG.style.display = '';
+      if (yhG) yhG.style.display = 'none';
+    } else {
+      if (zbG) zbG.style.display = 'none';
+      if (yhG) yhG.style.display = '';
+    }
+  }
+
+  // ---- Calcolo costo di carico live ----
+  function calcCostoCarico() {
+    const q  = parseFloat($('titoloQuantita')?.value)       || 0;
+    const p  = parseFloat($('titoloPrezzoAcquisto')?.value) || 0;
+    const k  = parseFloat($('titoloCambio')?.value)         || 1;
+    const c  = parseFloat($('titoloCommissioni')?.value)    || 0;
+    const t  = parseFloat($('titoloTasse')?.value)          || 0;
+    const r  = parseFloat($('titoloRateo')?.value)          || 0;
+    const val = $('titoloValuta')?.value || 'EUR';
+
+    const cv    = q * p * k;
+    const oneri = c + t + r;
+    const tot   = cv + oneri;
+    const pmc   = q > 0 ? tot / q : 0;
+
+    const fmtVal = (n) => new Intl.NumberFormat('it-IT', {
+      style: 'currency', currency: val,
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    }).format(n);
+
+    setEl('costoControvalore', fmtVal(cv));
+    setEl('costoOneri',        fmtVal(oneri));
+    setEl('costoQty',          q % 1 === 0 ? q : q.toFixed(3));
+    setEl('costoTotale',       fmtVal(tot));
+    setEl('costoPmc',          fmtVal(pmc));
   }
 
   function saveTitolo() {
