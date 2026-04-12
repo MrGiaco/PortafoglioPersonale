@@ -107,9 +107,12 @@ input, select, textarea { font-family: inherit; }
   background: var(--bg); border: 1.5px solid var(--border);
   display: flex; align-items: center; justify-content: center;
   transition: var(--transition);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .pin-key:hover  { background: var(--primary-light); border-color: var(--primary-mid); color: var(--primary-mid); }
-.pin-key:active { transform: scale(.93); }
+.pin-key:active { transform: scale(.93); background: var(--primary-light); }
 .pin-key--bio   { color: var(--primary-mid); font-size: 22px; }
 .pin-key--del   { color: var(--text-secondary); font-size: 17px; }
 .pin-key--empty { visibility: hidden; }
