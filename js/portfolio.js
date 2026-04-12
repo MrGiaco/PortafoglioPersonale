@@ -198,29 +198,6 @@ const Portfolio = (() => {
       var isSelected = k === (defaultKey || 'altro') ? ' selected' : '';
       return '<option value="' + k + '"' + isSelected + '>' + tutte[k].label + '</option>';
     }).join('');
-    // Aggiorna icona visiva affiancata alla select
-    _syncCatIcon(sel, tutte);
-    sel.onchange = function() { _syncCatIcon(sel, tutte); };
-  }
-
-  function _syncCatIcon(sel, tutte) {
-    // Cerca o crea elemento icona accanto alla select
-    var wrapper = sel.parentElement;
-    if (!wrapper) return;
-    var iconEl = wrapper.querySelector('.cat-live-icon');
-    if (!iconEl) {
-      iconEl = document.createElement('div');
-      iconEl.className = 'cat-live-icon';
-      iconEl.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
-        'width:34px;height:34px;border-radius:9px;background:var(--primary-light);color:var(--primary-mid);' +
-        'font-size:16px;flex-shrink:0;position:absolute;right:36px;top:50%;transform:translateY(-50%);pointer-events:none;';
-      // Wrapper deve essere relative
-      if (getComputedStyle(wrapper).position === 'static') wrapper.style.position = 'relative';
-      wrapper.appendChild(iconEl);
-    }
-    var cat = tutte[sel.value];
-    var icon = cat ? cat.icon : 'bi-three-dots';
-    iconEl.innerHTML = '<i class="bi ' + icon + '"></i>';
   }
 
   // =============================================
