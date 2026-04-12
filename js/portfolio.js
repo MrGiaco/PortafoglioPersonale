@@ -401,14 +401,98 @@ const Portfolio = (() => {
     return getTitoli().reduce((s, t) => s + (t.prezzoAttuale || t.prezzoAcquisto) * t.quantita, 0);
   }
 
+  // ---- Wizard state ----
+  let wizardStep = 1;
+  const wizardTot = 3;
+  const wizardSubs = [
+    'Seleziona il tipo di strumento',
+    'Dati identificativi del titolo',
+    'Acquisto e costo di carico',
+  ];
+  const tipoHints = {
+    azione:      'Le azioni quotate su Borsa Italiana usano il suffisso .MI nel ticker (es. ENI.MI).',
+    fondo:       'Per i fondi usa il codice ISIN o il ticker Yahoo Finance (es. VEUR.AS).',
+    certificate: 'I certificates usano il codice Zonebourse. Il ticker Yahoo potrebbe non essere disponibile.',
+    pir:         'I PIR sono fondi con agevolazioni fiscali italiane. Usa il ticker o il codice ISIN.',
+    polizza:     'Le polizze vita non hanno quotazioni automatiche. Il valore viene aggiornato manualmente.',
+  };
+
+  function wizardGoTo(n) {
+    wizardStep = n;
+    // Nascondi tutti i content
+    document.querySelectorAll('.wizard-content').forEach(el => {
+      el.classList.remove('active'); el.classList.add('hidden');
+    });
+    const sc = $(`wstep${n}`);
+    if (sc) { sc.classList.remove('hidden'); sc.classList.add('active'); }
+
+    // Aggiorna step indicator
+    for (let i = 1; i <= wizardTot; i++) {
+      const s = $(`ws${i}`); if (!s) continue;
+      s.classList.remove('active', 'done');
+      if (i < n) s.classList.add('done');
+      else if (i === n) s.classList.add('active');
+      if (i < wizardTot) {
+        const l = $(`wl${i}`);
+        if (l) l.classList.toggle('done', i < n);
+      }
+    }
+
+    // Sottotitolo hero
+    const sub = $('wizardSub');
+    if (sub) sub.textContent = wizardSubs[n - 1];
+
+    // Counter
+    const counter = $('wizardCounter');
+    if (counter) counter.textContent = `Passo ${n} di ${wizardTot}`;
+
+    // Pulsante indietro
+    const back = $('wizardBack');
+    if (back) back.style.display = n > 1 ? 'inline-flex' : 'none';
+
+    // Pulsante avanti/salva
+    const next = $('wizardNext');
+    if (next) {
+      if (n === wizardTot) {
+        next.innerHTML = '<i class="bi bi-check-lg"></i> Aggiungi al portafoglio';
+      } else {
+        next.innerHTML = 'Avanti <i class="bi bi-chevron-right"></i>';
+      }
+    }
+  }
+
+  function wizardNext() {
+    if (wizardStep < wizardTot) {
+      wizardGoTo(wizardStep + 1);
+    } else {
+      saveTitolo();
+    }
+  }
+
+  function wizardPrev() {
+    if (wizardStep > 1) wizardGoTo(wizardStep - 1);
+  }
+
+  function wizardReset() {
+    wizardStep = 1;
+    wizardGoTo(1);
+    // Reset tipo card
+    document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('active'));
+    const first = document.querySelector('.tipo-card');
+    if (first) { first.classList.add('active'); setTipoCard(first); }
+  }
+
   // ---- Selettore tipo a card ----
   function setTipoCard(el) {
     document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
     const tipo = el.dataset.tipo;
-    // Mostra/nasconde campo Zonebourse o Yahoo
-    const zbG = document.getElementById('titoloZBGroup');
-    const yhG = document.getElementById('titoloYahooGroup');
+    // Hint
+    const hint = $('tipoHint');
+    if (hint) hint.textContent = tipoHints[tipo] || '';
+    // Mostra/nasconde Zonebourse o Yahoo
+    const zbG = $('titoloZBGroup');
+    const yhG = $('titoloYahooGroup');
     if (tipo === 'certificate') {
       if (zbG) zbG.style.display = '';
       if (yhG) yhG.style.display = 'none';
@@ -774,6 +858,7 @@ const Portfolio = (() => {
     saveSpesaCarta, deleteSpesaCarta, saveImpostazioniCarta,
     showTab, setTipoCard, onTitoloTipoChange: setTipoCard,
     calcCostoCarico, saveTitolo,
+    wizardNext, wizardPrev, wizardReset,
     apriDettaglio, vendeTitolo,
     formatEur, formatDate,
   };
