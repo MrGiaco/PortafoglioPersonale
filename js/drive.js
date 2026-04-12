@@ -373,10 +373,39 @@ const Drive = (() => {
   // =============================================
 
   async function tryAutoConnect() {
-    // Connessione automatica disabilitata per evitare errori CORS con popup OAuth.
-    // L'utente si connette manualmente da Impostazioni → Connetti Drive.
-    // Carica comunque i dati locali se presenti.
-    return null;
+    if (CLIENT_ID.startsWith('INSERISCI')) return null;
+    if (!window.google || !google.accounts) return null;
+
+    return new Promise((resolve) => {
+      try {
+        const client = google.accounts.oauth2.initTokenClient({
+          client_id: CLIENT_ID,
+          scope: SCOPE,
+          prompt: 'none',
+          callback: async (resp) => {
+            if (resp.error || !resp.access_token) {
+              resolve(null);
+              return;
+            }
+            accessToken = resp.access_token;
+            updateDriveStatus(true);
+            try {
+              await initEncKey();
+              await ensureFolder();
+              await load();
+              App.showToast('Drive sincronizzato', 'success');
+            } catch (e) {
+              console.warn('Auto-connect Drive:', e);
+            }
+            resolve(accessToken);
+          },
+          error_callback: () => resolve(null),
+        });
+        client.requestAccessToken({ prompt: 'none' });
+      } catch (e) {
+        resolve(null);
+      }
+    });
   }
 
   // ---- API pubblica ----
