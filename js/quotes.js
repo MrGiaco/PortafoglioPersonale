@@ -162,13 +162,14 @@ const Quotes = (() => {
    */
   async function fetchQuote(titolo) {
     try {
+      // Polizze e strumenti manuali: nessuna quotazione automatica
+      if (titolo.tipo === 'polizza') {
+        return { price: titolo.prezzoAttuale || titolo.pmc || titolo.prezzoAcquisto, change: 0, changePct: 0, source: 'manuale' };
+      }
       if (titolo.codeZB) {
         return await fetchZonebourse(titolo.codeZB);
       } else if (titolo.ticker) {
         return await fetchYahoo(titolo.ticker);
-      } else if (titolo.tipo === 'polizza') {
-        // Polizze vita: valore manuale, nessuna quotazione
-        return { price: titolo.prezzoAcquisto, change: 0, changePct: 0, source: 'manuale' };
       }
       throw new Error('Nessun identificativo titolo');
     } catch (err) {
