@@ -244,6 +244,9 @@ const App = (() => {
     Object.entries(fields).forEach(([id, val]) => {
       const el = $(id); if (el) el.value = val || '';
     });
+
+    const si = $('contoSaldoIniziale');
+    if (si) si.value = Portfolio.getData().conto.saldoIniziale || 0;
   }
 
   // ---- Toast ----
@@ -423,6 +426,11 @@ const Modals = (() => {
       Portfolio.wizardReset();
       Portfolio.calcCostoCarico();
       const addebito = $('titoloAddebitoConto'); if (addebito) addebito.checked = true;
+    }
+
+    if (id === 'impostazioniConto') {
+      const si = $('contoSaldoIniziale');
+      if (si) si.value = Portfolio.getData().conto.saldoIniziale || 0;
     }
 
     if (id === 'impostazioniCarta') {
