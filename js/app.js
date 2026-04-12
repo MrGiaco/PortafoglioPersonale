@@ -267,6 +267,13 @@ const Modals = (() => {
       const modal = $(`modal-${current}`);
       if (modal) modal.classList.add('hidden');
     }
+    // Se si chiude il wizard titolo senza salvare, ripristina il titolo originale
+    if (current === 'nuovoTitolo' && typeof Portfolio !== 'undefined') {
+      const editing = Portfolio.getEditingTitolo();
+      if (editing) {
+        Portfolio.restoreEditingTitolo();
+      }
+    }
     current = null;
     document.body.style.overflow = '';
   }
