@@ -7,7 +7,7 @@ const Drive = (() => {
 
   // ---- Configurazione ----
   // SOSTITUISCI con il tuo Client ID Google
-  const CLIENT_ID   = 'INSERISCI_QUI_IL_TUO_CLIENT_ID.apps.googleusercontent.com';
+  const CLIENT_ID   = 'const CLIENT_ID = '311853633073-deskq7q9sl3bmdl5k4uh7er20rokeqhn.apps.googleusercontent.com';
   const SCOPE       = 'https://www.googleapis.com/auth/drive.file';
   const FILE_NAME   = 'portafoglio_personale_data.enc';
   const FOLDER_NAME = 'PortafoglioPersonale';
