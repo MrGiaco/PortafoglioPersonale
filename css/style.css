@@ -811,6 +811,7 @@ input, select, textarea { font-family: inherit; }
   border-radius: 24px 24px 0 0;
   width: 100%; max-width: 560px;
   max-height: 94vh;
+  position: relative;
   overflow: hidden; display: flex; flex-direction: column;
   animation: slideUp .22s ease;
 }
@@ -1187,9 +1188,3 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   flex: 1; justify-content: center;
 }
 
-/* =============================================
-   SELECT CATEGORIA con icona
-   ============================================= */
-.cat-option-icon {
-  display: inline-flex; align-items: center; gap: 6px;
-}
