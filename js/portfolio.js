@@ -1,4 +1,120 @@
-/* =============================================
+// ---- Dettaglio titolo ----
+  let _detChart = null;
+  let _detPeriod = '1M';
+
+  function getDettaglioId() { return dettaglioId; }
+
+  function apriDettaglio(id) {
+    const t = data.investimenti.titoli.find(t => t.id === id);
+    if (!t) return;
+    dettaglioId = id;
+    _detPeriod  = '1M';
+
+    const prezzo  = t.prezzoAttuale || t.prezzoAcquisto;
+    const pmc     = t.pmc || t.prezzoAcquisto;
+    const valore  = prezzo * t.quantita;
+    const costo   = pmc * t.quantita;
+    const pl      = valore - costo;
+    const plPct   = costo > 0 ? (pl / costo) * 100 : 0;
+    const dayPos  = (t.changePct || 0) >= 0;
+    const isPos   = pl >= 0;
+    const col     = tipoColor(t.tipo);
+
+    // Logo
+    const logoWrap = $('detLogoWrap');
+    const logoImg  = $('detLogoImg');
+    const logoFb   = $('detLogoFallback');
+    if (logoWrap) {
+      logoWrap.style.background = col.bg;
+      logoWrap.style.color      = col.fg;
+    }
+    if (logoImg && logoFb) {
+      const ticker = t.ticker || t.codeZB || '';
+      const src    = `icons/titoli/${ticker}.png`;
+      logoImg.src  = src;
+      logoImg.onload = () => { logoImg.style.display = 'block'; logoFb.style.display = 'none'; };
+      logoImg.onerror = () => { logoImg.style.display = 'none'; logoFb.style.display = 'block'; logoFb.textContent = avatarLetters(t.nome); };
+      logoFb.style.display = 'block';
+      logoFb.textContent   = avatarLetters(t.nome);
+    }
+
+    // Titolo e sottotitolo
+    setEl('detTitoloNome', t.nome);
+    setEl('detTitoloSub',  `${t.ticker || t.codeZB || '—'} · ${t.mercato || 'Borsa Italiana'} · ${formatNum(t.quantita)} ${t.tipo === 'azione' ? 'az.' : 'quote'}`);
+
+    // Prezzo
+    setEl('detPrezzo', formatEur(prezzo, 4));
+
+    // Badge variazione giornaliera
+    const chgBadge = $('detChgBadge');
+    if (chgBadge) {
+      chgBadge.textContent  = `${dayPos ? '+' : ''}${formatEur(t.change || 0, 4)} (${formatPct(t.changePct || 0)}) oggi`;
+      chgBadge.className    = `det-chg-badge ${dayPos ? 'pos' : 'neg'}`;
+    }
+
+    // Badge tipo
+    const tipoBadge = $('detTipoBadge');
+    if (tipoBadge) tipoBadge.textContent = tipoLabel(t.tipo);
+
+    // 6 statistiche nel hero
+    const statsGrid = $('detStatsGrid');
+    if (statsGrid) {
+      statsGrid.innerHTML = [
+        { label: 'Valore pos.',  val: formatEur(valore),                   cls: '' },
+        { label: 'P&L tot.',     val: formatEurSigned(pl),                 cls: isPos ? 'pos' : 'neg' },
+        { label: 'Rendimento',   val: formatPct(plPct),                    cls: isPos ? 'pos' : 'neg' },
+        { label: 'PMC',          val: formatEur(pmc, 4),                   cls: '' },
+        { label: 'Costo tot.',   val: formatEur(costo),                    cls: '' },
+        { label: 'Var. giorn.',  val: formatPct(t.changePct || 0),         cls: dayPos ? 'pos' : 'neg' },
+      ].map(s => `
+        <div class="det-stat-item">
+          <div class="det-stat-label">${s.label}</div>
+          <div class="det-stat-val ${s.cls}">${s.val}</div>
+        </div>`).join('');
+    }
+
+    // Info aggiuntive
+    const infoGrid = $('detInfoGrid');
+    if (infoGrid) {
+      const rows = [
+        { label: 'ISIN',             val: t.isin || '—' },
+        { label: 'WKN',              val: t.wkn  || '—' },
+        { label: 'Valuta',           val: t.valuta || 'EUR' },
+        { label: 'Data acquisto',    val: formatDate(t.dataAcquisto) },
+        { label: 'Commissioni',      val: formatEur(t.commissioni || 0) },
+        { label: 'Tasse / Bolli',    val: formatEur(t.tasse || 0) },
+        { label: 'Rateo / Dietimi',  val: formatEur(t.rateo || 0) },
+        { label: 'Note',             val: t.note || '—' },
+      ].filter(r => r.val && r.val !== '—' || r.label === 'Data acquisto');
+      infoGrid.innerHTML = rows.map(r => `
+        <div class="det-info-item">
+          <div class="det-info-label">${r.label}</div>
+          <div class="det-info-val">${escHtml(r.val)}</div>
+        </div>`).join('');
+    }
+
+    // Operazioni
+    renderDetOperazioni(t);
+
+    Modals.open('dettaglioTitolo');
+
+    // Grafico — carica dopo apertura modale
+    setTimeout(() => loadDetChart(t, _detPeriod), 200);
+  }
+
+  function renderDetOperazioni(t) {
+    const container = $('detOperazioni');
+    if (!container) return;
+    const ops = (t.operazioni || []).slice().reverse();
+    if (!ops.length) {
+      container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Nessuna operazione registrata</div>`;
+      return;
+    }
+    container.innerHTML = ops.map((op, idx) => {
+      const isAcq  = op.tipo === 'acquisto';
+      const totOp  = (op.costoTot || (op.quantita * op.prezzo));
+      return `
+      <div class=/* =============================================
    PORTAFOGLIO PERSONALE — portfolio.js
    Logica: Conto Corrente, Carta, Investimenti
    ============================================= */
@@ -400,41 +516,214 @@ const Portfolio = (() => {
   function renderInvSummary() {
     const titoli = getTitoli();
     const valoreAttuale = titoli.reduce((s, t) => s + (t.prezzoAttuale || t.prezzoAcquisto) * t.quantita, 0);
-    const costoTotale   = titoli.reduce((s, t) => s + t.prezzoAcquisto * t.quantita, 0);
+    const costoTotale   = titoli.reduce((s, t) => s + (t.pmc || t.prezzoAcquisto) * t.quantita, 0);
     const pl            = valoreAttuale - costoTotale;
     const rend          = costoTotale > 0 ? (pl / costoTotale) * 100 : 0;
 
     setEl('invValoreAttuale', formatEur(valoreAttuale));
     setEl('invCostoTotale',   formatEur(costoTotale));
     setEl('invPL',            formatEurSigned(pl));
-    setEl('invRendimento',    formatPctSigned(rend));
+    setEl('invRendimento',    formatPct(rend));
 
     const plEl = $('invPL');
-    if (plEl) plEl.className = `inv-summary-value ${pl >= 0 ? 'text-success' : 'text-danger'}`;
+    if (plEl) plEl.className = `inv-sum-val ${pl >= 0 ? 'inv-pl-pos' : 'inv-pl-neg'}`;
     const rendEl = $('invRendimento');
-    if (rendEl) rendEl.className = `inv-summary-value ${rend >= 0 ? 'text-success' : 'text-danger'}`;
+    if (rendEl) rendEl.className = `inv-sum-val ${rend >= 0 ? 'inv-pl-pos' : 'inv-pl-neg'}`;
   }
 
   function renderTitoliTab(tab) {
-    const tipoMap = {
-      azioni:       'azione',
-      fondi:        'fondo',
-      certificates: 'certificate',
-      pir:          'pir',
-      polizze:      'polizza',
-    };
+    const tipoMap = { azioni:'azione', fondi:'fondo', certificates:'certificate', pir:'pir', polizze:'polizza' };
     const tipo      = tipoMap[tab];
-    const container = $(`lista${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+    const listId    = `lista${tab.charAt(0).toUpperCase() + tab.slice(1)}`;
+    const container = $(listId);
     if (!container) return;
 
     const lista = getTitoli().filter(t => t.tipo === tipo);
-    container.innerHTML = lista.length
-      ? lista.map(t => titoloHTML(t)).join('')
-      : emptyState('bi-graph-up', 'Nessun titolo in questa categoria');
+    if (!lista.length) {
+      container.innerHTML = emptyState('bi-graph-up', 'Nessun titolo in questa categoria');
+      return;
+    }
+    container.innerHTML = lista.map(t => titoloCardHTML(t)).join('');
   }
 
-  function getTotaleInvestimenti() {
-    return getTitoli().reduce((s, t) => s + (t.prezzoAttuale || t.prezzoAcquisto) * t.quantita, 0);
+  function titoloCardHTML(t) {
+    const prezzo   = t.prezzoAttuale || t.prezzoAcquisto;
+    const valore   = prezzo * t.quantita;
+    const pmc      = t.pmc || t.prezzoAcquisto;
+    const costo    = pmc * t.quantita;
+    const pl       = valore - costo;
+    const plPct    = costo > 0 ? (pl / costo) * 100 : 0;
+    const isPos    = pl >= 0;
+    const dayPos   = (t.changePct || 0) >= 0;
+    const col      = tipoColor(t.tipo);
+    const av       = avatarLetters(t.nome);
+    const ticker   = t.ticker || t.codeZB || tipoLabel(t.tipo);
+
+    return `
+    <div class="titolo-card-new" onclick="Portfolio.openTitoloSheet('${t.id}')">
+      <div class="tc-top">
+        <div class="tc-avatar" style="background:${col.bg};color:${col.fg}">${av}</div>
+        <div class="tc-info">
+          <div class="tc-nome">${escHtml(t.nome)}</div>
+          <div class="tc-sub">${escHtml(ticker)} · ${formatNum(t.quantita)} ${t.tipo === 'azione' ? 'az.' : 'quote'}</div>
+        </div>
+        <div class="tc-price-box">
+          <div class="tc-price">${formatEur(prezzo, 4)}</div>
+          <div class="tc-chg ${dayPos ? 'pos' : 'neg'}">
+            <i class="bi bi-arrow-${dayPos ? 'up' : 'down'}-right"></i>
+            ${formatPct(t.changePct || 0)}
+          </div>
+        </div>
+      </div>
+      <div class="tc-stats">
+        <div class="tc-stat">
+          <div class="tc-stat-label">Valore</div>
+          <div class="tc-stat-val">${formatEur(valore)}</div>
+        </div>
+        <div class="tc-stat">
+          <div class="tc-stat-label">PMC</div>
+          <div class="tc-stat-val">${formatEur(pmc, 4)}</div>
+        </div>
+        <div class="tc-stat">
+          <div class="tc-stat-label">P&amp;L</div>
+          <div class="tc-stat-val ${isPos ? 'pos' : 'neg'}">${formatEurSigned(pl)}</div>
+        </div>
+        <div class="tc-stat">
+          <div class="tc-stat-label">Rend.</div>
+          <div class="tc-stat-val ${isPos ? 'pos' : 'neg'}">${formatPct(plPct)}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ---- Bottom Sheet titolo ----
+  let _sheetTitoloId = null;
+
+  function openTitoloSheet(id) {
+    _sheetTitoloId = id;
+    const t = data.investimenti.titoli.find(t => t.id === id);
+    if (!t) return;
+
+    // Crea sheet se non esiste
+    let overlay = $('titoloSheetOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'titoloSheetOverlay';
+      overlay.className = 'sheet-overlay';
+      overlay.onclick = (e) => { if (e.target === overlay) closeTitoloSheet(); };
+      document.body.appendChild(overlay);
+    }
+
+    overlay.innerHTML = `
+      <div class="sheet" onclick="event.stopPropagation()">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">${escHtml(t.nome)}</div>
+        <div class="sheet-item" onclick="Portfolio.apriDettaglio('${t.id}'); Portfolio.closeTitoloSheet()">
+          <div class="sheet-icon" style="background:#EFF6FF;color:#1E3A8A"><i class="bi bi-bar-chart-line"></i></div>
+          <div class="sheet-item-body">
+            <div class="sheet-item-title">Dettaglio</div>
+            <div class="sheet-item-sub">Grafico storico, operazioni e statistiche</div>
+          </div>
+          <i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>
+        </div>
+        <div class="sheet-item" onclick="Portfolio.editTitolo('${t.id}'); Portfolio.closeTitoloSheet()">
+          <div class="sheet-icon" style="background:#F4F6FB;color:#64748B"><i class="bi bi-pencil"></i></div>
+          <div class="sheet-item-body">
+            <div class="sheet-item-title">Modifica titolo</div>
+            <div class="sheet-item-sub">Modifica dati e operazioni</div>
+          </div>
+          <i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>
+        </div>
+        <div class="sheet-item" onclick="Portfolio.nuovoAcquisto('${t.id}'); Portfolio.closeTitoloSheet()">
+          <div class="sheet-icon" style="background:#F0FDF4;color:#16A34A"><i class="bi bi-plus-circle"></i></div>
+          <div class="sheet-item-body">
+            <div class="sheet-item-title">Nuovo acquisto</div>
+            <div class="sheet-item-sub">Aggiungi quote alla posizione esistente</div>
+          </div>
+          <i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>
+        </div>
+        <div class="sheet-item" onclick="Portfolio.vendeTitoloById('${t.id}'); Portfolio.closeTitoloSheet()">
+          <div class="sheet-icon" style="background:#FEF2F2;color:#DC2626"><i class="bi bi-cash-coin"></i></div>
+          <div class="sheet-item-body">
+            <div class="sheet-item-title">Vendi</div>
+            <div class="sheet-item-sub">Registra una vendita parziale o totale</div>
+          </div>
+          <i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>
+        </div>
+      </div>`;
+
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeTitoloSheet() {
+    const overlay = $('titoloSheetOverlay');
+    if (overlay) overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ---- Modifica titolo ----
+  function editTitolo(id) {
+    const t = data.investimenti.titoli.find(t => t.id === id);
+    if (!t) return;
+    dettaglioId = id;
+    Modals.open('nuovoTitolo');
+    setTimeout(() => {
+      // Seleziona tipo card
+      document.querySelectorAll('.tipo-card').forEach(c => {
+        c.classList.toggle('active', c.dataset.tipo === t.tipo);
+      });
+      setTipoCard(document.querySelector(`.tipo-card[data-tipo="${t.tipo}"]`) || document.querySelector('.tipo-card'));
+      const fields = {
+        titoloNome: t.nome, titoloTicker: t.ticker || '', titoloCodeZB: t.codeZB || '',
+        titoloIsin: t.isin || '', titoloWkn: t.wkn || '', titoloNote: t.note || '',
+        titoloDataAcquisto: t.dataAcquisto, titoloQuantita: t.quantita,
+        titoloPrezzoAcquisto: t.prezzoAcquisto, titoloCambio: t.cambio || 1,
+        titoloCommissioni: t.commissioni || 0, titoloTasse: t.tasse || 0, titoloRateo: t.rateo || 0,
+      };
+      Object.entries(fields).forEach(([k, v]) => { const el = $(k); if (el) el.value = v || ''; });
+      const valuta = $('titoloValuta'); if (valuta) valuta.value = t.valuta || 'EUR';
+      const mercato = $('titoloMercato'); if (mercato) mercato.value = t.mercato || 'MIL';
+      // Vai direttamente allo step 2 per editing
+      wizardGoTo(2);
+      calcCostoCarico();
+      // Rimuovi il vecchio record per sostituirlo al salvataggio
+      data.investimenti.titoli = data.investimenti.titoli.filter(x => x.id !== id);
+      if (t.costoTotale) {
+        data.conto.saldo += t.costoTotale;
+        data.conto.movimenti = data.conto.movimenti.filter(m => m.descrizione !== `Acquisto ${t.nome}` || m.data !== t.dataAcquisto);
+      }
+      renderConto();
+    }, 80);
+  }
+
+  // ---- Nuovo acquisto su titolo esistente ----
+  function nuovoAcquisto(id) {
+    const t = data.investimenti.titoli.find(t => t.id === id);
+    if (!t) return;
+    Modals.open('nuovoTitolo');
+    setTimeout(() => {
+      document.querySelectorAll('.tipo-card').forEach(c => {
+        c.classList.toggle('active', c.dataset.tipo === t.tipo);
+      });
+      setTipoCard(document.querySelector(`.tipo-card[data-tipo="${t.tipo}"]`) || document.querySelector('.tipo-card'));
+      const n = $('titoloNome'); if (n) n.value = t.nome;
+      const tk = $('titoloTicker'); if (tk) tk.value = t.ticker || '';
+      const zb = $('titoloCodeZB'); if (zb) zb.value = t.codeZB || '';
+      const is = $('titoloIsin'); if (is) is.value = t.isin || '';
+      const wk = $('titoloWkn'); if (wk) wk.value = t.wkn || '';
+      const me = $('titoloMercato'); if (me) me.value = t.mercato || 'MIL';
+      const va = $('titoloValuta'); if (va) va.value = t.valuta || 'EUR';
+      const da = $('titoloDataAcquisto'); if (da) da.value = new Date().toISOString().slice(0,10);
+      wizardGoTo(3);
+      calcCostoCarico();
+    }, 80);
+  }
+
+  // ---- Vendi per ID ----
+  function vendeTitoloById(id) {
+    dettaglioId = id;
+    vendeTitolo();
   }
 
   // ---- Wizard state ----
@@ -891,7 +1180,45 @@ const Portfolio = (() => {
   `;
   document.head.appendChild(style);
 
-  // ---- API pubblica ----
+  // =============================================
+  // UTILITY DOM / TESTO
+  // =============================================
+
+  function setEl(id, val) { const e = $(id); if (e) e.textContent = val; }
+
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function tipoLabel(tipo) {
+    const m = { azione:'Azione', fondo:'Fondo', certificate:'Certificate', pir:'PIR', polizza:'Polizza Vita' };
+    return m[tipo] || tipo;
+  }
+
+  function tipoIcon(tipo) {
+    const m = { azione:'bi-graph-up', fondo:'bi-pie-chart-fill', certificate:'bi-award-fill', pir:'bi-shield-fill-check', polizza:'bi-umbrella-fill' };
+    return m[tipo] || 'bi-graph-up';
+  }
+
+  function tipoColor(tipo) {
+    const m = { azione:'#EFF6FF:#1E3A8A', fondo:'#F5F3FF:#7C3AED', certificate:'#FFFBEB:#D97706', pir:'#F0FDF4:#16A34A', polizza:'#FEF2F2:#DC2626' };
+    const [bg, fg] = (m[tipo] || '#EFF6FF:#1E3A8A').split(':');
+    return { bg, fg };
+  }
+
+  function catLabel(cat) {
+    const m = { stipendio:'Stipendio', investimento:'Investimento', affitto:'Affitto', utenze:'Utenze', spesa:'Spesa', trasporti:'Trasporti', salute:'Salute', svago:'Svago', shopping:'Shopping', ristoranti:'Ristoranti', viaggi:'Viaggi', abbonamenti:'Abbonamenti', carburante:'Carburante', altro:'Altro' };
+    return m[cat] || cat || '—';
+  }
+
+  function catIcon(cat) {
+    const m = { stipendio:'bi-briefcase-fill', investimento:'bi-graph-up-arrow', affitto:'bi-house-fill', utenze:'bi-lightning-charge-fill', spesa:'bi-cart-fill', trasporti:'bi-car-front-fill', salute:'bi-heart-pulse-fill', svago:'bi-controller', shopping:'bi-bag-fill', ristoranti:'bi-cup-hot-fill', viaggi:'bi-airplane-fill', abbonamenti:'bi-collection-fill', carburante:'bi-fuel-pump-fill', altro:'bi-three-dots' };
+    return m[cat] || 'bi-arrow-left-right';
+  }
+
+  function avatarLetters(nome) {
+    return (nome || '').split(' ').slice(0, 3).map(w => w[0]).join('').toUpperCase().slice(0, 3);
+  }
   return {
     loadData, getData, getTitoli, updateQuote,
     renderAll, renderDashboard, renderConto, renderCarta, renderInvestimenti,
