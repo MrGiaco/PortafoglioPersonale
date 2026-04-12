@@ -757,6 +757,12 @@ const Portfolio = (() => {
           '<div class="sheet-item-body"><div class="sheet-item-title">Modifica titolo</div><div class="sheet-item-sub">Modifica dati e operazioni</div></div>' +
           '<i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
         '</div>' +
+        (!t.ticker && !t.codeZB ?
+        '<div class="sheet-item" onclick="Portfolio.aggiornaValoreManuale(\'' + t.id + '\'); Portfolio.closeTitoloSheet()">' +
+          '<div class="sheet-icon" style="background:#F0FDF4;color:#16A34A"><i class="bi bi-pencil-square"></i></div>' +
+          '<div class="sheet-item-body"><div class="sheet-item-title">Aggiorna valore</div><div class="sheet-item-sub">Inserisci manualmente il valore attuale</div></div>' +
+          '<i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
+        '</div>' : '') +
         '<div class="sheet-item" onclick="Portfolio.nuovoAcquisto(\'' + t.id + '\'); Portfolio.closeTitoloSheet()">' +
           '<div class="sheet-icon" style="background:#F0FDF4;color:#16A34A"><i class="bi bi-plus-circle"></i></div>' +
           '<div class="sheet-item-body"><div class="sheet-item-title">Nuovo acquisto</div><div class="sheet-item-sub">Aggiungi quote alla posizione esistente</div></div>' +
@@ -770,6 +776,64 @@ const Portfolio = (() => {
       '</div>';
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+  }
+
+  function aggiornaValoreManuale(id) {
+    var t = data.investimenti.titoli.find(function(x){ return x.id === id; });
+    if (!t) return;
+    var valoreAttuale = formatEur(t.prezzoAttuale || t.pmc, 2);
+
+    // Crea dialog con input
+    var overlay = document.getElementById('dialogOverlay');
+    if (!overlay) return;
+    overlay.innerHTML =
+      '<div class="dialog-box">' +
+        '<div class="dialog-body">' +
+          '<i class="bi bi-pencil-square" style="color:var(--primary);font-size:24px;display:block;margin-bottom:10px"></i>' +
+          '<strong>' + escHtml(t.nome) + '</strong>' +
+          '<span style="font-size:13px;color:var(--text-muted);display:block;margin:6px 0 14px">Valore attuale: ' + valoreAttuale + '</span>' +
+          '<input id="dialogValoreInput" type="number" step="0.01" min="0" ' +
+            'placeholder="Nuovo valore (€)" ' +
+            'style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;outline:none;box-sizing:border-box" ' +
+            'value="' + (t.prezzoAttuale || t.pmc || '') + '" />' +
+        '</div>' +
+        '<div class="dialog-footer">' +
+          '<button class="btn btn--ghost dialog-cancel">Annulla</button>' +
+          '<button class="btn btn--primary dialog-ok">Salva</button>' +
+        '</div>' +
+      '</div>';
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Focus sull'input
+    setTimeout(function() {
+      var inp = document.getElementById('dialogValoreInput');
+      if (inp) { inp.focus(); inp.select(); }
+    }, 100);
+
+    overlay.querySelector('.dialog-cancel').onclick = function() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    };
+    overlay.querySelector('.dialog-ok').onclick = function() {
+      var inp = document.getElementById('dialogValoreInput');
+      var nuovo = parseFloat(inp ? inp.value : '');
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+      if (isNaN(nuovo) || nuovo < 0) {
+        App.showToast('Valore non valido', 'warning');
+        return;
+      }
+      t.prezzoAttuale = nuovo;
+      t.change = 0; t.changePct = 0;
+      renderInvestimenti(); renderDashboard(); Charts.updateAll(); saveAndSync();
+      App.showToast(t.nome + ': valore aggiornato a ' + formatEur(nuovo), 'success');
+    };
+
+    // Conferma con Enter
+    overlay.querySelector('#dialogValoreInput') && overlay.querySelector('#dialogValoreInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') overlay.querySelector('.dialog-ok').click();
+    });
   }
 
   function closeTitoloSheet() {
@@ -1167,7 +1231,7 @@ const Portfolio = (() => {
     saveSpesaCarta, deleteSpesaCarta, editSpesaCarta, saveImpostazioniCarta,
     showTab, setTipoCard, calcCostoCarico, saveTitolo, editTitolo, nuovoAcquisto,
     wizardNext, wizardPrev, wizardReset,
-    openTitoloSheet, closeTitoloSheet,
+    openTitoloSheet, closeTitoloSheet, aggiornaValoreManuale,
     apriDettaglio, vendeTitolo, vendeTitoloById,
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo,
