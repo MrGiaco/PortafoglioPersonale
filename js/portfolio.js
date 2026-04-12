@@ -74,8 +74,44 @@ const Portfolio = (() => {
     t.currency      = quote.currency || 'EUR';
   }
 
-  function saveAndSync() {
-    Drive.save(getData());
+  // ---- Modifica Movimento Conto ----
+  function editMovimento(id) {
+    const mov = data.conto.movimenti.find(m => m.id === id);
+    if (!mov) return;
+    // Ripristina saldo prima della modifica
+    data.conto.saldo = mov.tipo === 'entrata'
+      ? data.conto.saldo - mov.importo
+      : data.conto.saldo + mov.importo;
+    // Elimina il movimento originale
+    data.conto.movimenti = data.conto.movimenti.filter(m => m.id !== id);
+    // Apri modale pre-compilata
+    Modals.open('nuovoMovimento');
+    setTimeout(() => {
+      const d = $('movData'); if (d) d.value = mov.data;
+      const desc = $('movDescrizione'); if (desc) desc.value = mov.descrizione;
+      const imp = $('movImporto'); if (imp) imp.value = mov.importo;
+      const cat = $('movCategoria'); if (cat) cat.value = mov.categoria;
+      const note = $('movNote'); if (note) note.value = mov.note || '';
+      setMovTipo(mov.tipo);
+    }, 50);
+    renderConto();
+    renderDashboard();
+  }
+
+  // ---- Modifica Spesa Carta ----
+  function editSpesaCarta(id) {
+    const spesa = data.carta.spese.find(s => s.id === id);
+    if (!spesa) return;
+    data.carta.spese = data.carta.spese.filter(s => s.id !== id);
+    Modals.open('nuovaSpesaCarta');
+    setTimeout(() => {
+      const d = $('cartaData'); if (d) d.value = spesa.data;
+      const desc = $('cartaDescrizione'); if (desc) desc.value = spesa.descrizione;
+      const imp = $('cartaImporto'); if (imp) imp.value = spesa.importo;
+      const cat = $('cartaCategoria'); if (cat) cat.value = spesa.categoria;
+      const add = $('cartaAddebito'); if (add) add.value = spesa.addebitoData || '';
+    }, 50);
+    renderCarta();
   }
 
   // =============================================
@@ -454,7 +490,7 @@ const Portfolio = (() => {
     const next = $('wizardNext');
     if (next) {
       if (n === wizardTot) {
-        next.innerHTML = '<i class="bi bi-check-lg"></i> Aggiungi al portafoglio';
+        next.innerHTML = '<i class="bi bi-check-lg"></i> Aggiungi';
       } else {
         next.innerHTML = 'Avanti <i class="bi bi-chevron-right"></i>';
       }
@@ -707,7 +743,7 @@ const Portfolio = (() => {
   // HTML HELPERS
   // =============================================
 
-  function transactionHTML(m, showDelete = false) {
+  function transactionHTML(m, showActions = false) {
     const isPos  = m.tipo === 'entrata';
     const icon   = catIcon(m.categoria);
     const color  = isPos ? 'summary-card__icon--green' : 'summary-card__icon--red';
@@ -721,8 +757,11 @@ const Portfolio = (() => {
           <div class="transaction-meta">${formatDate(m.data)} · ${catLabel(m.categoria)}</div>
         </div>
         <div class="transaction-amount ${cls}">${amount}</div>
-        ${showDelete ? `
+        ${showActions ? `
         <div class="transaction-actions">
+          <button class="action-btn" onclick="Portfolio.editMovimento('${m.id}')" title="Modifica">
+            <i class="bi bi-pencil"></i>
+          </button>
           <button class="action-btn" onclick="Portfolio.deleteMovimento('${m.id}')" title="Elimina">
             <i class="bi bi-trash3"></i>
           </button>
@@ -740,6 +779,9 @@ const Portfolio = (() => {
         </div>
         <div class="transaction-amount transaction-amount--negative">-${formatEur(s.importo)}</div>
         <div class="transaction-actions">
+          <button class="action-btn" onclick="Portfolio.editSpesaCarta('${s.id}')" title="Modifica">
+            <i class="bi bi-pencil"></i>
+          </button>
           <button class="action-btn" onclick="Portfolio.deleteSpesaCarta('${s.id}')" title="Elimina">
             <i class="bi bi-trash3"></i>
           </button>
@@ -854,8 +896,8 @@ const Portfolio = (() => {
     loadData, getData, getTitoli, updateQuote,
     renderAll, renderDashboard, renderConto, renderCarta, renderInvestimenti,
     filterMovimenti, filterSpese, setContoFilter, setContoFilterMonth,
-    setMovTipo, saveMovimento, deleteMovimento,
-    saveSpesaCarta, deleteSpesaCarta, saveImpostazioniCarta,
+    setMovTipo, saveMovimento, deleteMovimento, editMovimento,
+    saveSpesaCarta, deleteSpesaCarta, editSpesaCarta, saveImpostazioniCarta,
     showTab, setTipoCard, onTitoloTipoChange: setTipoCard,
     calcCostoCarico, saveTitolo,
     wizardNext, wizardPrev, wizardReset,
