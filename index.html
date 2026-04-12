@@ -545,61 +545,183 @@
   <!-- Nuovo Titolo -->
   <div id="modal-nuovoTitolo" class="modal hidden">
     <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Aggiungi Titolo</h3>
-      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+
+    <!-- Hero header -->
+    <div class="modal-hero">
+      <div class="modal-hero-top">
+        <div class="modal-hero-left">
+          <div class="modal-hero-icon"><i class="bi bi-graph-up-arrow"></i></div>
+          <div>
+            <div class="modal-hero-title">Aggiungi Titolo</div>
+            <div class="modal-hero-sub">Nuovo investimento in portafoglio</div>
+          </div>
+        </div>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+      </div>
     </div>
+
     <div class="modal-body">
-      <div class="form-group">
-        <label>Tipo</label>
-        <select id="titoloTipo" class="form-control" onchange="Portfolio.onTitoloTipoChange()">
-          <option value="azione">Azione</option>
-          <option value="fondo">Fondo</option>
-          <option value="certificate">Certificate</option>
-          <option value="pir">PIR</option>
-          <option value="polizza">Polizza Vita</option>
-        </select>
+
+      <!-- Tipo strumento -->
+      <div class="modal-sec">Tipo di strumento</div>
+      <div class="tipo-grid">
+        <div class="tipo-card active" data-tipo="azione" onclick="Portfolio.setTipoCard(this)">
+          <i class="bi bi-graph-up"></i>
+          <span class="tipo-label">Azione</span>
+        </div>
+        <div class="tipo-card" data-tipo="fondo" onclick="Portfolio.setTipoCard(this)">
+          <i class="bi bi-pie-chart-fill"></i>
+          <span class="tipo-label">Fondo</span>
+        </div>
+        <div class="tipo-card" data-tipo="certificate" onclick="Portfolio.setTipoCard(this)">
+          <i class="bi bi-award-fill"></i>
+          <span class="tipo-label">Certificate</span>
+        </div>
+        <div class="tipo-card" data-tipo="pir" onclick="Portfolio.setTipoCard(this)">
+          <i class="bi bi-shield-fill-check"></i>
+          <span class="tipo-label">PIR</span>
+        </div>
+        <div class="tipo-card" data-tipo="polizza" onclick="Portfolio.setTipoCard(this)">
+          <i class="bi bi-umbrella-fill"></i>
+          <span class="tipo-label">Polizza Vita</span>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Nome / Descrizione</label>
-        <input type="text" id="titoloNome" class="form-control" placeholder="Es. ENI, Fondo Azionario..." />
+
+      <!-- Identificazione -->
+      <div class="modal-sec">Identificazione</div>
+      <div class="modal-row">
+        <div class="form-group">
+          <label>Nome / Descrizione</label>
+          <input type="text" id="titoloNome" class="form-control" placeholder="Es. ENI S.p.A., Fondo Azionario..." />
+        </div>
       </div>
-      <div id="titoloYahooGroup" class="form-group">
-        <label>Ticker Yahoo Finance <span class="label-hint">(es. ENI.MI)</span></label>
-        <input type="text" id="titoloTicker" class="form-control" placeholder="Es. ENI.MI" />
+      <div class="modal-row modal-r3">
+        <div class="form-group" id="titoloYahooGroup">
+          <label>Ticker Yahoo Finance</label>
+          <input type="text" id="titoloTicker" class="form-control mono" placeholder="Es. ENI.MI" />
+        </div>
+        <div class="form-group" id="titoloZBGroup" style="display:none">
+          <label>Codice Zonebourse</label>
+          <input type="text" id="titoloCodeZB" class="form-control mono" placeholder="Es. 184320628" />
+        </div>
+        <div class="form-group">
+          <label>ISIN</label>
+          <input type="text" id="titoloIsin" class="form-control mono" placeholder="IT0003132476" />
+        </div>
+        <div class="form-group">
+          <label>WKN</label>
+          <input type="text" id="titoloWkn" class="form-control mono" placeholder="Es. 897822" />
+        </div>
       </div>
-      <div id="titoloZBGroup" class="form-group hidden">
-        <label>Codice Zonebourse <span class="label-hint">(es. 184320628)</span></label>
-        <input type="text" id="titoloCodeZB" class="form-control" placeholder="Es. 184320628" />
+      <div class="modal-row modal-r2">
+        <div class="form-group">
+          <label>Mercato / Borsa</label>
+          <select id="titoloMercato" class="form-control">
+            <option value="MIL">Borsa Italiana (MIL)</option>
+            <option value="ETR">Xetra (ETR)</option>
+            <option value="NYSE">NYSE</option>
+            <option value="NASDAQ">Nasdaq</option>
+            <option value="AMS">Euronext (AMS)</option>
+            <option value="LSE">London (LSE)</option>
+            <option value="altro">Altro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Valuta</label>
+          <select id="titoloValuta" class="form-control" onchange="Portfolio.calcCostoCarico()">
+            <option value="EUR">EUR — Euro</option>
+            <option value="USD">USD — Dollaro</option>
+            <option value="GBP">GBP — Sterlina</option>
+            <option value="CHF">CHF — Franco Svizzero</option>
+          </select>
+        </div>
       </div>
-      <div style="display:flex;gap:10px">
-        <div class="form-group" style="flex:1">
+
+      <!-- Acquisto -->
+      <div class="modal-sec">Operazione di acquisto</div>
+      <div class="modal-row modal-r4">
+        <div class="form-group">
           <label>Data acquisto</label>
           <input type="date" id="titoloDataAcquisto" class="form-control" />
         </div>
-        <div class="form-group" style="flex:1">
+        <div class="form-group">
           <label>Quantità</label>
-          <input type="number" id="titoloQuantita" class="form-control" placeholder="100" min="0" step="0.001" />
+          <input type="number" id="titoloQuantita" class="form-control" placeholder="100" min="0" step="0.001" oninput="Portfolio.calcCostoCarico()" />
+        </div>
+        <div class="form-group">
+          <label>Prezzo unitario</label>
+          <input type="number" id="titoloPrezzoAcquisto" class="form-control" placeholder="0,00" min="0" step="0.0001" oninput="Portfolio.calcCostoCarico()" />
+        </div>
+        <div class="form-group">
+          <label>Cambio</label>
+          <input type="number" id="titoloCambio" class="form-control" value="1" min="0" step="0.0001" oninput="Portfolio.calcCostoCarico()" />
         </div>
       </div>
-      <div class="form-group">
-        <label>Prezzo di acquisto (€)</label>
-        <input type="number" id="titoloPrezzoAcquisto" class="form-control" placeholder="0,00" min="0" step="0.0001" />
+      <div class="modal-row modal-r3">
+        <div class="form-group">
+          <label>Commissioni (€)</label>
+          <input type="number" id="titoloCommissioni" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+        </div>
+        <div class="form-group">
+          <label>Tasse / Bolli (€)</label>
+          <input type="number" id="titoloTasse" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+        </div>
+        <div class="form-group">
+          <label>Rateo / Dietimi (€)</label>
+          <input type="number" id="titoloRateo" class="form-control" value="0" min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+        </div>
       </div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" id="titoloAddebitoConto" checked />
-          <span class="checkbox-label">Registra automaticamente uscita sul conto</span>
-        </label>
+
+      <!-- Costo di carico live -->
+      <div class="modal-sec">Costo di carico</div>
+      <div class="costo-card">
+        <div class="costo-top">
+          <div class="costo-item">
+            <div class="costo-item__label">Controvalore</div>
+            <div class="costo-item__val" id="costoControvalore">€ 0,00</div>
+          </div>
+          <div class="costo-item">
+            <div class="costo-item__label">Oneri totali</div>
+            <div class="costo-item__val" id="costoOneri">€ 0,00</div>
+          </div>
+          <div class="costo-item">
+            <div class="costo-item__label">Quantità</div>
+            <div class="costo-item__val" id="costoQty">0</div>
+          </div>
+        </div>
+        <div class="costo-bottom">
+          <div class="costo-bottom__left">
+            <div class="costo-bottom__label">Costo totale di carico</div>
+            <div class="costo-bottom__sub">Controvalore + commissioni + tasse + rateo</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="costo-pmc">
+              <div class="costo-pmc__label">PMC unitario</div>
+              <div class="costo-pmc__val" id="costoPmc">€ 0,00</div>
+            </div>
+            <div class="costo-total" id="costoTotale">€ 0,00</div>
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Note</label>
-        <textarea id="titoloNote" class="form-control" rows="2" placeholder="Opzionale..."></textarea>
+
+      <!-- Note e checkbox -->
+      <div class="modal-row" style="margin-top:8px">
+        <div class="form-group">
+          <label>Note</label>
+          <input type="text" id="titoloNote" class="form-control" placeholder="Opzionale — es. target price, strategia..." />
+        </div>
       </div>
+      <div class="check-row">
+        <input type="checkbox" id="titoloAddebitoConto" checked />
+        <span class="checkbox-label">Registra automaticamente l'uscita sul conto corrente</span>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-      <button class="btn btn--primary" onclick="Portfolio.saveTitolo()"><i class="bi bi-plus-lg"></i> Aggiungi</button>
+      <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveTitolo()">
+        <i class="bi bi-check-lg"></i> Aggiungi al portafoglio
+      </button>
     </div>
   </div>
 
