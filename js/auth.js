@@ -150,7 +150,11 @@ const Auth = (() => {
   }
 
   async function offerBiometric() {
-    const ok = confirm('Vuoi abilitare l\'accesso con impronta digitale o Face ID?');
+    const ok = await Dialog.confirm(
+      '<i class="bi bi-fingerprint" style="color:var(--primary);font-size:28px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Accesso biometrico</strong><br><span style="font-size:13px;color:var(--text-muted)">Vuoi abilitare l\'accesso con impronta digitale o Face ID?</span>',
+      'Abilita', 'Non ora'
+    );
     if (ok) { const registered = await registerBiometric(); if (registered) return; }
     unlock();
   }
