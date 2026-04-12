@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#1E3A8A" />
   <meta name="description" content="Gestione personale di conto corrente, carta di credito e investimenti" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Portafoglio" />
   <title>Portafoglio Personale</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -105,17 +105,18 @@
 
     <!-- Topbar -->
     <header class="topbar" id="topbar">
-      <!-- Dashboard: saluto -->
       <div class="topbar-left" id="topbarGreeting">
         <div class="topbar-greeting">Buongiorno,</div>
-        <div class="topbar-name" id="topbarName">Roberto</div>
+        <div class="topbar-name">Roberto</div>
       </div>
-      <!-- Altre sezioni: titolo -->
       <div class="topbar-section-title hidden" id="topbarTitle"></div>
       <div class="topbar-actions">
-        <button class="topbar-btn" id="syncBtn" onclick="Quotes.refreshAll()" title="Aggiorna quotazioni"><i class="bi bi-arrow-clockwise"></i></button>
+        <button class="topbar-btn" onclick="Quotes.refreshAll()" title="Aggiorna quotazioni"><i class="bi bi-arrow-clockwise"></i></button>
         <button class="topbar-btn" onclick="Drive.sync()" title="Sincronizza Drive"><i class="bi bi-cloud-arrow-up-fill"></i></button>
-        <button class="topbar-btn" id="topbarAddBtn" onclick="App.fabAction()" title="Aggiungi" style="background:var(--primary);border-color:var(--primary);color:#fff"><i class="bi bi-plus-lg"></i></button>
+        <button class="topbar-btn" onclick="App.fabAction()" title="Aggiungi"
+          style="background:var(--primary);border-color:var(--primary);color:#fff">
+          <i class="bi bi-plus-lg"></i>
+        </button>
         <div class="topbar-avatar" onclick="App.navigate('impostazioni')"><i class="bi bi-person-fill"></i></div>
       </div>
     </header>
@@ -127,7 +128,7 @@
       <section id="section-dashboard" class="section active">
 
         <div class="patrimonio-card">
-          <div class="patrimonio-label">Patrimonio Totale</div>
+          <div class="patrimonio-label">PATRIMONIO TOTALE</div>
           <div class="patrimonio-value" id="patrimonioTotale">€ 0,00</div>
           <div class="patrimonio-badge" id="patrimonioChange"><i class="bi bi-arrow-up-right"></i> 0,00%</div>
           <div class="patrimonio-pills">
@@ -147,15 +148,15 @@
         </div>
 
         <div class="quick-actions">
-          <div class="qa-btn" onclick="App.navigate('conto'); Modals.open('nuovoMovimento')">
+          <div class="qa-btn" onclick="Portfolio.setMovTipo('entrata'); Modals.open('nuovoMovimento')">
             <div class="qa-icon qa-icon--green"><i class="bi bi-arrow-down-circle-fill"></i></div>
             <div class="qa-label">Entrata</div>
           </div>
-          <div class="qa-btn" onclick="App.navigate('conto'); Modals.open('nuovoMovimento')">
+          <div class="qa-btn" onclick="Portfolio.setMovTipo('uscita'); Modals.open('nuovoMovimento')">
             <div class="qa-icon qa-icon--red"><i class="bi bi-arrow-up-circle-fill"></i></div>
             <div class="qa-label">Uscita</div>
           </div>
-          <div class="qa-btn" onclick="App.navigate('investimenti'); Modals.open('nuovoTitolo')">
+          <div class="qa-btn" onclick="App.navigate('investimenti'); setTimeout(()=>Modals.open('nuovoTitolo'),100)">
             <div class="qa-icon qa-icon--blue"><i class="bi bi-graph-up-arrow"></i></div>
             <div class="qa-label">Acquista</div>
           </div>
@@ -198,7 +199,7 @@
       <section id="section-conto" class="section hidden">
 
         <div class="account-hero">
-          <div class="account-hero__label">Saldo Disponibile</div>
+          <div class="account-hero__label">SALDO DISPONIBILE</div>
           <div class="account-hero__value" id="contoSaldo">€ 0,00</div>
           <div class="account-hero__stats">
             <div class="hero-stat">
@@ -399,7 +400,7 @@
         </div>
       </section>
 
-    </main><!-- /content -->
+    </main>
 
     <!-- Tab Bar (mobile) -->
     <nav class="tab-bar">
@@ -432,8 +433,8 @@
 
   </div><!-- /main-wrapper -->
 
-  <!-- FAB -->
-  <button class="fab" id="fabBtn" onclick="App.fabAction()" title="Aggiungi">
+  <!-- FAB (mobile) -->
+  <button class="fab" onclick="App.fabAction()" title="Aggiungi">
     <i class="bi bi-plus-lg"></i>
   </button>
 
