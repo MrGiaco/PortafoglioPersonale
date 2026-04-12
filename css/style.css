@@ -1145,3 +1145,51 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
 }
 .section-page-header h2 { font-size: 18px; font-weight: 700; }
+
+/* =============================================
+   DIALOG CUSTOM (sostituisce confirm/alert nativi)
+   ============================================= */
+.dialog-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(15,23,42,.55);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+}
+.dialog-overlay.open {
+  opacity: 1; pointer-events: all;
+}
+.dialog-box {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 24px 20px 16px;
+  max-width: 320px; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  animation: dialogIn .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes dialogIn {
+  from { transform: scale(.88) translateY(12px); opacity: 0; }
+  to   { transform: scale(1)   translateY(0);    opacity: 1; }
+}
+.dialog-body {
+  text-align: center;
+  font-size: 14px; line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+.dialog-body strong { font-size: 15px; font-weight: 700; display: block; margin-bottom: 4px; }
+.dialog-footer {
+  display: flex; gap: 8px;
+}
+.dialog-footer .btn {
+  flex: 1; justify-content: center;
+}
+
+/* =============================================
+   SELECT CATEGORIA con icona
+   ============================================= */
+.cat-option-icon {
+  display: inline-flex; align-items: center; gap: 6px;
+}
