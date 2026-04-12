@@ -104,19 +104,18 @@ const Auth = (() => {
   // ---- Setup PIN (primo avvio / cambio PIN) ----
   function setupInput(digit) {
     if (setupStep === 1) {
-      if (setupPin.length >= PIN_LENGTH) return;
-      setupPin += digit;
-      updateDots('pinSetupDisplay', setupPin.length);
-      if (setupPin.length === PIN_LENGTH) {
+      if (_firstSetupPin.length >= PIN_LENGTH) return;
+      _firstSetupPin += digit;
+      updateDots('pinSetupDisplay', _firstSetupPin.length);
+      if (_firstSetupPin.length === PIN_LENGTH) {
         setTimeout(() => {
           setupStep = 2;
-          setupPin = '';     // reset per conferma
+          setupPin = '';
           updateDots('pinSetupDisplay', 0);
           $('pinSetupLabel').textContent = 'Conferma il PIN';
         }, 150);
       }
     } else {
-      // Step 2: conferma
       if (setupPin.length >= PIN_LENGTH) return;
       setupPin += digit;
       updateDots('pinSetupDisplay', setupPin.length);
@@ -127,9 +126,15 @@ const Auth = (() => {
   }
 
   function setupDelete() {
-    if (setupPin.length === 0) return;
-    setupPin = setupPin.slice(0, -1);
-    updateDots('pinSetupDisplay', setupPin.length);
+    if (setupStep === 1) {
+      if (_firstSetupPin.length === 0) return;
+      _firstSetupPin = _firstSetupPin.slice(0, -1);
+      updateDots('pinSetupDisplay', _firstSetupPin.length);
+    } else {
+      if (setupPin.length === 0) return;
+      setupPin = setupPin.slice(0, -1);
+      updateDots('pinSetupDisplay', setupPin.length);
+    }
   }
 
   async function confirmSetup() {
@@ -164,41 +169,7 @@ const Auth = (() => {
   // Variabile temporanea per il primo PIN nel setup
   let _firstSetupPin = '';
 
-  // Override setupInput per gestire correttamente i due step
-  function setupInput(digit) {
-    if (setupStep === 1) {
-      if (_firstSetupPin.length >= PIN_LENGTH) return;
-      _firstSetupPin += digit;
-      updateDots('pinSetupDisplay', _firstSetupPin.length);
-      if (_firstSetupPin.length === PIN_LENGTH) {
-        setTimeout(() => {
-          setupStep = 2;
-          setupPin = '';
-          updateDots('pinSetupDisplay', 0);
-          $('pinSetupLabel').textContent = 'Conferma il PIN';
-        }, 150);
-      }
-    } else {
-      if (setupPin.length >= PIN_LENGTH) return;
-      setupPin += digit;
-      updateDots('pinSetupDisplay', setupPin.length);
-      if (setupPin.length === PIN_LENGTH) {
-        setTimeout(() => confirmSetup(), 150);
-      }
-    }
-  }
 
-  function setupDelete() {
-    if (setupStep === 1) {
-      if (_firstSetupPin.length === 0) return;
-      _firstSetupPin = _firstSetupPin.slice(0, -1);
-      updateDots('pinSetupDisplay', _firstSetupPin.length);
-    } else {
-      if (setupPin.length === 0) return;
-      setupPin = setupPin.slice(0, -1);
-      updateDots('pinSetupDisplay', setupPin.length);
-    }
-  }
 
   // ---- Biometria (WebAuthn) ----
   async function biometric() {
