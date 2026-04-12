@@ -286,7 +286,6 @@ const Portfolio = (() => {
       if (dataCella instanceof Date) {
         dataStr = dataCella.toISOString().slice(0,10);
       } else {
-        // Prova parsing stringa
         var d = new Date(String(dataCella));
         if (isNaN(d.getTime())) return;
         dataStr = d.toISOString().slice(0,10);
@@ -296,20 +295,30 @@ const Portfolio = (() => {
       var dettagli      = String(r[2] || '').trim();
       var contoOCarta   = String(r[3] || '').trim().toLowerCase();
       var catBanca      = String(r[5] || '').trim().toLowerCase();
-      var valuta        = String(r[6] || 'EUR').trim();
       var importoRaw    = r[7];
-      var importo       = importoRaw != null ? parseFloat(String(importoRaw).replace(',','.')) : null;
 
-      // Descrizione: usa operazione (più leggibile del dettaglio lungo)
+      // Parsing importo robusto: gestisce numeri, stringhe con virgola/punto, null
+      var importo = null;
+      if (importoRaw != null && importoRaw !== '') {
+        var s = String(importoRaw).trim().replace(/\s/g, '');
+        // Formato italiano: 1.234,56 → 1234.56
+        if (/^\-?[\d\.]+,\d{1,2}$/.test(s)) {
+          s = s.replace(/\./g, '').replace(',', '.');
+        } else {
+          // Formato con punto decimale: rimuovi separatori migliaia
+          s = s.replace(/,(?=\d{3})/g, '');
+        }
+        var parsed = parseFloat(s);
+        if (!isNaN(parsed)) importo = parsed;
+      }
+
       var desc = operazione || dettagli || 'Movimento';
 
       // Mappa categoria banca → chiave app
       var catKey = MAPPING_BANCA[catBanca] || null;
 
       if (!catKey) {
-        // Categoria non mappata: creala come custom
         catKey = catBanca.replace(/[^a-z0-9]/g, '_').slice(0, 30) || 'altro';
-        // Scegli icona ragionata
         var iconMap = {
           'spesa':'bi-cart-fill', 'aliment':'bi-cart-fill',
           'ristor':'bi-cup-hot-fill', 'bar':'bi-cup-hot-fill',
@@ -335,11 +344,10 @@ const Portfolio = (() => {
       var isCartaDiCredito = contoOCarta.indexOf('carta') !== -1;
 
       if (isCartaDiCredito) {
-        // → Carta di credito
         var importoCarta = importo != null ? Math.abs(importo) : 0;
-        // Controlla duplicato (stessa data + descrizione)
+        // Dedup: data + descrizione + importo
         var isDup = data.carta.spese.some(function(s) {
-          return s.data === dataStr && s.descrizione === desc;
+          return s.data === dataStr && s.descrizione === desc && s.importo === importoCarta;
         });
         if (isDup) { duplicati++; return; }
         data.carta.spese.push({
@@ -349,22 +357,18 @@ const Portfolio = (() => {
         });
         importatiCarta++;
       } else {
-        // → Conto corrente
-        // Determina tipo entrata/uscita dal segno importo o dalla categoria
+        // Determina tipo dal segno dell'importo
         var tipo;
         if (importo != null) {
           tipo = importo >= 0 ? 'entrata' : 'uscita';
         } else {
-          // Senza importo: deduci dal tipo categoria
-          var uscitaCat = ['bonifici_out','utenze','imposte','polizze','affitto','carta_addebito','carburante'];
-          var entrataCat = ['stipendio','investimento','bonifici_in','rimborsi','giroconto_in','interessi e cedole'];
-          if (entrataCat.indexOf(catKey) !== -1) tipo = 'entrata';
-          else tipo = 'uscita';
+          var entrataCat = ['stipendio','investimento','bonifici_in','rimborsi','giroconto_in'];
+          tipo = entrataCat.indexOf(catKey) !== -1 ? 'entrata' : 'uscita';
         }
         var importoConto = importo != null ? Math.abs(importo) : 0;
-        // Controlla duplicato
+        // Dedup: data + descrizione + importo
         var isDupC = data.conto.movimenti.some(function(m) {
-          return m.data === dataStr && m.descrizione === desc;
+          return m.data === dataStr && m.descrizione === desc && m.importo === importoConto;
         });
         if (isDupC) { duplicati++; return; }
         var mov = {
@@ -373,11 +377,9 @@ const Portfolio = (() => {
           note: dettagli !== desc ? dettagli.slice(0, 120) : '',
         };
         data.conto.movimenti.push(mov);
-        if (importoConto > 0) {
-          data.conto.saldo = tipo === 'entrata'
-            ? data.conto.saldo + importoConto
-            : data.conto.saldo - importoConto;
-        }
+        data.conto.saldo = tipo === 'entrata'
+          ? data.conto.saldo + importoConto
+          : data.conto.saldo - importoConto;
         importatiConto++;
       }
     });
