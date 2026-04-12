@@ -608,6 +608,20 @@ const Portfolio = (() => {
       currency: valuta, note: note, venduto: false,
       operazioni: [{ data:dataAcq, tipo:'acquisto', quantita:quantita, prezzo:prezzo, cambio:cambio, comm:comm, tasse:tasse, rateo:rateo, costoTot:costoTot }],
     };
+    // Se stiamo modificando, rimuovi il vecchio titolo e ripristina saldo
+    if (_editingTitolo) {
+      data.investimenti.titoli = data.investimenti.titoli.filter(function(x){ return x.id !== _editingTitolo.id; });
+      if (_editingTitolo.costoTotale) {
+        data.conto.saldo += _editingTitolo.costoTotale;
+        data.conto.movimenti = data.conto.movimenti.filter(function(m){
+          return !(m.descrizione === 'Acquisto ' + _editingTitolo.nome && m.data === _editingTitolo.dataAcquisto);
+        });
+      }
+      titolo.id = _editingTitolo.id; // mantieni stesso ID
+      titolo.operazioni = _editingTitolo.operazioni || titolo.operazioni; // mantieni storico operazioni
+      _editingTitolo = null;
+    }
+
     data.investimenti.titoli.push(titolo);
 
     if (addebito) {
@@ -622,26 +636,30 @@ const Portfolio = (() => {
     }, 500);
   }
 
+  var _editingTitolo = null; // titolo in corso di modifica
+
   function editTitolo(id) {
     var t = data.investimenti.titoli.find(function(x){ return x.id===id; });
     if (!t) return;
     dettaglioId = id;
-    data.investimenti.titoli = data.investimenti.titoli.filter(function(x){ return x.id!==id; });
-    if (t.costoTotale) {
-      data.conto.saldo += t.costoTotale;
-      data.conto.movimenti = data.conto.movimenti.filter(function(m){ return !(m.descrizione==='Acquisto '+t.nome && m.data===t.dataAcquisto); });
-    }
+    _editingTitolo = JSON.parse(JSON.stringify(t)); // salva copia originale
+
     Modals.open('nuovoTitolo');
     setTimeout(function(){
       document.querySelectorAll('.tipo-card').forEach(function(c){ c.classList.toggle('active', c.dataset.tipo===t.tipo); });
       setTipoCard(document.querySelector('.tipo-card[data-tipo="'+t.tipo+'"]') || document.querySelector('.tipo-card'));
-      var fields = { titoloNome:t.nome, titoloTicker:t.ticker||'', titoloCodeZB:t.codeZB||'', titoloIsin:t.isin||'', titoloWkn:t.wkn||'', titoloNote:t.note||'', titoloDataAcquisto:t.dataAcquisto, titoloQuantita:t.quantita, titoloPrezzoAcquisto:t.prezzoAcquisto, titoloCambio:t.cambio||1, titoloCommissioni:t.commissioni||0, titoloTasse:t.tasse||0, titoloRateo:t.rateo||0 };
+      var fields = {
+        titoloNome:t.nome, titoloTicker:t.ticker||'', titoloCodeZB:t.codeZB||'',
+        titoloIsin:t.isin||'', titoloWkn:t.wkn||'', titoloNote:t.note||'',
+        titoloDataAcquisto:t.dataAcquisto, titoloQuantita:t.quantita,
+        titoloPrezzoAcquisto:t.prezzoAcquisto, titoloCambio:t.cambio||1,
+        titoloCommissioni:t.commissioni||0, titoloTasse:t.tasse||0, titoloRateo:t.rateo||0
+      };
       Object.keys(fields).forEach(function(k){ var el=$(k); if(el) el.value=fields[k]||''; });
       var v=$('titoloValuta'); if(v) v.value=t.valuta||'EUR';
       var m=$('titoloMercato'); if(m) m.value=t.mercato||'MIL';
       wizardGoTo(2); calcCostoCarico();
     }, 80);
-    renderConto();
   }
 
   function nuovoAcquisto(id) {
@@ -666,7 +684,16 @@ const Portfolio = (() => {
   function vendeTitoloById(id) { dettaglioId = id; vendeTitolo(); }
 
   // ---- Dettaglio ----
-  function getDettaglioId() { return dettaglioId; }
+  function getEditingTitolo() { return _editingTitolo; }
+
+  function restoreEditingTitolo() {
+    if (!_editingTitolo) return;
+    // Ripristina il titolo originale se non è già presente
+    var exists = data.investimenti.titoli.find(function(x){ return x.id === _editingTitolo.id; });
+    if (!exists) data.investimenti.titoli.push(_editingTitolo);
+    _editingTitolo = null;
+    renderInvestimenti();
+  }
 
   function apriDettaglio(id) {
     var t = data.investimenti.titoli.find(function(x){ return x.id===id; });
@@ -851,6 +878,7 @@ const Portfolio = (() => {
     openTitoloSheet, closeTitoloSheet,
     apriDettaglio, vendeTitolo, vendeTitoloById,
     setDetPeriod, getDettaglioId, deleteOperazione,
+    getEditingTitolo, restoreEditingTitolo,
     formatEur, formatDate,
   };
 
