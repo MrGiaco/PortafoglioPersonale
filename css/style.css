@@ -816,7 +816,50 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 .toggle-btn i { font-size: 15px; }
 .toggle-btn.active { border-color: var(--primary-mid); background: var(--primary-light); color: var(--primary-mid); }
 
-/* ---- Tipo strumento card ---- */
+/* ---- Wizard step indicator ---- */
+.wizard-step {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; position: relative; z-index: 1;
+}
+.wizard-circle {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: rgba(255,255,255,.5); transition: var(--transition);
+}
+.wizard-step.active .wizard-circle { background: #fff; border-color: #fff; color: var(--primary); }
+.wizard-step.done .wizard-circle { background: rgba(255,255,255,.25); border-color: rgba(255,255,255,.4); color: #fff; }
+.wizard-label {
+  font-size: 10px; font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: rgba(255,255,255,.4); margin-top: 4px; white-space: nowrap;
+  transition: var(--transition);
+}
+.wizard-step.active .wizard-label { color: #fff; }
+.wizard-step.done .wizard-label { color: rgba(255,255,255,.6); }
+.wizard-line {
+  height: 2px; background: rgba(255,255,255,.18);
+  flex: 1; margin-bottom: 14px;
+}
+.wizard-line.done { background: rgba(255,255,255,.4); }
+
+/* ---- Wizard content ---- */
+.wizard-content { display: none; flex-direction: column; gap: 0; }
+.wizard-content.active { display: flex; }
+
+/* ---- Wizard hint box ---- */
+.wizard-hint {
+  background: var(--primary-light); border-radius: 10px;
+  padding: 10px 12px; display: flex; gap: 8px; align-items: flex-start;
+  margin-top: 4px;
+}
+.wizard-hint i { color: var(--primary-mid); font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.wizard-hint span {
+  font-size: 12px; color: var(--primary-mid); font-weight: 500;
+  font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.5;
+}
 .tipo-grid {
   display: grid; grid-template-columns: repeat(5,1fr);
   gap: 6px; margin-bottom: 8px;
