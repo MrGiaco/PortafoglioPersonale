@@ -384,15 +384,21 @@ const Auth = (() => {
 document.addEventListener('DOMContentLoaded', () => {
   Auth.init();
 
-  // Rimuove il delay 300ms su mobile usando touchstart
+  // Su mobile usa touchstart per eliminare il delay 300ms
+  // Su desktop usa solo click per evitare doppio trigger
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
   function fastClick(el, fn) {
-    let moved = false;
-    el.addEventListener('touchstart', e => { moved = false; }, { passive: true });
-    el.addEventListener('touchmove',  () => { moved = true; },  { passive: true });
-    el.addEventListener('touchend',   e => {
-      if (!moved) { e.preventDefault(); fn(); }
-    });
-    el.addEventListener('click', fn); // fallback desktop
+    if (isTouchDevice) {
+      let moved = false;
+      el.addEventListener('touchstart', () => { moved = false; }, { passive: true });
+      el.addEventListener('touchmove',  () => { moved = true;  }, { passive: true });
+      el.addEventListener('touchend', e => {
+        if (!moved) { e.preventDefault(); fn(); }
+      });
+    } else {
+      el.addEventListener('click', fn);
+    }
   }
 
   // PIN login keys
