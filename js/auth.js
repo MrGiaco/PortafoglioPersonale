@@ -381,4 +381,39 @@ const Auth = (() => {
 
 })();
 
-document.addEventListener('DOMContentLoaded', () => Auth.init());
+document.addEventListener('DOMContentLoaded', () => {
+  Auth.init();
+
+  // Rimuove il delay 300ms su mobile usando touchstart
+  function fastClick(el, fn) {
+    let moved = false;
+    el.addEventListener('touchstart', e => { moved = false; }, { passive: true });
+    el.addEventListener('touchmove',  () => { moved = true; },  { passive: true });
+    el.addEventListener('touchend',   e => {
+      if (!moved) { e.preventDefault(); fn(); }
+    });
+    el.addEventListener('click', fn); // fallback desktop
+  }
+
+  // PIN login keys
+  document.querySelectorAll('#pinSection .pin-key').forEach(btn => {
+    const digit = btn.textContent.trim();
+    if (btn.classList.contains('pin-key--bio')) {
+      fastClick(btn, () => Auth.biometric());
+    } else if (btn.classList.contains('pin-key--del')) {
+      fastClick(btn, () => Auth.pinDelete());
+    } else if (digit && !isNaN(digit)) {
+      fastClick(btn, () => Auth.pinInput(digit));
+    }
+  });
+
+  // PIN setup keys
+  document.querySelectorAll('#pinSetup .pin-key').forEach(btn => {
+    const digit = btn.textContent.trim();
+    if (btn.classList.contains('pin-key--del')) {
+      fastClick(btn, () => Auth.setupDelete());
+    } else if (digit && !isNaN(digit)) {
+      fastClick(btn, () => Auth.setupInput(digit));
+    }
+  });
+});
