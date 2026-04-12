@@ -89,15 +89,303 @@ const Portfolio = (() => {
     return (nome || '').split(' ').slice(0,3).map(function(w){ return w[0]; }).join('').toUpperCase().slice(0,3);
   }
 
+  // =============================================
+  // SISTEMA CATEGORIE (statiche + custom dinamiche)
+  // =============================================
+
+  // Categorie built-in dell'app
+  var CATEGORIE_BUILTIN = {
+    stipendio:    { label:'Stipendio',         icon:'bi-briefcase-fill' },
+    investimento: { label:'Investimento',      icon:'bi-graph-up-arrow' },
+    affitto:      { label:'Affitto',           icon:'bi-house-fill' },
+    utenze:       { label:'Utenze',            icon:'bi-lightning-charge-fill' },
+    spesa:        { label:'Spesa alimentare',  icon:'bi-cart-fill' },
+    trasporti:    { label:'Trasporti',         icon:'bi-car-front-fill' },
+    salute:       { label:'Salute',            icon:'bi-heart-pulse-fill' },
+    svago:        { label:'Svago',             icon:'bi-controller' },
+    shopping:     { label:'Shopping',          icon:'bi-bag-fill' },
+    ristoranti:   { label:'Ristoranti',        icon:'bi-cup-hot-fill' },
+    viaggi:       { label:'Viaggi',            icon:'bi-airplane-fill' },
+    abbonamenti:  { label:'Abbonamenti',       icon:'bi-collection-fill' },
+    carburante:   { label:'Carburante',        icon:'bi-fuel-pump-fill' },
+    altro:        { label:'Altro',             icon:'bi-three-dots' },
+  };
+
+  // Mapping categorie banca → chiave app
+  var MAPPING_BANCA = {
+    'stipendi e pensioni':               'stipendio',
+    'investimenti, bdr e salvadanaio':   'investimento',
+    'disinvestimenti, bdr e salvadanaio':'investimento',
+    'interessi e cedole':                'investimento',
+    'affitto':                           'affitto',
+    'domiciliazioni e utenze':           'utenze',
+    'generi alimentari e supermercato':  'spesa',
+    'trasporti':                         'trasporti',
+    'prelievi':                          'trasporti',
+    'salute':                            'salute',
+    'tempo libero varie':                'svago',
+    'ristoranti e bar':                  'ristoranti',
+    'viaggi e vacanze':                  'viaggi',
+    'abbonamenti':                       'abbonamenti',
+    'carburanti':                        'carburante',
+    'hi-tech e informatica':             'hi_tech',
+    'cellulare':                         'cellulare',
+    'abbigliamento e accessori':         'abbigliamento',
+    'casa varie':                        'casa',
+    'polizze':                           'polizze',
+    'bonifici in uscita':                'bonifici_out',
+    'bonifici ricevuti':                 'bonifici_in',
+    'rimborsi spese e storni':           'rimborsi',
+    'imposte, bolli e commissioni':      'imposte',
+    'imposte sul reddito e tasse varie': 'imposte',
+    'addebito mia carta di credito':     'carta_addebito',
+    'giroconto in entrata':              'giroconto_in',
+    'valore insieme':                    'altro',
+    'altre uscite':                      'altro',
+    'entrate':                           'altro',
+  };
+
+  // Categorie custom predefinite (per banca, non presenti nelle builtin)
+  var CATEGORIE_CUSTOM_DEFAULT = {
+    hi_tech:        { label:'Hi-Tech & Informatica', icon:'bi-laptop-fill' },
+    cellulare:      { label:'Cellulare',             icon:'bi-phone-fill' },
+    abbigliamento:  { label:'Abbigliamento',         icon:'bi-bag-heart-fill' },
+    casa:           { label:'Casa',                  icon:'bi-tools' },
+    polizze:        { label:'Polizze',               icon:'bi-shield-fill-check' },
+    bonifici_out:   { label:'Bonifici in uscita',    icon:'bi-send-fill' },
+    bonifici_in:    { label:'Bonifici ricevuti',     icon:'bi-inbox-fill' },
+    rimborsi:       { label:'Rimborsi',              icon:'bi-arrow-counterclockwise' },
+    imposte:        { label:'Imposte e Tasse',       icon:'bi-bank2' },
+    carta_addebito: { label:'Addebito Carta',        icon:'bi-credit-card-fill' },
+    giroconto_in:   { label:'Giroconto',             icon:'bi-arrow-left-right' },
+  };
+
+  function getCategorieCustom() {
+    return data.impostazioni.categorie_custom || {};
+  }
+
+  function getCategoria(key) {
+    if (CATEGORIE_BUILTIN[key]) return CATEGORIE_BUILTIN[key];
+    var custom = getCategorieCustom();
+    if (custom[key]) return custom[key];
+    if (CATEGORIE_CUSTOM_DEFAULT[key]) return CATEGORIE_CUSTOM_DEFAULT[key];
+    return { label: key, icon: 'bi-three-dots' };
+  }
+
   function catLabel(cat) {
-    var m = { stipendio:'Stipendio', investimento:'Investimento', affitto:'Affitto', utenze:'Utenze', spesa:'Spesa', trasporti:'Trasporti', salute:'Salute', svago:'Svago', shopping:'Shopping', ristoranti:'Ristoranti', viaggi:'Viaggi', abbonamenti:'Abbonamenti', carburante:'Carburante', altro:'Altro' };
-    return m[cat] || cat || '—';
+    return getCategoria(cat).label || cat || '—';
   }
 
   function catIcon(cat) {
-    var m = { stipendio:'bi-briefcase-fill', investimento:'bi-graph-up-arrow', affitto:'bi-house-fill', utenze:'bi-lightning-charge-fill', spesa:'bi-cart-fill', trasporti:'bi-car-front-fill', salute:'bi-heart-pulse-fill', svago:'bi-controller', shopping:'bi-bag-fill', ristoranti:'bi-cup-hot-fill', viaggi:'bi-airplane-fill', abbonamenti:'bi-collection-fill', carburante:'bi-fuel-pump-fill', altro:'bi-three-dots' };
-    return m[cat] || 'bi-arrow-left-right';
+    return getCategoria(cat).icon || 'bi-three-dots';
   }
+
+  // Aggiunge una categoria custom se non esiste già
+  function addCategoriaCustom(key, label, icon) {
+    if (CATEGORIE_BUILTIN[key] || CATEGORIE_CUSTOM_DEFAULT[key]) return false; // già esiste
+    if (!data.impostazioni.categorie_custom) data.impostazioni.categorie_custom = {};
+    if (data.impostazioni.categorie_custom[key]) return false; // già aggiunta
+    data.impostazioni.categorie_custom[key] = { label: label, icon: icon || 'bi-tag-fill' };
+    return true;
+  }
+
+  // Popola dinamicamente le select di categoria nei modal
+  function populateCategorieSelect(selectId, defaultKey) {
+    var sel = document.getElementById(selectId);
+    if (!sel) return;
+    var tutte = Object.assign({}, CATEGORIE_BUILTIN, CATEGORIE_CUSTOM_DEFAULT, getCategorieCustom());
+    sel.innerHTML = Object.keys(tutte).map(function(k) {
+      var isSelected = k === (defaultKey || 'altro') ? ' selected' : '';
+      return '<option value="' + k + '"' + isSelected + '>' + tutte[k].label + '</option>';
+    }).join('');
+    // Aggiorna icona visiva affiancata alla select
+    _syncCatIcon(sel, tutte);
+    sel.onchange = function() { _syncCatIcon(sel, tutte); };
+  }
+
+  function _syncCatIcon(sel, tutte) {
+    // Cerca o crea elemento icona accanto alla select
+    var wrapper = sel.parentElement;
+    if (!wrapper) return;
+    var iconEl = wrapper.querySelector('.cat-live-icon');
+    if (!iconEl) {
+      iconEl = document.createElement('div');
+      iconEl.className = 'cat-live-icon';
+      iconEl.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
+        'width:34px;height:34px;border-radius:9px;background:var(--primary-light);color:var(--primary-mid);' +
+        'font-size:16px;flex-shrink:0;position:absolute;right:36px;top:50%;transform:translateY(-50%);pointer-events:none;';
+      // Wrapper deve essere relative
+      if (getComputedStyle(wrapper).position === 'static') wrapper.style.position = 'relative';
+      wrapper.appendChild(iconEl);
+    }
+    var cat = tutte[sel.value];
+    var icon = cat ? cat.icon : 'bi-three-dots';
+    iconEl.innerHTML = '<i class="bi ' + icon + '"></i>';
+  }
+
+  // =============================================
+  // IMPORT DA FILE BANCA
+  // =============================================
+
+  async function importDaBanca() {
+    return new Promise(function(resolve, reject) {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.xlsx,.xls';
+      input.onchange = async function(e) {
+        var file = e.target.files[0];
+        if (!file) { reject('Nessun file'); return; }
+        try {
+          var result = await _parseBancaFile(file);
+          resolve(result);
+        } catch(err) {
+          App.showToast('Errore lettura file banca: ' + err.message, 'error');
+          reject(err);
+        }
+      };
+      input.click();
+    });
+  }
+
+  async function _parseBancaFile(file) {
+    // Legge il file XLSX con SheetJS (CDN già disponibile se incluso, altrimenti fallback CSV)
+    var buffer = await file.arrayBuffer();
+
+    if (typeof XLSX === 'undefined') {
+      throw new Error('Libreria XLSX non caricata. Aggiungila nell\'index.html.');
+    }
+
+    var wb   = XLSX.read(buffer, { type:'array', cellDates:true });
+    var ws   = wb.Sheets[wb.SheetNames[0]];
+    var rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+
+    // Trova la riga header (contiene "Data" e "Operazione")
+    var headerIdx = -1;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r && r[0] && String(r[0]).trim() === 'Data' && r[1] && String(r[1]).trim() === 'Operazione') {
+        headerIdx = i;
+        break;
+      }
+    }
+    if (headerIdx === -1) throw new Error('Formato file non riconosciuto (header non trovato)');
+
+    var dataRows = rows.slice(headerIdx + 1).filter(function(r) {
+      return r && r[0] && r[0] !== 'Data'; // escludi righe vuote e header ripetuto
+    });
+
+    var importatiConto = 0, importatiCarta = 0, duplicati = 0, catNuove = [];
+    var oggi = new Date().toISOString().slice(0,10);
+
+    dataRows.forEach(function(r) {
+      // Colonne: 0=Data, 1=Operazione, 2=Dettagli, 3=Conto, 4=Contabilizzazione, 5=Categoria, 6=Valuta, 7=Importo
+      var dataCella = r[0];
+      if (!dataCella) return;
+
+      var dataStr;
+      if (dataCella instanceof Date) {
+        dataStr = dataCella.toISOString().slice(0,10);
+      } else {
+        // Prova parsing stringa
+        var d = new Date(String(dataCella));
+        if (isNaN(d.getTime())) return;
+        dataStr = d.toISOString().slice(0,10);
+      }
+
+      var operazione    = String(r[1] || '').trim();
+      var dettagli      = String(r[2] || '').trim();
+      var contoOCarta   = String(r[3] || '').trim().toLowerCase();
+      var catBanca      = String(r[5] || '').trim().toLowerCase();
+      var valuta        = String(r[6] || 'EUR').trim();
+      var importoRaw    = r[7];
+      var importo       = importoRaw != null ? parseFloat(String(importoRaw).replace(',','.')) : null;
+
+      // Descrizione: usa operazione (più leggibile del dettaglio lungo)
+      var desc = operazione || dettagli || 'Movimento';
+
+      // Mappa categoria banca → chiave app
+      var catKey = MAPPING_BANCA[catBanca] || null;
+
+      if (!catKey) {
+        // Categoria non mappata: creala come custom
+        catKey = catBanca.replace(/[^a-z0-9]/g, '_').slice(0, 30) || 'altro';
+        // Scegli icona ragionata
+        var iconMap = {
+          'spesa':'bi-cart-fill', 'aliment':'bi-cart-fill',
+          'ristor':'bi-cup-hot-fill', 'bar':'bi-cup-hot-fill',
+          'viagg':'bi-airplane-fill', 'hotel':'bi-building-fill',
+          'salut':'bi-heart-pulse-fill', 'farm':'bi-capsule-pill',
+          'sport':'bi-trophy-fill', 'svago':'bi-controller',
+          'tech':'bi-laptop-fill', 'infor':'bi-laptop-fill',
+          'abbig':'bi-bag-heart-fill', 'moda':'bi-bag-heart-fill',
+          'assic':'bi-shield-fill-check', 'poliz':'bi-shield-fill-check',
+          'tassa':'bi-bank2', 'impost':'bi-bank2',
+          'carb':'bi-fuel-pump-fill', 'benzin':'bi-fuel-pump-fill',
+          'bonif':'bi-send-fill', 'trasfer':'bi-arrow-left-right',
+        };
+        var autoIcon = 'bi-tag-fill';
+        Object.keys(iconMap).forEach(function(k) {
+          if (catBanca.indexOf(k) !== -1) autoIcon = iconMap[k];
+        });
+        var catLabelNuova = r[5] ? String(r[5]).trim() : catKey;
+        var aggiunta = addCategoriaCustom(catKey, catLabelNuova, autoIcon);
+        if (aggiunta) catNuove.push(catLabelNuova);
+      }
+
+      var isCartaDiCredito = contoOCarta.indexOf('carta') !== -1;
+
+      if (isCartaDiCredito) {
+        // → Carta di credito
+        var importoCarta = importo != null ? Math.abs(importo) : 0;
+        // Controlla duplicato (stessa data + descrizione)
+        var isDup = data.carta.spese.some(function(s) {
+          return s.data === dataStr && s.descrizione === desc;
+        });
+        if (isDup) { duplicati++; return; }
+        data.carta.spese.push({
+          id: uid(), data: dataStr, descrizione: desc,
+          importo: importoCarta, categoria: catKey,
+          addebitoData: '', note: dettagli !== desc ? dettagli : '',
+        });
+        importatiCarta++;
+      } else {
+        // → Conto corrente
+        // Determina tipo entrata/uscita dal segno importo o dalla categoria
+        var tipo;
+        if (importo != null) {
+          tipo = importo >= 0 ? 'entrata' : 'uscita';
+        } else {
+          // Senza importo: deduci dal tipo categoria
+          var uscitaCat = ['bonifici_out','utenze','imposte','polizze','affitto','carta_addebito','carburante'];
+          var entrataCat = ['stipendio','investimento','bonifici_in','rimborsi','giroconto_in','interessi e cedole'];
+          if (entrataCat.indexOf(catKey) !== -1) tipo = 'entrata';
+          else tipo = 'uscita';
+        }
+        var importoConto = importo != null ? Math.abs(importo) : 0;
+        // Controlla duplicato
+        var isDupC = data.conto.movimenti.some(function(m) {
+          return m.data === dataStr && m.descrizione === desc;
+        });
+        if (isDupC) { duplicati++; return; }
+        var mov = {
+          id: uid(), data: dataStr, tipo: tipo, descrizione: desc,
+          importo: importoConto, categoria: catKey,
+          note: dettagli !== desc ? dettagli.slice(0, 120) : '',
+        };
+        data.conto.movimenti.push(mov);
+        if (importoConto > 0) {
+          data.conto.saldo = tipo === 'entrata'
+            ? data.conto.saldo + importoConto
+            : data.conto.saldo - importoConto;
+        }
+        importatiConto++;
+      }
+    });
+
+    return { importatiConto, importatiCarta, duplicati, catNuove };
+  }
+
+
 
   function emptyState(icon, msg) {
     return '<div class="empty-state"><i class="bi ' + icon + '"></i><p>' + msg + '</p></div>';
@@ -270,8 +558,8 @@ const Portfolio = (() => {
       if ($('movData'))        $('movData').value        = mov.data;
       if ($('movDescrizione')) $('movDescrizione').value = mov.descrizione;
       if ($('movImporto'))     $('movImporto').value     = mov.importo;
-      if ($('movCategoria'))   $('movCategoria').value   = mov.categoria;
       if ($('movNote'))        $('movNote').value        = mov.note || '';
+      populateCategorieSelect('movCategoria', mov.categoria);
       setMovTipo(mov.tipo);
     }, 50);
     renderConto(); renderDashboard();
@@ -340,8 +628,8 @@ const Portfolio = (() => {
       if ($('cartaData'))        $('cartaData').value        = spesa.data;
       if ($('cartaDescrizione')) $('cartaDescrizione').value = spesa.descrizione;
       if ($('cartaImporto'))     $('cartaImporto').value     = spesa.importo;
-      if ($('cartaCategoria'))   $('cartaCategoria').value   = spesa.categoria;
       if ($('cartaAddebito'))    $('cartaAddebito').value    = spesa.addebitoData || '';
+      populateCategorieSelect('cartaCategoria', spesa.categoria);
     }, 50);
     renderCarta();
   }
@@ -686,6 +974,8 @@ const Portfolio = (() => {
   // ---- Dettaglio ----
   function getEditingTitolo() { return _editingTitolo; }
 
+  function getDettaglioId() { return dettaglioId; }
+
   function restoreEditingTitolo() {
     if (!_editingTitolo) return;
     // Ripristina il titolo originale se non è già presente
@@ -775,10 +1065,15 @@ const Portfolio = (() => {
     }).join('');
   }
 
-  function deleteOperazione(titoloId, opIdx) {
+  async function deleteOperazione(titoloId, opIdx) {
     var t = data.investimenti.titoli.find(function(x){ return x.id===titoloId; });
     if (!t || !t.operazioni[opIdx]) return;
-    if (!confirm('Eliminare questa operazione?')) return;
+    var ok = await Dialog.confirmDanger(
+      '<i class="bi bi-trash3-fill" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Elimina operazione</strong><br><span style="font-size:13px;color:var(--text-muted)">Questa azione non può essere annullata.</span>',
+      'Elimina', 'Annulla'
+    );
+    if (!ok) return;
     t.operazioni.splice(opIdx,1);
     renderDetOperazioni(t); saveAndSync();
     App.showToast('Operazione eliminata','info');
@@ -880,6 +1175,8 @@ const Portfolio = (() => {
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo,
     formatEur, formatDate,
+    populateCategorieSelect, importDaBanca,
+    catLabel, catIcon, CATEGORIE_BUILTIN, CATEGORIE_CUSTOM_DEFAULT,
   };
 
 })();
