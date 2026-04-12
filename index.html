@@ -446,32 +446,45 @@
   <!-- Nuovo Movimento Conto -->
   <div id="modal-nuovoMovimento" class="modal hidden">
     <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Nuovo Movimento</h3>
-      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    <div class="modal-hero">
+      <div class="modal-hero-top">
+        <div class="modal-hero-left">
+          <div class="modal-hero-icon" id="movHeroIcon"><i class="bi bi-arrow-down-circle-fill"></i></div>
+          <div>
+            <div class="modal-hero-title" id="movHeroTitle">Nuova Entrata</div>
+            <div class="modal-hero-sub">Registra un movimento sul conto corrente</div>
+          </div>
+        </div>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+      </div>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label>Tipo</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" id="movTipoEntrata" onclick="Portfolio.setMovTipo('entrata')"><i class="bi bi-arrow-down-circle"></i> Entrata</button>
-          <button class="toggle-btn" id="movTipoUscita" onclick="Portfolio.setMovTipo('uscita')"><i class="bi bi-arrow-up-circle"></i> Uscita</button>
-        </div>
+      <div class="modal-sec">Tipo di movimento</div>
+      <div class="toggle-group" style="margin-bottom:14px">
+        <button class="toggle-btn active" id="movTipoEntrata" onclick="Portfolio.setMovTipo('entrata')">
+          <i class="bi bi-arrow-down-circle-fill"></i> Entrata
+        </button>
+        <button class="toggle-btn" id="movTipoUscita" onclick="Portfolio.setMovTipo('uscita')">
+          <i class="bi bi-arrow-up-circle-fill"></i> Uscita
+        </button>
       </div>
-      <div class="form-group">
+
+      <div class="modal-sec">Dettagli</div>
+      <div class="form-group" style="margin-bottom:8px">
         <label>Importo (€)</label>
-        <input type="number" id="movImporto" class="form-control" placeholder="0,00" min="0" step="0.01" style="font-size:20px;font-weight:700" />
+        <input type="number" id="movImporto" class="form-control" placeholder="0,00" min="0" step="0.01"
+          style="font-size:22px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif" />
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom:8px">
         <label>Descrizione</label>
-        <input type="text" id="movDescrizione" class="form-control" placeholder="Es. Stipendio, Affitto..." />
+        <input type="text" id="movDescrizione" class="form-control" placeholder="Es. Stipendio, Affitto, Bolletta..." />
       </div>
-      <div style="display:flex;gap:10px">
-        <div class="form-group" style="flex:1">
+      <div class="modal-row modal-r2">
+        <div class="form-group">
           <label>Data</label>
           <input type="date" id="movData" class="form-control" />
         </div>
-        <div class="form-group" style="flex:1">
+        <div class="form-group">
           <label>Categoria</label>
           <select id="movCategoria" class="form-control">
             <option value="stipendio">Stipendio</option>
@@ -486,39 +499,51 @@
           </select>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin-top:2px">
         <label>Note</label>
         <textarea id="movNote" class="form-control" rows="2" placeholder="Opzionale..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-      <button class="btn btn--primary" onclick="Portfolio.saveMovimento()"><i class="bi bi-check-lg"></i> Salva</button>
+      <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveMovimento()">
+        <i class="bi bi-check-lg"></i> Salva movimento
+      </button>
     </div>
   </div>
 
   <!-- Nuova Spesa Carta -->
   <div id="modal-nuovaSpesaCarta" class="modal hidden">
     <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Nuova Spesa Carta</h3>
-      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    <div class="modal-hero">
+      <div class="modal-hero-top">
+        <div class="modal-hero-left">
+          <div class="modal-hero-icon"><i class="bi bi-credit-card-fill"></i></div>
+          <div>
+            <div class="modal-hero-title">Nuova Spesa Carta</div>
+            <div class="modal-hero-sub">Registra una spesa sulla carta di credito</div>
+          </div>
+        </div>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+      </div>
     </div>
     <div class="modal-body">
-      <div class="form-group">
+      <div class="modal-sec">Dettagli spesa</div>
+      <div class="form-group" style="margin-bottom:8px">
         <label>Importo (€)</label>
-        <input type="number" id="cartaImporto" class="form-control" placeholder="0,00" min="0" step="0.01" style="font-size:20px;font-weight:700" />
+        <input type="number" id="cartaImporto" class="form-control" placeholder="0,00" min="0" step="0.01"
+          style="font-size:22px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif" />
       </div>
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom:8px">
         <label>Descrizione</label>
-        <input type="text" id="cartaDescrizione" class="form-control" placeholder="Es. Amazon, Ristorante..." />
+        <input type="text" id="cartaDescrizione" class="form-control" placeholder="Es. Amazon, Ristorante, Carburante..." />
       </div>
-      <div style="display:flex;gap:10px">
-        <div class="form-group" style="flex:1">
+      <div class="modal-row modal-r2">
+        <div class="form-group">
           <label>Data spesa</label>
           <input type="date" id="cartaData" class="form-control" />
         </div>
-        <div class="form-group" style="flex:1">
+        <div class="form-group">
           <label>Categoria</label>
           <select id="cartaCategoria" class="form-control">
             <option value="shopping">Shopping</option>
@@ -531,14 +556,24 @@
           </select>
         </div>
       </div>
-      <div class="form-group">
-        <label>Data addebito su conto</label>
+
+      <div class="modal-sec">Addebito</div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label>Data addebito su conto corrente</label>
         <input type="date" id="cartaAddebito" class="form-control" />
+      </div>
+      <div style="background:var(--primary-light);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;margin-top:2px">
+        <i class="bi bi-info-circle-fill" style="color:var(--primary-mid);font-size:16px;flex-shrink:0"></i>
+        <span style="font-size:12px;color:var(--primary-mid);font-weight:500;font-family:'Plus Jakarta Sans',sans-serif">
+          La spesa sarà addebitata automaticamente sul conto alla data indicata
+        </span>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-      <button class="btn btn--primary" onclick="Portfolio.saveSpesaCarta()"><i class="bi bi-check-lg"></i> Salva</button>
+      <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveSpesaCarta()">
+        <i class="bi bi-check-lg"></i> Salva spesa
+      </button>
     </div>
   </div>
 
@@ -728,36 +763,73 @@
   <!-- Dettaglio Titolo -->
   <div id="modal-dettaglioTitolo" class="modal hidden">
     <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 id="detTitoloNome">Dettaglio</h3>
-      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    <div class="modal-hero">
+      <div class="modal-hero-top">
+        <div class="modal-hero-left">
+          <div class="modal-hero-icon"><i class="bi bi-bar-chart-fill"></i></div>
+          <div>
+            <div class="modal-hero-title" id="detTitoloNome">Dettaglio</div>
+            <div class="modal-hero-sub">Riepilogo posizione e operazioni</div>
+          </div>
+        </div>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+      </div>
     </div>
     <div class="modal-body" id="detTitoloBody"></div>
     <div class="modal-footer">
       <button class="btn btn--danger" onclick="Portfolio.vendeTitolo()"><i class="bi bi-cash-coin"></i> Vendi</button>
-      <button class="btn btn--ghost" onclick="Modals.close()">Chiudi</button>
+      <button class="btn btn--ghost" style="flex:1;justify-content:center" onclick="Modals.close()">Chiudi</button>
     </div>
   </div>
 
   <!-- Impostazioni Carta -->
   <div id="modal-impostazioniCarta" class="modal hidden">
     <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Configura Carta</h3>
-      <button onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+    <div class="modal-hero">
+      <div class="modal-hero-top">
+        <div class="modal-hero-left">
+          <div class="modal-hero-icon"><i class="bi bi-credit-card-2-front-fill"></i></div>
+          <div>
+            <div class="modal-hero-title">Configura Carta</div>
+            <div class="modal-hero-sub">Inserisci i dati della tua carta di credito</div>
+          </div>
+        </div>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+      </div>
     </div>
     <div class="modal-body">
-      <div class="form-group"><label>Titolare</label><input type="text" id="ccHolderInput" class="form-control" placeholder="Nome Cognome" /></div>
-      <div class="form-group"><label>Ultime 4 cifre</label><input type="text" id="ccLastInput" class="form-control" placeholder="1234" maxlength="4" /></div>
-      <div style="display:flex;gap:10px">
-        <div class="form-group" style="flex:1"><label>Scadenza (MM/AA)</label><input type="text" id="ccExpiryInput" class="form-control" placeholder="12/27" maxlength="5" /></div>
-        <div class="form-group" style="flex:1"><label>Plafond (€)</label><input type="number" id="ccPlafondInput" class="form-control" placeholder="5000" /></div>
+      <div class="modal-sec">Dati carta</div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label>Titolare</label>
+        <input type="text" id="ccHolderInput" class="form-control" placeholder="Nome Cognome" />
       </div>
-      <div class="form-group"><label>Giorno addebito mensile</label><input type="number" id="ccGiornoAddebito" class="form-control" placeholder="15" min="1" max="31" /></div>
+      <div class="modal-row modal-r2">
+        <div class="form-group">
+          <label>Ultime 4 cifre</label>
+          <input type="text" id="ccLastInput" class="form-control mono" placeholder="1234" maxlength="4" />
+        </div>
+        <div class="form-group">
+          <label>Scadenza (MM/AA)</label>
+          <input type="text" id="ccExpiryInput" class="form-control mono" placeholder="12/27" maxlength="5" />
+        </div>
+      </div>
+      <div class="modal-sec">Impostazioni</div>
+      <div class="modal-row modal-r2">
+        <div class="form-group">
+          <label>Plafond (€)</label>
+          <input type="number" id="ccPlafondInput" class="form-control" placeholder="5000" />
+        </div>
+        <div class="form-group">
+          <label>Giorno addebito mensile</label>
+          <input type="number" id="ccGiornoAddebito" class="form-control" placeholder="15" min="1" max="31" />
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
-      <button class="btn btn--primary" onclick="Portfolio.saveImpostazioniCarta()"><i class="bi bi-check-lg"></i> Salva</button>
+      <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveImpostazioniCarta()">
+        <i class="bi bi-check-lg"></i> Salva
+      </button>
     </div>
   </div>
 
