@@ -7,7 +7,7 @@ const Drive = (() => {
 
   // ---- Configurazione ----
   // SOSTITUISCI con il tuo Client ID Google
-  const CLIENT_ID   = '311853633073-deskq7q9sl3bmdl5k4uh7er20rokeqhn.apps.googleusercontent.com';
+  const CLIENT_ID   = 'INSERISCI_QUI_IL_TUO_CLIENT_ID.apps.googleusercontent.com';
   const SCOPE       = 'https://www.googleapis.com/auth/drive.file';
   const FILE_NAME   = 'portafoglio_personale_data.enc';
   const FOLDER_NAME = 'PortafoglioPersonale';
@@ -373,32 +373,10 @@ const Drive = (() => {
   // =============================================
 
   async function tryAutoConnect() {
-    // Se non c'è Client ID configurato, salta
-    if (CLIENT_ID.startsWith('INSERISCI')) return;
-
-    // Prova token silenzioso (senza prompt)
-    if (!window.google || !google.accounts) return;
-
-    return new Promise((resolve) => {
-      const client = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPE,
-        prompt: '',
-        callback: async (resp) => {
-          if (resp.error || !resp.access_token) { resolve(null); return; }
-          accessToken = resp.access_token;
-          updateDriveStatus(true);
-          try {
-            await initEncKey();
-            await ensureFolder();
-            await load();
-          } catch (e) { console.warn('Auto-connect Drive:', e); }
-          resolve(accessToken);
-        },
-        error_callback: () => resolve(null),
-      });
-      client.requestAccessToken({ prompt: '' });
-    });
+    // Connessione automatica disabilitata per evitare errori CORS con popup OAuth.
+    // L'utente si connette manualmente da Impostazioni → Connetti Drive.
+    // Carica comunque i dati locali se presenti.
+    return null;
   }
 
   // ---- API pubblica ----
