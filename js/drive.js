@@ -310,13 +310,14 @@ const Drive = (() => {
   // =============================================
 
   async function tryAutoConnect() {
-    if (!window.google || !google.accounts) return null;
+    if (!window.google || !google.accounts) {
+      loadLocal();
+      return null;
+    }
 
-    // Carica prima i dati locali immediatamente
+    // Carica dati locali immediatamente come fallback
     loadLocal();
 
-    // Tenta token silenzioso — se l'utente ha già autorizzato
-    // non aprirà nessun popup
     return new Promise((resolve) => {
       try {
         const client = google.accounts.oauth2.initTokenClient({
@@ -325,7 +326,6 @@ const Drive = (() => {
           prompt:         'none',
           callback: async (resp) => {
             if (resp.error || !resp.access_token) {
-              // Nessun token silenzioso disponibile — ok, dati locali già caricati
               resolve(null);
               return;
             }
@@ -342,7 +342,6 @@ const Drive = (() => {
           },
           error_callback: () => resolve(null),
         });
-        // hint: evita il popup interattivo
         client.requestAccessToken({ prompt: 'none' });
       } catch (e) {
         resolve(null);
