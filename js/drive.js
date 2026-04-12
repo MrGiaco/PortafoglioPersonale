@@ -5,18 +5,15 @@
 
 const Drive = (() => {
 
-  // ---- Configurazione ----
-  // SOSTITUISCI con il tuo Client ID Google
-  const CLIENT_ID   = 'const CLIENT_ID = '311853633073-deskq7q9sl3bmdl5k4uh7er20rokeqhn.apps.googleusercontent.com';
+  const CLIENT_ID   = '311853633073-deskq7q9sl3bmdl5k4uh7er20rokeqhn.apps.googleusercontent.com';
   const SCOPE       = 'https://www.googleapis.com/auth/drive.file';
   const FILE_NAME   = 'portafoglio_personale_data.enc';
   const FOLDER_NAME = 'PortafoglioPersonale';
 
-  // ---- Stato ----
-  let accessToken  = null;
-  let fileId       = null;
-  let folderId     = null;
-  let encKey       = null;   // CryptoKey AES-256-GCM
+  let accessToken = null;
+  let fileId      = null;
+  let folderId    = null;
+  let encKey      = null;
 
   const $ = id => document.getElementById(id);
 
@@ -24,7 +21,6 @@ const Drive = (() => {
   // CIFRATURA AES-256-GCM
   // =============================================
 
-  // Deriva una chiave AES dalla passphrase (PIN hash)
   async function deriveKey(passphrase) {
     const enc  = new TextEncoder();
     const salt = enc.encode('PortafoglioPersonale_salt_v1');
@@ -45,7 +41,6 @@ const Drive = (() => {
     const iv        = crypto.getRandomValues(new Uint8Array(12));
     const encoded   = new TextEncoder().encode(JSON.stringify(data));
     const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, encKey, encoded);
-    // Combina IV + dati cifrati → base64
     const combined  = new Uint8Array(iv.length + encrypted.byteLength);
     combined.set(iv, 0);
     combined.set(new Uint8Array(encrypted), iv.length);
@@ -61,7 +56,6 @@ const Drive = (() => {
     return JSON.parse(new TextDecoder().decode(decrypted));
   }
 
-  // Inizializza la chiave di cifratura dal PIN hash salvato
   async function initEncKey() {
     const pinHash = localStorage.getItem('pp_pin_hash');
     if (!pinHash) throw new Error('PIN non impostato');
@@ -91,8 +85,6 @@ const Drive = (() => {
           accessToken = resp.access_token;
           updateDriveStatus(true);
           App.showToast('Google Drive connesso!', 'success');
-
-          // Inizializza chiave e carica dati
           try {
             await initEncKey();
             await ensureFolder();
@@ -115,19 +107,14 @@ const Drive = (() => {
   function updateDriveStatus(connected) {
     const badge = $('driveStatus');
     if (!badge) return;
-    if (connected) {
-      badge.textContent = 'Connesso';
-      badge.className = 'status-badge status-badge--on';
-    } else {
-      badge.textContent = 'Non connesso';
-      badge.className = 'status-badge status-badge--off';
-    }
+    badge.textContent = connected ? 'Connesso' : 'Non connesso';
+    badge.className   = connected ? 'status-badge status-badge--on' : 'status-badge status-badge--off';
   }
 
   function isConnected() { return !!accessToken; }
 
   // =============================================
-  // GESTIONE CARTELLA E FILE SU DRIVE
+  // CARTELLA E FILE SU DRIVE
   // =============================================
 
   async function driveRequest(url, options = {}) {
@@ -136,7 +123,7 @@ const Drive = (() => {
       ...options,
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+        'Content-Type':  'application/json',
         ...(options.headers || {}),
       }
     });
@@ -150,43 +137,32 @@ const Drive = (() => {
   }
 
   async function ensureFolder() {
-    // Cerca la cartella PortafoglioPersonale
-    const res = await driveRequest(
+    const res  = await driveRequest(
       `https://www.googleapis.com/drive/v3/files?q=name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`
     );
     const data = await res.json();
     if (data.files && data.files.length > 0) {
       folderId = data.files[0].id;
     } else {
-      // Crea la cartella
-      const create = await driveRequest(
-        'https://www.googleapis.com/drive/v3/files',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            name: FOLDER_NAME,
-            mimeType: 'application/vnd.google-apps.folder',
-          })
-        }
-      );
-      const folder = await create.json();
-      folderId = folder.id;
+      const create = await driveRequest('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        body: JSON.stringify({ name: FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
+      });
+      folderId = (await create.json()).id;
     }
   }
 
   async function ensureFile() {
     if (!folderId) await ensureFolder();
-
-    // Cerca il file dati
-    const res = await driveRequest(
+    const res  = await driveRequest(
       `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and '${folderId}' in parents and trashed=false&fields=files(id,name)`
     );
     const data = await res.json();
     if (data.files && data.files.length > 0) {
       fileId = data.files[0].id;
-      return true; // file esistente
+      return true;
     }
-    return false; // file non esiste
+    return false;
   }
 
   // =============================================
@@ -194,52 +170,30 @@ const Drive = (() => {
   // =============================================
 
   async function save(appData) {
-    if (!isConnected()) {
-      // Salvataggio locale come fallback
-      saveLocal(appData);
-      return;
-    }
+    if (!isConnected()) { saveLocal(appData); return; }
 
     try {
       App.showLoading(true);
       await initEncKey();
       const encrypted = await encrypt(appData);
-      const blob = new Blob([encrypted], { type: 'text/plain' });
+      const blob      = new Blob([encrypted], { type: 'text/plain' });
+      const exists    = await ensureFile();
 
-      const exists = await ensureFile();
-
-      let url, method;
-      if (exists && fileId) {
-        url    = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
-        method = 'PATCH';
-      } else {
-        // Crea il file con metadati
-        const meta = await driveRequest(
-          'https://www.googleapis.com/drive/v3/files',
-          {
-            method: 'POST',
-            body: JSON.stringify({
-              name: FILE_NAME,
-              parents: [folderId],
-            })
-          }
-        );
-        const f = await meta.json();
-        fileId = f.id;
-        url    = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
-        method = 'PATCH';
+      if (!exists) {
+        const meta = await driveRequest('https://www.googleapis.com/drive/v3/files', {
+          method: 'POST',
+          body: JSON.stringify({ name: FILE_NAME, parents: [folderId] })
+        });
+        fileId = (await meta.json()).id;
       }
 
-      await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'text/plain',
-        },
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'text/plain' },
         body: blob,
       });
 
-      saveLocal(appData); // backup locale
+      saveLocal(appData);
       App.showToast('Dati salvati su Drive', 'success');
     } catch (err) {
       console.error('Drive save error:', err);
@@ -255,29 +209,20 @@ const Drive = (() => {
   // =============================================
 
   async function load() {
-    if (!isConnected()) {
-      return loadLocal();
-    }
+    if (!isConnected()) return loadLocal();
 
     try {
       App.showLoading(true);
       await initEncKey();
       const exists = await ensureFile();
+      if (!exists || !fileId) return loadLocal();
 
-      if (!exists || !fileId) {
-        // Nessun file su Drive: usa dati locali se presenti
-        return loadLocal();
-      }
-
-      const res = await driveRequest(
-        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`
-      );
+      const res       = await driveRequest(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
       const encrypted = await res.text();
-
       if (!encrypted || encrypted.trim() === '') return loadLocal();
 
       const data = await decrypt(encrypted);
-      saveLocal(data); // sincronizza locale
+      saveLocal(data);
       if (typeof Portfolio !== 'undefined') Portfolio.loadData(data);
       App.showToast('Dati caricati da Drive', 'success');
       return data;
@@ -291,17 +236,14 @@ const Drive = (() => {
   }
 
   // =============================================
-  // STORAGE LOCALE (fallback / cache)
+  // STORAGE LOCALE
   // =============================================
 
   const LOCAL_KEY = 'pp_data_local';
 
   function saveLocal(data) {
-    try {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.warn('localStorage pieno:', e);
-    }
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); }
+    catch (e) { console.warn('localStorage pieno:', e); }
   }
 
   function loadLocal() {
@@ -311,9 +253,7 @@ const Drive = (() => {
       const data = JSON.parse(raw);
       if (typeof Portfolio !== 'undefined') Portfolio.loadData(data);
       return data;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
 
   // =============================================
@@ -325,17 +265,15 @@ const Drive = (() => {
       App.showToast('Connetti prima Google Drive nelle impostazioni', 'warning');
       return;
     }
-    const data = Portfolio.getData();
-    await save(data);
+    await save(Portfolio.getData());
   }
 
   // =============================================
-  // EXPORT / IMPORT BACKUP (JSON locale)
+  // EXPORT / IMPORT BACKUP
   // =============================================
 
   function exportBackup(data) {
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
@@ -346,15 +284,14 @@ const Drive = (() => {
 
   function importBackup() {
     return new Promise((resolve, reject) => {
-      const input = document.createElement('input');
-      input.type  = 'file';
-      input.accept = '.json';
+      const input    = document.createElement('input');
+      input.type     = 'file';
+      input.accept   = '.json';
       input.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) { reject('Nessun file'); return; }
         try {
-          const text = await file.text();
-          const data = JSON.parse(text);
+          const data = JSON.parse(await file.text());
           saveLocal(data);
           if (typeof Portfolio !== 'undefined') Portfolio.loadData(data);
           App.showToast('Backup importato con successo', 'success');
@@ -369,21 +306,26 @@ const Drive = (() => {
   }
 
   // =============================================
-  // AUTO-CONNECT al caricamento
+  // AUTO-CONNECT (silenzioso, senza popup)
   // =============================================
 
   async function tryAutoConnect() {
-    if (CLIENT_ID.startsWith('INSERISCI')) return null;
     if (!window.google || !google.accounts) return null;
 
+    // Carica prima i dati locali immediatamente
+    loadLocal();
+
+    // Tenta token silenzioso — se l'utente ha già autorizzato
+    // non aprirà nessun popup
     return new Promise((resolve) => {
       try {
         const client = google.accounts.oauth2.initTokenClient({
-          client_id: CLIENT_ID,
-          scope: SCOPE,
-          prompt: 'none',
+          client_id:      CLIENT_ID,
+          scope:          SCOPE,
+          prompt:         'none',
           callback: async (resp) => {
             if (resp.error || !resp.access_token) {
+              // Nessun token silenzioso disponibile — ok, dati locali già caricati
               resolve(null);
               return;
             }
@@ -393,7 +335,6 @@ const Drive = (() => {
               await initEncKey();
               await ensureFolder();
               await load();
-              App.showToast('Drive sincronizzato', 'success');
             } catch (e) {
               console.warn('Auto-connect Drive:', e);
             }
@@ -401,6 +342,7 @@ const Drive = (() => {
           },
           error_callback: () => resolve(null),
         });
+        // hint: evita il popup interattivo
         client.requestAccessToken({ prompt: 'none' });
       } catch (e) {
         resolve(null);
@@ -408,18 +350,11 @@ const Drive = (() => {
     });
   }
 
-  // ---- API pubblica ----
   return {
-    connect,
-    sync,
-    save,
-    load,
-    loadLocal,
-    saveLocal,
-    exportBackup,
-    importBackup,
-    isConnected,
-    tryAutoConnect,
+    connect, sync, save, load,
+    loadLocal, saveLocal,
+    exportBackup, importBackup,
+    isConnected, tryAutoConnect,
   };
 
 })();
