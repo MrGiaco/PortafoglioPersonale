@@ -5,6 +5,84 @@
    ============================================= */
 
 // =============================================
+// DIALOG (confirm/alert custom, sostituisce nativi)
+// =============================================
+
+const Dialog = (() => {
+
+  function _render(html) {
+    let overlay = document.getElementById('dialogOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'dialogOverlay';
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = html;
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    return overlay;
+  }
+
+  function _close(overlay) {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function confirm(msg, okLabel, cancelLabel) {
+    okLabel     = okLabel     || 'Conferma';
+    cancelLabel = cancelLabel || 'Annulla';
+    return new Promise(resolve => {
+      const overlay = _render(
+        '<div class="dialog-box">' +
+          '<div class="dialog-body">' + msg + '</div>' +
+          '<div class="dialog-footer">' +
+            '<button class="btn btn--ghost dialog-cancel">' + cancelLabel + '</button>' +
+            '<button class="btn btn--primary dialog-ok">' + okLabel + '</button>' +
+          '</div>' +
+        '</div>'
+      );
+      overlay.querySelector('.dialog-ok').onclick     = () => { _close(overlay); resolve(true);  };
+      overlay.querySelector('.dialog-cancel').onclick = () => { _close(overlay); resolve(false); };
+    });
+  }
+
+  function confirmDanger(msg, okLabel, cancelLabel) {
+    okLabel     = okLabel     || 'Elimina';
+    cancelLabel = cancelLabel || 'Annulla';
+    return new Promise(resolve => {
+      const overlay = _render(
+        '<div class="dialog-box">' +
+          '<div class="dialog-body">' + msg + '</div>' +
+          '<div class="dialog-footer">' +
+            '<button class="btn btn--ghost dialog-cancel">' + cancelLabel + '</button>' +
+            '<button class="btn btn--danger dialog-ok">' + okLabel + '</button>' +
+          '</div>' +
+        '</div>'
+      );
+      overlay.querySelector('.dialog-ok').onclick     = () => { _close(overlay); resolve(true);  };
+      overlay.querySelector('.dialog-cancel').onclick = () => { _close(overlay); resolve(false); };
+    });
+  }
+
+  function alert(msg) {
+    return new Promise(resolve => {
+      const overlay = _render(
+        '<div class="dialog-box">' +
+          '<div class="dialog-body">' + msg + '</div>' +
+          '<div class="dialog-footer">' +
+            '<button class="btn btn--primary dialog-ok" style="width:100%">OK</button>' +
+          '</div>' +
+        '</div>'
+      );
+      overlay.querySelector('.dialog-ok').onclick = () => { _close(overlay); resolve(); };
+    });
+  }
+
+  return { confirm, confirmDanger, alert };
+
+})();
+
+// =============================================
 // APP
 // =============================================
 
@@ -213,9 +291,29 @@ const App = (() => {
     }
   }
 
-  // ---- Reset app ----
-  function resetApp() {
-    if (!confirm('Sei sicuro di voler cancellare tutti i dati locali? Questa azione è irreversibile.')) return;
+  async function importDaBanca() {
+    try {
+      const result = await Portfolio.importDaBanca();
+      Portfolio.renderAll();
+      Charts.updateAll();
+      Drive.save(Portfolio.getData());
+      let msg = `Importati ${result.importatiConto} movimenti conto, ${result.importatiCarta} spese carta.`;
+      if (result.duplicati > 0)  msg += ` (${result.duplicati} duplicati ignorati)`;
+      if (result.catNuove.length > 0) msg += ` · Nuove categorie: ${result.catNuove.join(', ')}`;
+      showToast(msg, 'success', 6000);
+    } catch(e) {
+      // già gestito in portfolio.js
+    }
+  }
+
+
+  async function resetApp() {
+    const ok = await Dialog.confirmDanger(
+      '<i class="bi bi-exclamation-triangle-fill" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Reimposta app</strong><br><span style="font-size:13px;color:var(--text-muted)">Tutti i dati locali verranno cancellati. I dati su Drive non vengono eliminati.</span>',
+      'Reimposta', 'Annulla'
+    );
+    if (!ok) return;
     const keysToKeep = ['pp_pin_hash', 'pp_bio_enabled', 'pp_bio_cred_id'];
     Object.keys(localStorage).forEach(k => {
       if (!keysToKeep.includes(k)) localStorage.removeItem(k);
@@ -228,7 +326,7 @@ const App = (() => {
   return {
     init, navigate, toggleSidebar, closeSidebar,
     showToast, showLoading,
-    exportData, importData, resetApp,
+    exportData, importData, importDaBanca, resetApp,
     fabAction,
   };
 
@@ -290,6 +388,7 @@ const Modals = (() => {
       const imp = $('movImporto'); if (imp) imp.value = '';
       const desc = $('movDescrizione'); if (desc) desc.value = '';
       const note = $('movNote'); if (note) note.value = '';
+      Portfolio.populateCategorieSelect('movCategoria', 'altro');
       Portfolio.setMovTipo('entrata');
     }
 
@@ -297,6 +396,7 @@ const Modals = (() => {
       const el = $('cartaData'); if (el) el.value = today;
       const imp = $('cartaImporto'); if (imp) imp.value = '';
       const desc = $('cartaDescrizione'); if (desc) desc.value = '';
+      Portfolio.populateCategorieSelect('cartaCategoria', 'shopping');
       const d = Portfolio.getData().carta;
       const giorno = d.giornoAddebito || 15;
       const now = new Date();
