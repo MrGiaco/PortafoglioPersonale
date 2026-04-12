@@ -439,20 +439,34 @@ const Portfolio = (() => {
   }
 
   function saveTitolo() {
-    const tipo      = $('titoloTipo')?.value;
-    const nome      = $('titoloNome')?.value?.trim();
-    const ticker    = $('titoloTicker')?.value?.trim().toUpperCase();
-    const codeZB    = $('titoloCodeZB')?.value?.trim();
-    const dataAcq   = $('titoloDataAcquisto')?.value;
-    const quantita  = parseFloat($('titoloQuantita')?.value);
-    const prezzo    = parseFloat($('titoloPrezzoAcquisto')?.value);
-    const addebito  = $('titoloAddebitoConto')?.checked;
-    const note      = $('titoloNote')?.value?.trim();
+    const tipoEl  = document.querySelector('.tipo-card.active');
+    const tipo    = tipoEl?.dataset.tipo || 'azione';
+    const nome    = $('titoloNome')?.value?.trim();
+    const ticker  = $('titoloTicker')?.value?.trim().toUpperCase();
+    const codeZB  = $('titoloCodeZB')?.value?.trim();
+    const isin    = $('titoloIsin')?.value?.trim().toUpperCase();
+    const wkn     = $('titoloWkn')?.value?.trim();
+    const mercato = $('titoloMercato')?.value;
+    const valuta  = $('titoloValuta')?.value || 'EUR';
+    const dataAcq = $('titoloDataAcquisto')?.value;
+    const quantita= parseFloat($('titoloQuantita')?.value);
+    const prezzo  = parseFloat($('titoloPrezzoAcquisto')?.value);
+    const cambio  = parseFloat($('titoloCambio')?.value) || 1;
+    const comm    = parseFloat($('titoloCommissioni')?.value) || 0;
+    const tasse   = parseFloat($('titoloTasse')?.value) || 0;
+    const rateo   = parseFloat($('titoloRateo')?.value) || 0;
+    const addebito= $('titoloAddebitoConto')?.checked;
+    const note    = $('titoloNote')?.value?.trim();
 
     if (!nome || !dataAcq || isNaN(quantita) || isNaN(prezzo) || quantita <= 0 || prezzo <= 0) {
       App.showToast('Compila tutti i campi obbligatori', 'warning');
       return;
     }
+
+    const cv     = quantita * prezzo * cambio;
+    const oneri  = comm + tasse + rateo;
+    const costoTot = cv + oneri;
+    const pmc    = quantita > 0 ? costoTot / quantita : prezzo;
 
     const titolo = {
       id:             uid(),
@@ -460,34 +474,42 @@ const Portfolio = (() => {
       nome,
       ticker:         tipo !== 'certificate' ? ticker : null,
       codeZB:         tipo === 'certificate' ? codeZB : null,
+      isin,
+      wkn,
+      mercato,
+      valuta,
       dataAcquisto:   dataAcq,
       quantita,
       prezzoAcquisto: prezzo,
+      cambio,
+      commissioni:    comm,
+      tasse,
+      rateo,
+      costoTotale:    costoTot,
+      pmc,
       prezzoAttuale:  prezzo,
       change:         0,
       changePct:      0,
-      currency:       'EUR',
+      currency:       valuta,
       note,
       venduto:        false,
-      operazioni:     [{ data: dataAcq, tipo: 'acquisto', quantita, prezzo }],
+      operazioni:     [{ data: dataAcq, tipo: 'acquisto', quantita, prezzo, cambio, comm, tasse, rateo, costoTot }],
     };
 
     data.investimenti.titoli.push(titolo);
 
-    // Registra movimento conto se richiesto
     if (addebito) {
-      const importoTot = quantita * prezzo;
       const mov = {
         id:          uid(),
         data:        dataAcq,
         tipo:        'uscita',
         descrizione: `Acquisto ${nome}`,
-        importo:     importoTot,
+        importo:     costoTot,
         categoria:   'investimento',
-        note:        `${quantita} × ${formatEur(prezzo)}`,
+        note:        `${quantita} × ${formatEur(prezzo)} | Comm: ${formatEur(comm)} | PMC: ${formatEur(pmc)}`,
       };
       data.conto.movimenti.push(mov);
-      data.conto.saldo -= importoTot;
+      data.conto.saldo -= costoTot;
     }
 
     Modals.close();
@@ -496,7 +518,6 @@ const Portfolio = (() => {
     saveAndSync();
     App.showToast(`${nome} aggiunto al portafoglio`, 'success');
 
-    // Aggiorna quotazione subito
     setTimeout(() => Quotes.fetchQuote(titolo).then(q => {
       if (q) { updateQuote(titolo.id, q); renderInvestimenti(); }
     }), 500);
@@ -744,7 +765,8 @@ const Portfolio = (() => {
     filterMovimenti, filterSpese, setContoFilter, setContoFilterMonth,
     setMovTipo, saveMovimento, deleteMovimento,
     saveSpesaCarta, deleteSpesaCarta, saveImpostazioniCarta,
-    showTab, onTitoloTipoChange, saveTitolo,
+    showTab, setTipoCard, onTitoloTipoChange: setTipoCard,
+    calcCostoCarico, saveTitolo,
     apriDettaglio, vendeTitolo,
     formatEur, formatDate,
   };
