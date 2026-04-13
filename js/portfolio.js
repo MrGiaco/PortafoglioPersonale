@@ -447,16 +447,6 @@ const Portfolio = (() => {
     setEl('summaryInvValue',   formatEur(totInv));
     setEl('summaryCreditValue',formatEur(debitoCarta));
 
-    // Aggiorna badge variazione patrimonio (P&L investimenti %)
-    var badgeEl = $('patrimonioChange');
-    if (badgeEl) {
-      var costoTot = getTitoli().reduce(function(s,t){ return s+(t.pmc||t.prezzoAcquisto)*t.quantita; }, 0);
-      var plPct    = costoTot > 0 ? ((totInv - costoTot) / costoTot) * 100 : 0;
-      var isPos    = plPct >= 0;
-      badgeEl.className = 'patrimonio-badge' + (isPos ? '' : ' neg');
-      badgeEl.innerHTML = '<i class="bi ' + (isPos ? 'bi-arrow-up-right' : 'bi-arrow-down-right') + '"></i> ' + formatPct(plPct) + ' investimenti';
-    }
-
     renderUltimeTransazioni();
   }
 
@@ -601,8 +591,10 @@ const Portfolio = (() => {
 
   function filterSpese() {
     var search = ($('cartaSearch') ? $('cartaSearch').value : '').toLowerCase();
+    var mese   = $('cartaFilterMonth') ? $('cartaFilterMonth').value : '';
     var list   = data.carta.spese.slice();
-    if (search) list = list.filter(function(s){ return s.descrizione.toLowerCase().includes(search) || (s.note||'').toLowerCase().includes(search); });
+    if (search) list = list.filter(function(s){ return s.descrizione.toLowerCase().includes(search); });
+    if (mese)   list = list.filter(function(s){ return s.data.startsWith(mese); });
     list.sort(function(a,b){ return new Date(b.data)-new Date(a.data); });
     var container = $('cartaMovimenti');
     if (!container) return;
@@ -678,10 +670,12 @@ const Portfolio = (() => {
   function toggleSezione(key) {
     var body = document.getElementById('invSez-' + key);
     var icon = document.getElementById('invSezIcon-' + key);
+    var hdr  = document.querySelector('#isez-' + key + ' .isez-hdr');
     if (!body) return;
     var isNowCollapsed = !body.classList.contains('collapsed');
     body.classList.toggle('collapsed', isNowCollapsed);
     if (icon) icon.style.transform = isNowCollapsed ? 'rotate(-90deg)' : '';
+    if (hdr)  hdr.style.borderRadius = isNowCollapsed ? '14px' : '14px 14px 0 0';
     localStorage.setItem('inv_collapsed_' + key, isNowCollapsed);
   }
 
@@ -706,10 +700,10 @@ const Portfolio = (() => {
 
       // Header sezione con bordo sinistro colorato
       html += '<div class="isez" id="isez-' + sez.key + '">' +
-        '<div class="isez-hdr" onclick="Portfolio.toggleSezione(\'' + sez.key + '\')" style="border-left-color:' + sez.colore + '">' +
+        '<div class="isez-hdr" onclick="Portfolio.toggleSezione(\'' + sez.key + '\')" style="border-left-color:' + sez.colore + ';border-radius:' + (collapsed ? '14px' : '14px 14px 0 0') + '">' +
           '<div class="isez-left">' +
-            '<div class="isez-ico" style="background:' + sez.colore + '18;color:' + sez.colore + '">' +
-              '<i class="bi ' + sez.icon + '"></i>' +
+            '<div class="isez-ico" style="color:' + sez.colore + '">' +
+              '<i class="bi ' + sez.icon + '" style="font-size:20px"></i>' +
             '</div>' +
             '<div>' +
               '<div class="isez-title">' + sez.label + '</div>' +
@@ -722,10 +716,10 @@ const Portfolio = (() => {
           '</div>' +
         '</div>' +
         '<div class="isez-body' + (collapsed ? ' collapsed' : '') + '" id="invSez-' + sez.key + '">' +
-          '<div class="itc-list">' +
+          '<div class="itc-list" style="border-left-color:' + sez.colore + '">' +
             lista.map(titoloCardHTML).join('') +
           '</div>' +
-          '<div class="isez-subtotal">' +
+          '<div class="isez-subtotal" style="border-left-color:' + sez.colore + '">' +
             '<span class="isez-sub-lbl">Subtotale ' + sez.label + '</span>' +
             '<div class="isez-sub-right">' +
               '<div class="isez-sub-item"><div class="isez-sub-item-lbl">Valore</div><div class="isez-sub-item-val">' + formatEur(valSez) + '</div></div>' +
@@ -1468,9 +1462,8 @@ const Portfolio = (() => {
       var labels = history.map(function(p){ return p.time || new Date(p.date+'T00:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'}); });
       var values = history.map(function(p){ return p.close; });
       var first  = values[0], last = values[values.length-1];
-
-      // Linea bianca su sfondo blu — massimo contrasto
-      var lineColor = '#ffffff';
+      var color  = last >= first ? '#15803d' : '#b91c1c';
+      var bgA    = last >= first ? 'rgba(21,128,61,.08)' : 'rgba(185,28,28,.06)';
 
       // Aggiorna footer
       var ftrL = document.getElementById('detChartFtrLeft');
@@ -1478,23 +1471,19 @@ const Portfolio = (() => {
 
       var ctx  = canvas.getContext('2d');
       var grad = ctx.createLinearGradient(0,0,0,160);
-      grad.addColorStop(0, 'rgba(255,255,255,0.18)'); grad.addColorStop(1,'rgba(255,255,255,0.00)');
+      grad.addColorStop(0, bgA); grad.addColorStop(1,'rgba(255,255,255,0)');
 
       _detChart = new Chart(canvas, {
         type:'line',
         data:{ labels:labels, datasets:[
-          { label:'Prezzo', data:values, borderColor:lineColor, backgroundColor:grad, borderWidth:2.5, pointRadius:0, pointHoverRadius:5, pointHoverBackgroundColor:'#fff', tension:0.35, fill:true },
-          { label:'PMC', data:Array(values.length).fill(pmc), borderColor:'rgba(255,255,255,0.35)', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false },
+          { label:'Prezzo', data:values, borderColor:color, backgroundColor:grad, borderWidth:2, pointRadius:0, pointHoverRadius:4, tension:0.3, fill:true },
+          { label:'PMC', data:Array(values.length).fill(pmc), borderColor:'rgba(148,163,184,.5)', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false },
         ]},
         options:{ responsive:true, maintainAspectRatio:false,
           plugins:{ legend:{ display:false },
-            tooltip:{ backgroundColor:'rgba(15,23,42,0.85)', titleColor:'#f8fafc', bodyColor:'#cbd5e1', padding:10, cornerRadius:8, displayColors:false,
-              mode:'index', intersect:false, callbacks:{ label:function(c){ return c.dataset.label+': '+formatEur(c.parsed.y,2); }}}},
-          scales:{
-            x:{ grid:{display:false}, border:{display:false}, ticks:{ color:'rgba(255,255,255,0.45)', font:{size:10,weight:'500'}, maxTicksLimit:5, maxRotation:0 }},
-            y:{ position:'right', grid:{color:'rgba(255,255,255,0.10)'}, border:{display:false},
-              ticks:{ color:'rgba(255,255,255,0.55)', font:{size:10,weight:'600'}, callback:function(v){ return formatEur(v,2); }, maxTicksLimit:4 }}
-          }
+            tooltip:{ mode:'index', intersect:false, callbacks:{ label:function(c){ return c.dataset.label+': '+formatEur(c.parsed.y,2); }}}},
+          scales:{ x:{ grid:{display:false}, ticks:{ maxTicksLimit:5, font:{size:9}}},
+            y:{ grid:{color:'rgba(241,245,249,.8)'}, ticks:{ callback:function(v){ return formatEur(v,2); }, font:{size:9}}}}
         },
       });
     });
