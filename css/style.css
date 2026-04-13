@@ -1364,11 +1364,13 @@ textarea.form-control { resize: vertical; min-height: 64px; }
    ============================================= */
 .tc2 {
   background: var(--bg-card);
-  border-top: 1px solid #E2E8F0;
+  border-radius: 12px;
+  margin: 0 10px 10px;
   cursor: pointer;
   transition: background .12s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
 }
-.tc2:first-child { border-top: none; }
+.tc2:first-child { margin-top: 10px; }
 .tc2:hover { background: var(--bg-secondary); }
 .tc2-body { padding: 14px 16px; }
 
