@@ -287,30 +287,53 @@
       </section>
 
       <!-- ===== INVESTIMENTI ===== -->
-      <section id="section-investimenti" class="section hidden">
+      <section id="section-investimenti" class="section hidden" style="padding:0;display:flex;flex-direction:column;overflow:hidden">
 
-        <div class="inv-hero-card">
-          <div class="patrimonio-label">PORTAFOGLIO INVESTIMENTI</div>
-          <div class="inv-hero-value" id="invValoreAttuale">€ 0</div>
-          <div class="inv-hero-badge" id="invRendimentoBadge"><i class="bi bi-arrow-up-right"></i> +0.00%</div>
-          <div class="patrimonio-pills">
-            <div class="patrimonio-pill">
-              <div class="patrimonio-pill__label">Costo</div>
-              <div class="patrimonio-pill__value" id="invCostoTotale">€ 0</div>
+        <!-- HERO STICKY -->
+        <div class="inv-sticky">
+          <div class="inv-hero-card">
+            <div class="patrimonio-label">PORTAFOGLIO INVESTIMENTI</div>
+            <div class="inv-hero-value" id="invValoreAttuale">€ 0</div>
+            <div class="inv-hero-badge" id="invRendimentoBadge">+0.00% rendimento</div>
+            <div class="patrimonio-pills">
+              <div class="patrimonio-pill">
+                <div class="patrimonio-pill__label">Investito</div>
+                <div class="patrimonio-pill__value" id="invCostoTotale">€ 0</div>
+              </div>
+              <div class="patrimonio-pill">
+                <div class="patrimonio-pill__label">P&amp;L</div>
+                <div class="patrimonio-pill__value" id="invPL">€ 0</div>
+              </div>
+              <div class="patrimonio-pill">
+                <div class="patrimonio-pill__label">Rendimento</div>
+                <div class="patrimonio-pill__value" id="invRendimento">0%</div>
+              </div>
             </div>
-            <div class="patrimonio-pill">
-              <div class="patrimonio-pill__label">P&amp;L</div>
-              <div class="patrimonio-pill__value" id="invPL">€ 0</div>
-            </div>
-            <div class="patrimonio-pill">
-              <div class="patrimonio-pill__label">Rendimento</div>
-              <div class="patrimonio-pill__value" id="invRendimento">0%</div>
+            <div class="inv-hero-divider"></div>
+            <div class="inv-hero-mini">
+              <div class="inv-mini-left">
+                <div class="inv-mini-item">
+                  <div class="inv-mini-lbl">Conto corrente</div>
+                  <div class="inv-mini-val" id="invMiniConto">€ 0</div>
+                </div>
+                <div class="inv-mini-sep"></div>
+                <div class="inv-mini-item">
+                  <div class="inv-mini-lbl">Carta credito</div>
+                  <div class="inv-mini-val neg" id="invMiniCarta">€ 0</div>
+                </div>
+              </div>
+              <div class="inv-mini-total">
+                <div class="inv-mini-total-lbl">Patrimonio totale</div>
+                <div class="inv-mini-total-val" id="invMiniPatrim">€ 0</div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Sezioni collassabili — popolate da JS -->
-        <div id="invSezioni"></div>
+        <!-- SCROLL SEZIONI -->
+        <div class="inv-scroll-body">
+          <div id="invSezioni"></div>
+        </div>
 
       </section>
 
