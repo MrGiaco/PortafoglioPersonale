@@ -559,7 +559,7 @@ function populateReportAnni() {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
+    navigator.serviceWorker.register('/PortafoglioPersonale/sw.js')
       .then(reg => {
         console.log('SW registrato:', reg.scope);
         navigator.serviceWorker.addEventListener('message', e => {
