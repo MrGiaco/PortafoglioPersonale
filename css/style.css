@@ -517,15 +517,37 @@ input, select, textarea { font-family: inherit; }
 /* =============================================
    INVESTIMENTI
    ============================================= */
-.inv-summary-bar {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px 16px;
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 8px; margin-bottom: 12px; text-align: center;
+.inv-hero-card {
+  background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
+  border-radius: 20px;
+  padding: 22px 20px;
+  margin-bottom: 14px;
+  position: relative; overflow: hidden;
 }
-.inv-sum-item {}
-.inv-sum-label { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; font-weight: 500; }
-.inv-sum-val { font-size: 13px; font-weight: 700; }
+.inv-hero-card::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(255,255,255,.07);
+}
+.inv-hero-card::after {
+  content: '';
+  position: absolute; bottom: -30px; left: 20px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: rgba(255,255,255,.04);
+}
+.inv-hero-value {
+  font-size: 32px; font-weight: 800; color: #fff;
+  letter-spacing: -.02em; margin-bottom: 10px;
+}
+.inv-hero-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.15); border-radius: var(--radius-pill);
+  padding: 4px 10px; font-size: 12px; color: #fff; font-weight: 600;
+  margin-bottom: 16px;
+}
+.inv-hero-badge.neg { background: rgba(220,38,38,.25); }
+
 
 /* Tabs investimenti */
 .inv-tabs {
