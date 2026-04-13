@@ -1595,10 +1595,6 @@ const Portfolio = (() => {
     }
 
     var infoGrid = $('detInfoGrid');
-    if (infoGrid) {
-      var rows = [ {label:'ISIN',val:t.isin||'—'},{label:'WKN',val:t.wkn||'—'},{label:'Valuta',val:t.valuta||'EUR'},{label:'Data acquisto',val:formatDate(t.dataAcquisto)},{label:'Commissioni',val:formatEur(t.commissioni||0)},{label:'Tasse / Bolli',val:formatEur(t.tasse||0)} ];
-      infoGrid.innerHTML = rows.map(function(r){ return '<div class="det-info-item"><div class="det-info-label">'+r.label+'</div><div class="det-info-val">'+escHtml(r.val)+'</div></div>'; }).join('');
-    }
 
 
   // ---- Vendi ----
