@@ -95,11 +95,6 @@ const App = (() => {
 
   // ---- Init (chiamato dopo unlock) ----
   async function init() {
-    const el = $('dashDate');
-    if (el) el.textContent = new Date().toLocaleDateString('it-IT', {
-      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-    });
-
     // Carica dati locali
     Drive.loadLocal();
 
@@ -564,7 +559,7 @@ function populateReportAnni() {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/PortafoglioPersonale/sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then(reg => {
         console.log('SW registrato:', reg.scope);
         navigator.serviceWorker.addEventListener('message', e => {
