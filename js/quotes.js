@@ -52,13 +52,10 @@ const Quotes = (() => {
     if (!result) throw new Error(`Ticker ${ticker} non trovato`);
 
     const meta       = result.meta;
-    const price      = meta.regularMarketPrice ?? meta.previousClose ?? 0;
-    const prevClose  = meta.previousClose ?? price;
-    const openPrice  = meta.regularMarketOpen ?? prevClose;
+    const price      = meta.regularMarketPrice ?? 0;
+    const prevClose  = meta.chartPreviousClose ?? meta.regularMarketPrice ?? price;
     const change     = price - prevClose;
     const changePct  = prevClose !== 0 ? (change / prevClose) * 100 : 0;
-    const changeFromOpen    = price - openPrice;
-    const changePctFromOpen = openPrice !== 0 ? (changeFromOpen / openPrice) * 100 : 0;
     const currency   = meta.currency ?? 'EUR';
 
     const quote = {
@@ -67,9 +64,9 @@ const Quotes = (() => {
       price:     round(price),
       change:    round(change),
       changePct: round(changePct),
-      changeFromOpen:    round(changeFromOpen),
-      changePctFromOpen: round(changePctFromOpen),
-      openPrice: round(openPrice),
+      dayHigh:   round(meta.regularMarketDayHigh ?? price),
+      dayLow:    round(meta.regularMarketDayLow  ?? price),
+      prevClose: round(prevClose),
       currency,
       timestamp: Date.now(),
       source:    'yahoo',
