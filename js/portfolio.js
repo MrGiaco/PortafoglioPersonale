@@ -650,21 +650,103 @@ const Portfolio = (() => {
   // INVESTIMENTI
   // =============================================
 
-  function showTab(tab, btn) {
-    activeTab = tab;
-    document.querySelectorAll('.inv-tab').forEach(function(t){ t.classList.remove('active'); });
-    document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); t.classList.add('hidden'); });
-    if (btn) btn.classList.add('active');
-    var tc = $('tab-' + tab);
-    if (tc) { tc.classList.add('active'); tc.classList.remove('hidden'); }
-    renderTitoliTab(tab);
-    renderInvSummary();
+  // ---- Configurazione sezioni ----
+  var SEZIONI_INV = [
+    { key: 'azione',      label: 'Azioni',        icon: 'bi-graph-up-arrow',     colore: '#2563EB' },
+    { key: 'fondo',       label: 'Fondi',          icon: 'bi-pie-chart-fill',     colore: '#7C3AED' },
+    { key: 'certificate', label: 'Certificates',   icon: 'bi-award-fill',         colore: '#D97706' },
+    { key: 'pir',         label: 'PIR',            icon: 'bi-shield-fill-check',  colore: '#16A34A' },
+    { key: 'polizza',     label: 'Polizze',        icon: 'bi-umbrella-fill',      colore: '#DC2626' },
+  ];
+
+  function _sezioneCollapsed(key) {
+    var stored = localStorage.getItem('inv_collapsed_' + key);
+    return stored === 'true';  // default: aperto
+  }
+
+  function toggleSezione(key) {
+    var body = document.getElementById('invSez-' + key);
+    var icon = document.getElementById('invSezIcon-' + key);
+    if (!body) return;
+    var isNowCollapsed = !body.classList.contains('collapsed');
+    body.classList.toggle('collapsed', isNowCollapsed);
+    if (icon) icon.style.transform = isNowCollapsed ? 'rotate(-90deg)' : '';
+    localStorage.setItem('inv_collapsed_' + key, isNowCollapsed);
   }
 
   function renderInvestimenti() {
-    renderTitoliTab(activeTab);
     renderInvSummary();
+    var container = $('invSezioni');
+    if (!container) return;
+
+    var titoli = getTitoli();
+    var html = '';
+
+    SEZIONI_INV.forEach(function(sez) {
+      var lista = titoli.filter(function(t){ return t.tipo === sez.key; });
+      if (!lista.length) return;
+
+      var valSez  = lista.reduce(function(s,t){ return s + (t.prezzoAttuale||t.prezzoAcquisto)*t.quantita; }, 0);
+      var costSez = lista.reduce(function(s,t){ return s + (t.pmc||t.prezzoAcquisto)*t.quantita; }, 0);
+      var plSez   = valSez - costSez;
+      var plPctSez= costSez > 0 ? (plSez/costSez)*100 : 0;
+      var posS    = plSez >= 0;
+      var collapsed = _sezioneCollapsed(sez.key);
+
+      html += '<div class="inv-section">' +
+        '<div class="inv-section__header" onclick="Portfolio.toggleSezione(\'' + sez.key + '\')">' +
+          '<div class="inv-section__header-left">' +
+            '<div class="inv-section__icon" style="background:' + sez.colore + '22;color:' + sez.colore + '">' +
+              '<i class="bi ' + sez.icon + '"></i>' +
+            '</div>' +
+            '<div>' +
+              '<div class="inv-section__title">' + sez.label + '</div>' +
+              '<div class="inv-section__sub">' + lista.length + ' ' + (lista.length === 1 ? 'titolo' : 'titoli') + ' · ' + formatEur(valSez) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="inv-section__header-right">' +
+            '<span class="inv-section__pl ' + (posS ? 'pos' : 'neg') + '">' + formatPct(plPctSez) + '</span>' +
+            '<i class="bi bi-chevron-down inv-section__chevron" id="invSezIcon-' + sez.key + '" style="' + (collapsed ? 'transform:rotate(-90deg)' : '') + '"></i>' +
+          '</div>' +
+        '</div>' +
+        '<div class="inv-section__body' + (collapsed ? ' collapsed' : '') + '" id="invSez-' + sez.key + '">' +
+          lista.map(titoloCardHTML).join('') +
+          '<div class="inv-section__subtotal">' +
+            '<div class="inv-st-row">' +
+              '<span class="inv-st-label">Subtotale ' + sez.label + '</span>' +
+              '<span class="inv-st-val">' + formatEur(valSez) + '</span>' +
+            '</div>' +
+            '<div class="inv-st-row">' +
+              '<span class="inv-st-label">P&amp;L</span>' +
+              '<span class="inv-st-val ' + (posS?'pos':'neg') + '">' + formatEurSigned(plSez) + ' (' + formatPct(plPctSez) + ')</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    // Totale complessivo in fondo
+    var totVal  = titoli.reduce(function(s,t){ return s + (t.prezzoAttuale||t.prezzoAcquisto)*t.quantita; }, 0);
+    var totCost = titoli.reduce(function(s,t){ return s + (t.pmc||t.prezzoAcquisto)*t.quantita; }, 0);
+    var totPL   = totVal - totCost;
+    var totPct  = totCost > 0 ? (totPL/totCost)*100 : 0;
+    var totPos  = totPL >= 0;
+
+    html += '<div class="inv-totale-card">' +
+      '<div class="inv-tot-label">TOTALE PORTAFOGLIO</div>' +
+      '<div class="inv-tot-valore">' + formatEur(totVal) + '</div>' +
+      '<div class="inv-tot-grid">' +
+        '<div class="inv-tot-item"><div class="inv-tot-item-label">Investito</div><div class="inv-tot-item-val">' + formatEur(totCost) + '</div></div>' +
+        '<div class="inv-tot-item"><div class="inv-tot-item-label">P&amp;L</div><div class="inv-tot-item-val ' + (totPos?'pos':'neg') + '">' + formatEurSigned(totPL) + '</div></div>' +
+        '<div class="inv-tot-item"><div class="inv-tot-item-label">Rendimento</div><div class="inv-tot-item-val ' + (totPos?'pos':'neg') + '">' + formatPct(totPct) + '</div></div>' +
+      '</div>' +
+    '</div>';
+
+    container.innerHTML = html;
   }
+
+  // ---- showTab mantenuto per compatibilità (non più usato) ----
+  function showTab(tab, btn) { renderInvestimenti(); }
 
   function renderInvSummary() {
     var titoli        = getTitoli();
@@ -679,65 +761,81 @@ const Portfolio = (() => {
     setEl('invPL',            formatEurSigned(pl));
     setEl('invRendimento',    formatPct(rend));
 
-    // Badge rendimento con colore e freccia
     var badge = $('invRendimentoBadge');
     if (badge) {
       badge.innerHTML = '<i class="bi bi-arrow-' + (isPos ? 'up' : 'down') + '-right"></i> ' + formatPct(rend);
       badge.className = 'inv-hero-badge' + (isPos ? '' : ' neg');
     }
-
-    // Colore P&L nella pill
     var plEl = $('invPL');
     if (plEl) plEl.style.color = isPos ? 'rgba(134,239,172,1)' : 'rgba(252,165,165,1)';
   }
 
-  function renderTitoliTab(tab) {
-    var tipoMap = { azioni:'azione', fondi:'fondo', certificates:'certificate', pir:'pir', polizze:'polizza' };
-    var tipo    = tipoMap[tab];
-    var listId  = 'lista' + tab.charAt(0).toUpperCase() + tab.slice(1);
-    var container = $(listId);
-    if (!container) return;
-    var lista = getTitoli().filter(function(t){ return t.tipo === tipo; });
-    container.innerHTML = lista.length ? lista.map(titoloCardHTML).join('') : emptyState('bi-graph-up','Nessun titolo in questa categoria');
-  }
-
   function titoloCardHTML(t) {
-    var prezzo = t.prezzoAttuale || t.prezzoAcquisto;
-    var pmc    = t.pmc || t.prezzoAcquisto;
-    var valore = prezzo * t.quantita;
-    var costo  = pmc * t.quantita;
-    var pl     = valore - costo;
-    var plPct  = costo > 0 ? (pl/costo)*100 : 0;
-    var dayPos = (t.changePct||0) >= 0;
-    var isPos  = pl >= 0;
-    var col    = tipoColor(t.tipo);
-    var av     = avatarLetters(t.nome);
-    var ticker = t.ticker || t.codeZB || tipoLabel(t.tipo);
-    var logoSrc= 'icons/titoli/' + (t.ticker || t.codeZB || '') + '.png';
+    var prezzo  = t.prezzoAttuale || t.prezzoAcquisto;
+    var pmc     = t.pmc || t.prezzoAcquisto;
+    var valore  = prezzo * t.quantita;
+    var costo   = pmc * t.quantita;
+    var pl      = valore - costo;
+    var plPct   = costo > 0 ? (pl/costo)*100 : 0;
+    var isPos   = pl >= 0;
+    var col     = tipoColor(t.tipo);
+    var av      = avatarLetters(t.nome);
+    var ticker  = t.ticker || t.codeZB || '';
+    var logoSrc = 'icons/titoli/' + (t.ticker || '') + '.png';
 
-    return '<div class="titolo-card-new" onclick="Portfolio.openTitoloSheet(\'' + t.id + '\')">' +
-      '<div class="tc-top">' +
-        '<div class="tc-avatar" style="background:' + col.bg + ';color:' + col.fg + ';position:relative;overflow:hidden">' +
-          '<img src="' + logoSrc + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:11px" ' +
-            'onerror="this.style.display=\'none\'" />' +
-          '<span>' + escHtml(av) + '</span>' +
-        '</div>' +
-        '<div class="tc-info">' +
-          '<div class="tc-nome">' + escHtml(t.nome) + '</div>' +
-          '<div class="tc-sub">' + escHtml(ticker) + ' · ' + formatNum(t.quantita) + ' ' + (t.tipo==='azione'?'az.':'quote') + '</div>' +
-        '</div>' +
-        '<div class="tc-price-box">' +
-          '<div class="tc-price">' + formatEur(prezzo, 4) + '</div>' +
-          '<div class="tc-chg ' + (dayPos?'pos':'neg') + '">' +
-            '<i class="bi bi-arrow-' + (dayPos?'up':'down') + '-right"></i> ' + formatPct(t.changePct||0) +
+    // Variazione giornaliera: se assente o zero usa variazione vs PMC
+    var hasDay   = (t.change !== 0 || t.changePct !== 0);
+    var dayChg   = hasDay ? (t.change || 0)    : (prezzo - pmc);
+    var dayChgPct= hasDay ? (t.changePct || 0) : (pmc > 0 ? ((prezzo - pmc)/pmc)*100 : 0);
+    var dayLabel = hasDay ? 'oggi' : 'vs PMC';
+    var dayPos   = dayChgPct >= 0;
+
+    var qtyLabel = t.tipo === 'azione' ? 'azioni' : 'quote';
+    var qtyFmt   = t.quantita % 1 === 0 ? String(Math.round(t.quantita)) : t.quantita.toFixed(3);
+
+    return '<div class="tc2" onclick="Portfolio.openTitoloSheet(\'' + t.id + '\')">' +
+      // Bordo sinistro colorato
+      '<div class="tc2-stripe" style="background:' + (isPos ? 'var(--success)' : 'var(--danger)') + '"></div>' +
+
+      '<div class="tc2-inner">' +
+        // Header: avatar + nome + badge
+        '<div class="tc2-header">' +
+          '<div class="tc2-avatar" style="background:' + col.bg + ';color:' + col.fg + '">' +
+            '<img src="' + logoSrc + '" onerror="this.style.display=\'none\'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:9px" />' +
+            '<span>' + escHtml(av) + '</span>' +
+          '</div>' +
+          '<div class="tc2-title-wrap">' +
+            '<div class="tc2-nome">' + escHtml(t.nome) + '</div>' +
+            '<div class="tc2-meta">' + escHtml(ticker || tipoLabel(t.tipo)) + ' · ' + qtyFmt + ' ' + qtyLabel + '</div>' +
+          '</div>' +
+          '<div class="tc2-price-col">' +
+            '<div class="tc2-price">' + formatEur(prezzo, 4) + '</div>' +
+            '<div class="tc2-day ' + (dayPos?'pos':'neg') + '">' +
+              '<i class="bi bi-arrow-' + (dayPos?'up':'down') + '-right"></i>' +
+              formatPct(dayChgPct) +
+              '<span class="tc2-day-label">' + dayLabel + '</span>' +
+            '</div>' +
           '</div>' +
         '</div>' +
-      '</div>' +
-      '<div class="tc-stats">' +
-        '<div class="tc-stat"><div class="tc-stat-label">Valore</div><div class="tc-stat-val">' + formatEur(valore) + '</div></div>' +
-        '<div class="tc-stat"><div class="tc-stat-label">PMC</div><div class="tc-stat-val">' + formatEur(pmc,4) + '</div></div>' +
-        '<div class="tc-stat"><div class="tc-stat-label">P&amp;L</div><div class="tc-stat-val ' + (isPos?'pos':'neg') + '">' + formatEurSigned(pl) + '</div></div>' +
-        '<div class="tc-stat"><div class="tc-stat-label">Rend.</div><div class="tc-stat-val ' + (isPos?'pos':'neg') + '">' + formatPct(plPct) + '</div></div>' +
+
+        // Stats grid
+        '<div class="tc2-stats">' +
+          '<div class="tc2-stat">' +
+            '<div class="tc2-stat-label">Valore posizione</div>' +
+            '<div class="tc2-stat-val">' + formatEur(valore) + '</div>' +
+          '</div>' +
+          '<div class="tc2-stat">' +
+            '<div class="tc2-stat-label">PMC unitario</div>' +
+            '<div class="tc2-stat-val">' + formatEur(pmc, 4) + '</div>' +
+          '</div>' +
+          '<div class="tc2-stat tc2-stat--wide">' +
+            '<div class="tc2-stat-label">P&amp;L totale</div>' +
+            '<div class="tc2-stat-val ' + (isPos?'pos':'neg') + '">' +
+              formatEurSigned(pl) +
+              '<span class="tc2-stat-pct"> (' + formatPct(plPct) + ')</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }
@@ -1265,7 +1363,7 @@ const Portfolio = (() => {
     saveSpesaCarta, deleteSpesaCarta, editSpesaCarta, saveImpostazioniCarta,
     showTab, setTipoCard, calcCostoCarico, saveTitolo, editTitolo, nuovoAcquisto,
     wizardNext, wizardPrev, wizardReset,
-    openTitoloSheet, closeTitoloSheet, aggiornaValoreManuale,
+    openTitoloSheet, closeTitoloSheet, aggiornaValoreManuale, toggleSezione,
     apriDettaglio, vendeTitolo, vendeTitoloById,
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo,
