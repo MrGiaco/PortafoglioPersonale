@@ -106,11 +106,11 @@ const Charts = (() => {
 
     // Raggruppa saldo cumulativo per data
     const byDate = {};
-    let saldo = data.conto.saldo;
+    const saldoIniziale = data.conto.saldoIniziale || 0;
 
     // Ricostruisce storico saldo dalla fine (approssimazione)
     const sorted = [...movimenti].sort((a, b) => new Date(a.data) - new Date(b.data));
-    let running = 0;
+    let running = saldoIniziale;
     const dateMap = {};
     sorted.forEach(m => {
       running += m.tipo === 'entrata' ? m.importo : -m.importo;
@@ -125,8 +125,9 @@ const Charts = (() => {
       return new Date(d) >= from;
     }).sort();
 
+    const saldoCorrente = saldoIniziale + (data.conto.saldo || 0);
     const labels = dates.length > 0 ? dates.map(d => new Date(d + 'T00:00:00').toLocaleDateString('it-IT', { day:'numeric', month:'short' })) : ['Oggi'];
-    const values = dates.length > 0 ? dates.map(d => dateMap[d]) : [data.conto.saldo];
+    const values = dates.length > 0 ? dates.map(d => dateMap[d]) : [saldoCorrente];
 
     // Aggiungi valore investimenti al saldo per patrimonio totale
     const invTot = (data.investimenti.titoli || [])
@@ -200,7 +201,8 @@ const Charts = (() => {
     });
 
     // Aggiungi conto corrente
-    if (data.conto.saldo > 0) gruppi['Conto Corrente'] = data.conto.saldo;
+    const saldoConto = (data.conto.saldoIniziale || 0) + (data.conto.saldo || 0);
+    if (saldoConto > 0) gruppi['Conto Corrente'] = saldoConto;
 
     const labels = Object.keys(gruppi);
     const values = Object.values(gruppi);
