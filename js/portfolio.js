@@ -447,6 +447,16 @@ const Portfolio = (() => {
     setEl('summaryInvValue',   formatEur(totInv));
     setEl('summaryCreditValue',formatEur(debitoCarta));
 
+    // Aggiorna badge variazione patrimonio (P&L investimenti %)
+    var badgeEl = $('patrimonioChange');
+    if (badgeEl) {
+      var costoTot = getTitoli().reduce(function(s,t){ return s+(t.pmc||t.prezzoAcquisto)*t.quantita; }, 0);
+      var plPct    = costoTot > 0 ? ((totInv - costoTot) / costoTot) * 100 : 0;
+      var isPos    = plPct >= 0;
+      badgeEl.className = 'patrimonio-badge' + (isPos ? '' : ' neg');
+      badgeEl.innerHTML = '<i class="bi ' + (isPos ? 'bi-arrow-up-right' : 'bi-arrow-down-right') + '"></i> ' + formatPct(plPct) + ' investimenti';
+    }
+
     renderUltimeTransazioni();
   }
 
@@ -591,10 +601,8 @@ const Portfolio = (() => {
 
   function filterSpese() {
     var search = ($('cartaSearch') ? $('cartaSearch').value : '').toLowerCase();
-    var mese   = $('cartaFilterMonth') ? $('cartaFilterMonth').value : '';
     var list   = data.carta.spese.slice();
-    if (search) list = list.filter(function(s){ return s.descrizione.toLowerCase().includes(search); });
-    if (mese)   list = list.filter(function(s){ return s.data.startsWith(mese); });
+    if (search) list = list.filter(function(s){ return s.descrizione.toLowerCase().includes(search) || (s.note||'').toLowerCase().includes(search); });
     list.sort(function(a,b){ return new Date(b.data)-new Date(a.data); });
     var container = $('cartaMovimenti');
     if (!container) return;
