@@ -804,7 +804,6 @@ const Portfolio = (() => {
     var dayPos = dayChgPct >= 0;
     var qtyLabel = (t.tipo === 'azione') ? 'azioni' : 'quote';
     var qtyFmt   = t.quantita % 1 === 0 ? String(Math.round(t.quantita)) : t.quantita.toFixed(3);
-    var daySign  = dayPos ? '+' : '';
 
     return '<div class="tc2" onclick="Portfolio.openTitoloSheet(\'' + t.id + '\')">' +
       '<div class="tc2-body">' +
@@ -828,7 +827,7 @@ const Portfolio = (() => {
           '<div class="tc2-price-col">' +
             '<div class="tc2-price">' + formatEur(prezzo, 4) + '</div>' +
             '<div class="tc2-daypill ' + (dayPos?'pos':'neg') + '">' +
-              (dayPos?'▲':'▼') + ' ' + daySign + formatPct(dayChgPct) +
+              (dayPos?'▲':'▼') + ' ' + formatPct(dayChgPct) +
               '<span class="tc2-day-lbl">' + dayLabel + '</span>' +
             '</div>' +
           '</div>' +
@@ -853,8 +852,8 @@ const Portfolio = (() => {
               '<div class="tc2-st-sub">min – max oggi</div>'
             ) : (
               '<div class="tc2-st-lbl">Var. ' + dayLabel + '</div>' +
-              '<div class="tc2-st-val ' + (dayPos?'pos':'neg') + '">' + (dayPos?'+':'') + formatEur(dayChg,4) + '</div>' +
-              '<div class="tc2-st-sub">' + (dayPos?'+':'') + formatPct(dayChgPct) + '</div>'
+              '<div class="tc2-st-val ' + (dayPos?'pos':'neg') + '">' + formatEurSigned(dayChg) + '</div>' +
+              '<div class="tc2-st-sub">' + formatPct(dayChgPct) + '</div>'
             )) +
           '</div>' +
         '</div>' +
@@ -878,12 +877,12 @@ const Portfolio = (() => {
         (hasQuotaSource ?
           '<div class="tc2-charts">' +
             '<div class="tc2-chart-box">' +
-              '<div class="tc2-chart-hdr"><span class="tc2-chart-lbl">Intraday</span><span class="tc2-chart-pct ' + (dayPos?'pos':'neg') + '">' + daySign + formatPct(dayChgPct) + '</span></div>' +
+              '<div class="tc2-chart-hdr"><span class="tc2-chart-lbl">Intraday</span><span class="tc2-chart-pct ' + (dayPos?'pos':'neg') + '">' + formatPct(dayChgPct) + '</span></div>' +
               '<canvas id="cIntra_' + t.id + '" class="tc2-canvas"></canvas>' +
               '<div class="tc2-chart-ftr"><span>apertura</span><span>adesso</span></div>' +
             '</div>' +
             '<div class="tc2-chart-box">' +
-              '<div class="tc2-chart-hdr"><span class="tc2-chart-lbl">Dal carico</span><span class="tc2-chart-pct ' + (isPos?'pos':'neg') + '">' + (isPos?'+':'') + formatPct(plPct) + '</span></div>' +
+              '<div class="tc2-chart-hdr"><span class="tc2-chart-lbl">Dal carico</span><span class="tc2-chart-pct ' + (isPos?'pos':'neg') + '">' + formatPct(plPct) + '</span></div>' +
               '<canvas id="cCarico_' + t.id + '" class="tc2-canvas"></canvas>' +
               '<div class="tc2-chart-ftr"><span>' + formatDate(t.dataAcquisto) + '</span><span>oggi</span></div>' +
             '</div>' +
