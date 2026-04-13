@@ -98,6 +98,7 @@ const Charts = (() => {
   function renderPatrimonio(period = activePeriod) {
     const canvas = document.getElementById('chartPatrimonio');
     if (!canvas || !window.Chart) return;
+    if (typeof Portfolio === 'undefined') return;
     destroyChart('patrimonio');
 
     const data    = Portfolio.getData();
@@ -186,6 +187,7 @@ const Charts = (() => {
   function renderAllocazione() {
     const canvas = document.getElementById('chartAllocazione');
     if (!canvas || !window.Chart) return;
+    if (typeof Portfolio === 'undefined') return;
     destroyChart('allocazione');
 
     const data   = Portfolio.getData();
@@ -255,6 +257,7 @@ const Charts = (() => {
   function renderEntrateUscite(anno) {
     const canvas = document.getElementById('chartEntrateUscite');
     if (!canvas || !window.Chart) return;
+    if (typeof Portfolio === 'undefined') return;
     destroyChart('entrateUscite');
 
     const data      = Portfolio.getData();
@@ -314,6 +317,7 @@ const Charts = (() => {
   function renderCategorie(anno) {
     const canvas = document.getElementById('chartCategorie');
     if (!canvas || !window.Chart) return;
+    if (typeof Portfolio === 'undefined') return;
     destroyChart('categorie');
 
     const data = Portfolio.getData();
