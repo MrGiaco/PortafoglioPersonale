@@ -672,12 +672,23 @@ const Portfolio = (() => {
     var costoTotale   = titoli.reduce(function(s,t){ return s+(t.pmc||t.prezzoAcquisto)*t.quantita; }, 0);
     var pl            = valoreAttuale - costoTotale;
     var rend          = costoTotale > 0 ? (pl/costoTotale)*100 : 0;
+    var isPos         = pl >= 0;
+
     setEl('invValoreAttuale', formatEur(valoreAttuale));
     setEl('invCostoTotale',   formatEur(costoTotale));
     setEl('invPL',            formatEurSigned(pl));
     setEl('invRendimento',    formatPct(rend));
-    var plEl   = $('invPL');      if (plEl)   plEl.className   = 'inv-sum-val ' + (pl   >= 0 ? 'inv-pl-pos' : 'inv-pl-neg');
-    var rendEl = $('invRendimento'); if (rendEl) rendEl.className = 'inv-sum-val ' + (rend >= 0 ? 'inv-pl-pos' : 'inv-pl-neg');
+
+    // Badge rendimento con colore e freccia
+    var badge = $('invRendimentoBadge');
+    if (badge) {
+      badge.innerHTML = '<i class="bi bi-arrow-' + (isPos ? 'up' : 'down') + '-right"></i> ' + formatPct(rend);
+      badge.className = 'inv-hero-badge' + (isPos ? '' : ' neg');
+    }
+
+    // Colore P&L nella pill
+    var plEl = $('invPL');
+    if (plEl) plEl.style.color = isPos ? 'rgba(134,239,172,1)' : 'rgba(252,165,165,1)';
   }
 
   function renderTitoliTab(tab) {
