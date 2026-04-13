@@ -407,10 +407,13 @@ const Portfolio = (() => {
   function updateQuote(id, quote) {
     var t = data.investimenti.titoli.find(function(t){ return t.id === id; });
     if (!t || !quote) return;
-    t.prezzoAttuale = quote.price;
-    t.change        = quote.change;
-    t.changePct     = quote.changePct;
-    t.currency      = quote.currency || 'EUR';
+    t.prezzoAttuale        = quote.price;
+    t.change               = quote.change;
+    t.changePct            = quote.changePct;
+    t.changeFromOpen       = quote.changeFromOpen       || 0;
+    t.changePctFromOpen    = quote.changePctFromOpen    || 0;
+    t.openPrice            = quote.openPrice            || 0;
+    t.currency             = quote.currency || 'EUR';
   }
 
   function saveAndSync() { Drive.save(getData()); }
@@ -787,13 +790,22 @@ const Portfolio = (() => {
     var logoSrc = t.ticker ? 'icons/titoli/' + t.ticker + '.png' : '';
 
     var hasQuotaSource = !!(t.ticker || t.codeZB);
-    var dayChgPct = t.changePct || 0;
-    var dayChg    = t.change    || 0;
-    var dayLabel  = 'oggi';
+    var dayChgPct = 0, dayChg = 0, dayLabel = 'oggi';
+
     if (!hasQuotaSource) {
       dayChgPct = pmc > 0 ? ((prezzo - pmc) / pmc) * 100 : 0;
       dayChg    = prezzo - pmc;
       dayLabel  = 'vs PMC';
+    } else if (t.changePctFromOpen !== undefined && t.changePctFromOpen !== 0) {
+      // Variazione rispetto all'apertura (intraday vera)
+      dayChgPct = t.changePctFromOpen;
+      dayChg    = t.changeFromOpen;
+      dayLabel  = 'apertura';
+    } else {
+      // Fallback: variazione rispetto a chiusura precedente
+      dayChgPct = t.changePct || 0;
+      dayChg    = t.change    || 0;
+      dayLabel  = 'ieri';
     }
     var dayPos = dayChgPct >= 0;
     var qtyLabel = (t.tipo === 'azione') ? 'azioni' : 'quote';
