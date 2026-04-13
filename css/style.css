@@ -1357,3 +1357,124 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 .tc2-stat-val.pos { color: var(--success); }
 .tc2-stat-val.neg { color: var(--danger); }
 .tc2-stat-pct { font-size: 11px; font-weight: 500; opacity: .8; }
+
+/* =============================================
+   NUOVA CARD TITOLO v2 (tc2)
+   ============================================= */
+.tc2 {
+  background: var(--bg-card);
+  border-top: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: background .12s;
+}
+.tc2:last-of-type { border-bottom: none; }
+.tc2:hover { background: var(--bg-secondary); }
+.tc2-body { padding: 14px 16px; }
+
+/* Meta: logo + ticker + badge */
+.tc2-meta {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+.tc2-logo {
+  width: 40px; height: 40px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800;
+  flex-shrink: 0; position: relative; overflow: hidden;
+  border: 0.5px solid rgba(0,0,0,.06);
+}
+.tc2-logo img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: contain;
+  border-radius: 10px;
+}
+.tc2-logo span { position: relative; z-index: 1; }
+.tc2-meta-info { flex: 1; min-width: 0; }
+.tc2-ticker { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.tc2-qty    { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.tc2-badge  {
+  font-size: 10px; font-weight: 700;
+  padding: 3px 9px; border-radius: 20px;
+  flex-shrink: 0;
+}
+
+/* Riga nome + prezzo */
+.tc2-row2 {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 12px;
+  margin-bottom: 12px;
+}
+.tc2-nome {
+  font-size: 14px; font-weight: 700;
+  color: var(--text-primary); line-height: 1.35; flex: 1;
+}
+.tc2-price-col { text-align: right; flex-shrink: 0; }
+.tc2-price {
+  font-size: 17px; font-weight: 800;
+  color: var(--text-primary); letter-spacing: -.02em;
+  margin-bottom: 4px;
+}
+.tc2-daypill {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+}
+.tc2-daypill.pos { background: #dcfce7; color: #15803d; }
+.tc2-daypill.neg { background: #fee2e2; color: #b91c1c; }
+.tc2-day-lbl { font-size: 9px; font-weight: 400; opacity: .7; margin-left: 2px; }
+
+/* Griglia stat */
+.tc2-stats {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 7px; margin-bottom: 10px;
+}
+.tc2-st { background: var(--bg-secondary); border-radius: 10px; padding: 9px 10px; }
+.tc2-st-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
+}
+.tc2-st-val { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.tc2-st-val.pos { color: var(--success); }
+.tc2-st-val.neg { color: var(--danger); }
+.tc2-st-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* P&L totale */
+.tc2-pl {
+  background: var(--bg-secondary); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.tc2-pl-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;
+}
+.tc2-pl-val { font-size: 16px; font-weight: 800; }
+.tc2-pl-val.pos { color: var(--success); }
+.tc2-pl-val.neg { color: var(--danger); }
+.tc2-pl-pct { font-size: 12px; font-weight: 600; opacity: .8; }
+.tc2-pl-costo { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+
+/* Due grafici affiancati */
+.tc2-charts {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.tc2-chart-box {
+  background: var(--bg-secondary); border-radius: 10px; overflow: hidden;
+}
+.tc2-chart-hdr {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 7px 10px 0;
+}
+.tc2-chart-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.tc2-chart-pct { font-size: 11px; font-weight: 700; }
+.tc2-chart-pct.pos { color: var(--success); }
+.tc2-chart-pct.neg { color: var(--danger); }
+.tc2-canvas { display: block; width: 100%; height: 64px; }
+.tc2-chart-ftr {
+  display: flex; justify-content: space-between;
+  padding: 2px 10px 6px;
+  font-size: 9px; color: var(--text-muted);
+}
