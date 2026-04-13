@@ -239,6 +239,53 @@ const Quotes = (() => {
     }
   }
 
+  // Storico intraday (intervalli 5 minuti, giornata corrente)
+  async function fetchIntraday(titolo) {
+    try {
+      if (!titolo.ticker) return [];
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(titolo.ticker)}?interval=5m&range=1d`;
+      const res  = await proxyFetch(url);
+      const json = await res.json();
+      const result = json?.chart?.result?.[0];
+      if (!result) return [];
+      const timestamps = result.timestamp ?? [];
+      const closes     = result.indicators?.quote?.[0]?.close ?? [];
+      return timestamps.map((ts, i) => ({
+        time:  new Date(ts * 1000).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+        close: closes[i] != null ? round(closes[i]) : null,
+      })).filter(p => p.close !== null);
+    } catch (err) {
+      console.warn('Intraday error:', err.message);
+      return [];
+    }
+  }
+
+  // Storico dal carico: da dataAcquisto a oggi
+  async function fetchSincePMC(titolo) {
+    try {
+      if (titolo.codeZB) {
+        // ZoneBourse: restituisce tutto lo storico, filtriamo dalla data acquisto
+        const all = await fetchZonebourseHistory(titolo.codeZB);
+        return all.filter(p => p.date >= titolo.dataAcquisto);
+      } else if (titolo.ticker) {
+        // Calcola range in giorni dalla data di acquisto
+        const msDay = 86400000;
+        const giorni = Math.ceil((Date.now() - new Date(titolo.dataAcquisto).getTime()) / msDay);
+        let range = '1y';
+        if (giorni > 365 * 2) range = '5y';
+        else if (giorni > 365) range = '2y';
+        const all = await fetchYahooHistory(titolo.ticker, range, '1d');
+        return all.filter(p => p.date >= titolo.dataAcquisto);
+      }
+      return [];
+    } catch (err) {
+      console.warn('SincePMC error:', err.message);
+      return [];
+    }
+  }
+
+
+
   // =============================================
   // RICERCA TICKER YAHOO
   // =============================================
@@ -301,6 +348,8 @@ const Quotes = (() => {
   return {
     fetchQuote,
     fetchHistory,
+    fetchIntraday,
+    fetchSincePMC,
     refreshAll,
     searchTicker,
     formatPrice,
