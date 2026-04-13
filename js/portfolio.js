@@ -407,13 +407,13 @@ const Portfolio = (() => {
   function updateQuote(id, quote) {
     var t = data.investimenti.titoli.find(function(t){ return t.id === id; });
     if (!t || !quote) return;
-    t.prezzoAttuale        = quote.price;
-    t.change               = quote.change;
-    t.changePct            = quote.changePct;
-    t.changeFromOpen       = quote.changeFromOpen       || 0;
-    t.changePctFromOpen    = quote.changePctFromOpen    || 0;
-    t.openPrice            = quote.openPrice            || 0;
-    t.currency             = quote.currency || 'EUR';
+    t.prezzoAttuale = quote.price;
+    t.change        = quote.change;
+    t.changePct     = quote.changePct;
+    t.dayHigh       = quote.dayHigh   || 0;
+    t.dayLow        = quote.dayLow    || 0;
+    t.prevClose     = quote.prevClose || 0;
+    t.currency      = quote.currency  || 'EUR';
   }
 
   function saveAndSync() { Drive.save(getData()); }
@@ -796,16 +796,10 @@ const Portfolio = (() => {
       dayChgPct = pmc > 0 ? ((prezzo - pmc) / pmc) * 100 : 0;
       dayChg    = prezzo - pmc;
       dayLabel  = 'vs PMC';
-    } else if (t.changePctFromOpen !== undefined && t.changePctFromOpen !== 0) {
-      // Variazione rispetto all'apertura (intraday vera)
-      dayChgPct = t.changePctFromOpen;
-      dayChg    = t.changeFromOpen;
-      dayLabel  = 'apertura';
     } else {
-      // Fallback: variazione rispetto a chiusura precedente
       dayChgPct = t.changePct || 0;
       dayChg    = t.change    || 0;
-      dayLabel  = 'ieri';
+      dayLabel  = 'oggi';
     }
     var dayPos = dayChgPct >= 0;
     var qtyLabel = (t.tipo === 'azione') ? 'azioni' : 'quote';
@@ -853,9 +847,15 @@ const Portfolio = (() => {
             '<div class="tc2-st-sub">costo medio</div>' +
           '</div>' +
           '<div class="tc2-st">' +
-            '<div class="tc2-st-lbl">Var. ' + dayLabel + '</div>' +
-            '<div class="tc2-st-val ' + (dayPos?'pos':'neg') + '">' + daySign + formatEur(dayChg,4) + '</div>' +
-            '<div class="tc2-st-sub">' + daySign + formatPct(dayChgPct) + ' ' + dayLabel + '</div>' +
+            (t.dayHigh ? (
+              '<div class="tc2-st-lbl">Range giornaliero</div>' +
+              '<div class="tc2-st-val" style="font-size:11px">' + formatEur(t.dayLow,2) + ' – ' + formatEur(t.dayHigh,2) + '</div>' +
+              '<div class="tc2-st-sub">min – max oggi</div>'
+            ) : (
+              '<div class="tc2-st-lbl">Var. ' + dayLabel + '</div>' +
+              '<div class="tc2-st-val ' + (dayPos?'pos':'neg') + '">' + (dayPos?'+':'') + formatEur(dayChg,4) + '</div>' +
+              '<div class="tc2-st-sub">' + (dayPos?'+':'') + formatPct(dayChgPct) + '</div>'
+            )) +
           '</div>' +
         '</div>' +
 
