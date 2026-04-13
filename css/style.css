@@ -20,7 +20,6 @@
   --orange:         #EA580C;
 
   --bg:             #F4F6FB;
-  --bg-secondary:   #F1F5F9;
   --bg-card:        #FFFFFF;
   --border:         #EEF0F6;
   --border-mid:     #E2E8F0;
@@ -270,11 +269,6 @@ input, select, textarea { font-family: inherit; }
 /* =============================================
    DASHBOARD
    ============================================= */
-.dash-date {
-  font-size: 12px; font-weight: 600; color: var(--text-muted);
-  text-transform: capitalize; margin-bottom: 10px; padding: 0 2px;
-}
-
 .patrimonio-card {
   background: var(--primary);
   border-radius: 20px;
@@ -311,7 +305,6 @@ input, select, textarea { font-family: inherit; }
   padding: 4px 10px; font-size: 12px; color: #fff; font-weight: 600;
   margin-bottom: 16px;
 }
-.patrimonio-badge.neg { background: rgba(255,80,80,.25); }
 .patrimonio-pills { display: flex; gap: 8px; }
 .patrimonio-pill {
   flex: 1; background: rgba(255,255,255,.12);
@@ -1294,7 +1287,7 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 .inv-tot-item-label { font-size: 10px; color: rgba(255,255,255,.45); margin-bottom: 4px; font-weight: 500; }
 .inv-tot-item-val { font-size: 13px; font-weight: 700; color: #fff; }
 .inv-tot-item-val.pos { color: #86efac; }
-.inv-tot-item-val.neg { color: #ff5050; }
+.inv-tot-item-val.neg { color: #fca5a5; }
 
 /* =============================================
    NUOVA CARD TITOLO (tc2)
@@ -1524,7 +1517,7 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   text-transform: uppercase; color: rgba(255,255,255,.35); margin-bottom: 2px;
 }
 .inv-mini-val { font-size: 12px; font-weight: 800; color: rgba(255,255,255,.75); }
-.inv-mini-val.neg { color: rgba(255,80,80,.9); }
+.inv-mini-val.neg { color: rgba(252,165,165,.85); }
 .inv-mini-sep {
   width: 1px; height: 28px;
   background: rgba(255,255,255,.15);
@@ -1550,20 +1543,19 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 14px;
   background: var(--bg-card);
-  border-radius: 16px 16px 0 0;
+  border-radius: 14px 14px 0 0;
   border-left: 3px solid #2563EB;
   cursor: pointer;
   transition: background .12s;
 }
 .isez-hdr:hover { background: var(--bg-secondary); }
-.isez-left { display: flex; align-items: center; gap: 10px; }
+.isez-left { display: flex; align-items: center; gap: 11px; }
 .isez-ico {
-  width: 30px; height: 30px; border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; flex-shrink: 0;
+  flex-shrink: 0; width: 20px; height: 20px;
 }
-.isez-title { font-size: 13px; font-weight: 800; color: var(--text-primary); }
-.isez-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+.isez-title { font-size: 14px; font-weight: 800; color: var(--text-primary); }
+.isez-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 .isez-right { display: flex; align-items: center; gap: 8px; }
 .isez-pl { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
 .isez-pl.pos { background: #dcfce7; color: #15803d; }
@@ -1574,21 +1566,19 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 
 /* Lista card titoli separati */
 .itc-list {
-  display: flex; flex-direction: column; gap: 8px;
-  padding: 8px 0;
+  display: flex; flex-direction: column; gap: 2px;
+  background: #CBD5E1;
+  border-left: 3px solid #2563EB;
 }
 
 /* Card singolo titolo */
 .itc {
   background: var(--bg-card);
-  border-radius: 14px;
-  margin: 0 8px;
   padding: 13px 14px;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
-  transition: box-shadow .15s;
+  transition: background .12s;
 }
-.itc:hover { box-shadow: 0 3px 12px rgba(0,0,0,.1); }
+.itc:hover { background: var(--bg-secondary); }
 .itc-top {
   display: flex; align-items: center; gap: 9px;
   margin-bottom: 6px;
@@ -1605,13 +1595,13 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 }
 .itc-logo span { position: relative; z-index: 1; }
 .itc-meta { flex: 1; min-width: 0; }
-.itc-ticker { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+.itc-ticker { font-size: 11px; font-weight: 700; color: #64748b; }
 .itc-name {
   font-size: 13px; font-weight: 700; color: var(--text-primary);
   margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .itc-price-col { text-align: right; flex-shrink: 0; }
-.itc-price { font-size: 15px; font-weight: 900; color: var(--text-primary); letter-spacing: -.02em; margin-bottom: 3px; }
+.itc-price { font-size: 16px; font-weight: 900; color: var(--text-primary); letter-spacing: -.02em; margin-bottom: 3px; }
 .itc-daypill {
   display: inline-flex; align-items: center; gap: 2px;
   font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
@@ -1633,7 +1623,7 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 .itc-bottom {
   display: flex; align-items: flex-end; justify-content: space-between;
 }
-.itc-stat-lbl { font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; }
+.itc-stat-lbl { font-size: 10px; font-weight: 700; color: #64748b; margin-bottom: 2px; }
 .itc-stat-val { font-size: 13px; font-weight: 800; color: var(--text-primary); }
 .itc-stat-val.pos { color: var(--success); }
 .itc-stat-val.neg { color: var(--danger); }
@@ -1643,13 +1633,14 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 14px;
   background: #E2E8F0;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 14px 14px;
   border-top: 1px solid var(--border);
+  border-left: 3px solid #2563EB;
 }
-.isez-sub-lbl { font-size: 10px; font-weight: 700; color: #475569; }
+.isez-sub-lbl { font-size: 11px; font-weight: 700; color: #475569; }
 .isez-sub-right { display: flex; gap: 14px; }
 .isez-sub-item { text-align: right; }
-.isez-sub-item-lbl { font-size: 8px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; font-weight: 700; margin-bottom: 1px; }
+.isez-sub-item-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; font-weight: 700; margin-bottom: 1px; }
 .isez-sub-item-val { font-size: 12px; font-weight: 800; color: #1e293b; }
 .isez-sub-item-val.pos { color: var(--success); }
 .isez-sub-item-val.neg { color: var(--danger); }
@@ -1728,8 +1719,8 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   border-radius: 20px; padding: 4px 10px;
   font-size: 11px; font-weight: 700; margin-top: 4px;
 }
-.det-chg-pill.pos { background: rgba(74,222,128,.2);  color: #4ade80; }
-.det-chg-pill.neg { background: rgba(255,80,80,.22);  color: #ff5050; }
+.det-chg-pill.pos { background: rgba(134,239,172,.2); color: #86efac; }
+.det-chg-pill.neg { background: rgba(252,165,165,.18); color: #fca5a5; }
 .det-hero-name { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px; }
 .det-hero-sub { font-size: 10px; color: rgba(255,255,255,.45); font-weight: 600; margin-bottom: 12px; }
 
