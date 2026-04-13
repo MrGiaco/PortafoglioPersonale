@@ -743,6 +743,9 @@ const Portfolio = (() => {
     '</div>';
 
     container.innerHTML = html;
+
+    // Disegna i grafici dopo che il DOM è stato aggiornato
+    setTimeout(function(){ _renderMiniCharts(); }, 50);
   }
 
   // ---- showTab mantenuto per compatibilità (non più usato) ----
@@ -781,63 +784,207 @@ const Portfolio = (() => {
     var col     = tipoColor(t.tipo);
     var av      = avatarLetters(t.nome);
     var ticker  = t.ticker || t.codeZB || '';
-    var logoSrc = 'icons/titoli/' + (t.ticker || '') + '.png';
+    var logoSrc = t.ticker ? 'icons/titoli/' + t.ticker + '.png' : '';
 
-    // Variazione giornaliera: se assente o zero usa variazione vs PMC
-    var hasDay   = (t.change !== 0 || t.changePct !== 0);
-    var dayChg   = hasDay ? (t.change || 0)    : (prezzo - pmc);
-    var dayChgPct= hasDay ? (t.changePct || 0) : (pmc > 0 ? ((prezzo - pmc)/pmc)*100 : 0);
-    var dayLabel = hasDay ? 'oggi' : 'vs PMC';
-    var dayPos   = dayChgPct >= 0;
-
-    var qtyLabel = t.tipo === 'azione' ? 'azioni' : 'quote';
+    var hasQuotaSource = !!(t.ticker || t.codeZB);
+    var dayChgPct = t.changePct || 0;
+    var dayChg    = t.change    || 0;
+    var dayLabel  = 'oggi';
+    if (!hasQuotaSource) {
+      dayChgPct = pmc > 0 ? ((prezzo - pmc) / pmc) * 100 : 0;
+      dayChg    = prezzo - pmc;
+      dayLabel  = 'vs PMC';
+    }
+    var dayPos = dayChgPct >= 0;
+    var qtyLabel = (t.tipo === 'azione') ? 'azioni' : 'quote';
     var qtyFmt   = t.quantita % 1 === 0 ? String(Math.round(t.quantita)) : t.quantita.toFixed(3);
+    var daySign  = dayPos ? '+' : '';
 
     return '<div class="tc2" onclick="Portfolio.openTitoloSheet(\'' + t.id + '\')">' +
-      // Bordo sinistro colorato
-      '<div class="tc2-stripe" style="background:' + (isPos ? 'var(--success)' : 'var(--danger)') + '"></div>' +
+      '<div class="tc2-body">' +
 
-      '<div class="tc2-inner">' +
-        // Header: avatar + nome + badge
-        '<div class="tc2-header">' +
-          '<div class="tc2-avatar" style="background:' + col.bg + ';color:' + col.fg + '">' +
-            '<img src="' + logoSrc + '" onerror="this.style.display=\'none\'" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:9px" />' +
+        // Riga 1: Logo + ticker/qty + badge tipo
+        '<div class="tc2-meta">' +
+          '<div class="tc2-logo" style="background:' + col.bg + ';color:' + col.fg + '">' +
+            (logoSrc ? '<img src="' + logoSrc + '" onerror="this.style.display=\'none\'" />' : '') +
             '<span>' + escHtml(av) + '</span>' +
           '</div>' +
-          '<div class="tc2-title-wrap">' +
-            '<div class="tc2-nome">' + escHtml(t.nome) + '</div>' +
-            '<div class="tc2-meta">' + escHtml(ticker || tipoLabel(t.tipo)) + ' · ' + qtyFmt + ' ' + qtyLabel + '</div>' +
+          '<div class="tc2-meta-info">' +
+            '<div class="tc2-ticker">' + escHtml(ticker || tipoLabel(t.tipo)) + '</div>' +
+            '<div class="tc2-qty">' + qtyFmt + ' ' + qtyLabel + '</div>' +
           '</div>' +
+          '<span class="tc2-badge" style="background:' + col.bg + ';color:' + col.fg + '">' + tipoLabel(t.tipo) + '</span>' +
+        '</div>' +
+
+        // Riga 2: Nome completo + prezzo + variazione giornaliera
+        '<div class="tc2-row2">' +
+          '<div class="tc2-nome">' + escHtml(t.nome) + '</div>' +
           '<div class="tc2-price-col">' +
             '<div class="tc2-price">' + formatEur(prezzo, 4) + '</div>' +
-            '<div class="tc2-day ' + (dayPos?'pos':'neg') + '">' +
-              '<i class="bi bi-arrow-' + (dayPos?'up':'down') + '-right"></i>' +
-              formatPct(dayChgPct) +
-              '<span class="tc2-day-label">' + dayLabel + '</span>' +
+            '<div class="tc2-daypill ' + (dayPos?'pos':'neg') + '">' +
+              (dayPos?'▲':'▼') + ' ' + daySign + formatPct(dayChgPct) +
+              '<span class="tc2-day-lbl">' + dayLabel + '</span>' +
             '</div>' +
           '</div>' +
         '</div>' +
 
-        // Stats grid
+        // Griglia stat
         '<div class="tc2-stats">' +
-          '<div class="tc2-stat">' +
-            '<div class="tc2-stat-label">Valore posizione</div>' +
-            '<div class="tc2-stat-val">' + formatEur(valore) + '</div>' +
+          '<div class="tc2-st">' +
+            '<div class="tc2-st-lbl">Valore posizione</div>' +
+            '<div class="tc2-st-val">' + formatEur(valore) + '</div>' +
+            '<div class="tc2-st-sub">' + qtyFmt + ' × ' + formatEur(prezzo,4) + '</div>' +
           '</div>' +
-          '<div class="tc2-stat">' +
-            '<div class="tc2-stat-label">PMC unitario</div>' +
-            '<div class="tc2-stat-val">' + formatEur(pmc, 4) + '</div>' +
+          '<div class="tc2-st">' +
+            '<div class="tc2-st-lbl">PMC unitario</div>' +
+            '<div class="tc2-st-val">' + formatEur(pmc,4) + '</div>' +
+            '<div class="tc2-st-sub">costo medio</div>' +
           '</div>' +
-          '<div class="tc2-stat tc2-stat--wide">' +
-            '<div class="tc2-stat-label">P&amp;L totale</div>' +
-            '<div class="tc2-stat-val ' + (isPos?'pos':'neg') + '">' +
-              formatEurSigned(pl) +
-              '<span class="tc2-stat-pct"> (' + formatPct(plPct) + ')</span>' +
-            '</div>' +
+          '<div class="tc2-st">' +
+            '<div class="tc2-st-lbl">Var. ' + dayLabel + '</div>' +
+            '<div class="tc2-st-val ' + (dayPos?'pos':'neg') + '">' + daySign + formatEur(dayChg,4) + '</div>' +
+            '<div class="tc2-st-sub">' + daySign + formatPct(dayChgPct) + ' ' + dayLabel + '</div>' +
           '</div>' +
         '</div>' +
+
+        // P&L totale
+        '<div class="tc2-pl">' +
+          '<div>' +
+            '<div class="tc2-pl-lbl">P&amp;L totale posizione</div>' +
+            '<div class="tc2-pl-val ' + (isPos?'pos':'neg') + '">' +
+              formatEurSigned(pl) +
+              '<span class="tc2-pl-pct"> (' + formatPct(plPct) + ')</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="text-align:right">' +
+            '<div class="tc2-pl-lbl">Investito</div>' +
+            '<div class="tc2-pl-costo">' + formatEur(costo) + '</div>' +
+          '</div>' +
+        '</div>' +
+
+        // Due grafici affiancati (canvas — popolati dopo il render)
+        (hasQuotaSource ?
+          '<div class="tc2-charts">' +
+            '<div class="tc2-chart-box">' +
+              '<div class="tc2-chart-hdr"><span class="tc2-chart-lbl">Intraday</span><span class="tc2-chart-pct ' + (dayPos?'pos':'neg') + '">' + daySign + formatPct(dayChgPct) + '</span></div>' +
+              '<canvas id="cIntra_' + t.id + '" class="tc2-canvas"></canvas>' +
+              '<div class="tc2-chart-ftr"><span>apertura</span><span>adesso</span></div>' +
+            '</div>' +
+            '<div class="tc2-chart-box">' +
+              '<div class="tc2-chart-hdr"><span class="tc2-chart-lbl">Dal carico</span><span class="tc2-chart-pct ' + (isPos?'pos':'neg') + '">' + (isPos?'+':'') + formatPct(plPct) + '</span></div>' +
+              '<canvas id="cCarico_' + t.id + '" class="tc2-canvas"></canvas>' +
+              '<div class="tc2-chart-ftr"><span>' + formatDate(t.dataAcquisto) + '</span><span>oggi</span></div>' +
+            '</div>' +
+          '</div>'
+        : '') +
+
       '</div>' +
     '</div>';
+  }
+
+  // Disegna i mini-grafici dopo che il DOM è stato aggiornato
+  function _renderMiniCharts() {
+    var titoli = getTitoli().filter(function(t){ return !!(t.ticker || t.codeZB); });
+    titoli.forEach(function(t) {
+      _drawMiniChart(t);
+    });
+  }
+
+  function _drawMiniChart(t) {
+    var prezzo = t.prezzoAttuale || t.prezzoAcquisto;
+    var pmc    = t.pmc || t.prezzoAcquisto;
+    var isPos  = prezzo >= pmc;
+
+    var canvasIntra  = document.getElementById('cIntra_'  + t.id);
+    var canvasCarico = document.getElementById('cCarico_' + t.id);
+    if (!canvasIntra && !canvasCarico) return;
+
+    var colorIntra  = (t.changePct || 0) >= 0 ? '#15803d' : '#b91c1c';
+    var colorCarico = isPos ? '#15803d' : '#b91c1c';
+
+    // Grafico intraday
+    if (canvasIntra) {
+      Quotes.fetchIntraday(t).then(function(data) {
+        if (!data.length) { canvasIntra.parentElement.style.display = 'none'; return; }
+        var vals = data.map(function(p){ return p.close; });
+        _drawSparkline(canvasIntra, vals, colorIntra, vals[0]);
+      });
+    }
+
+    // Grafico dal carico
+    if (canvasCarico) {
+      Quotes.fetchSincePMC(t).then(function(data) {
+        if (!data.length) { canvasCarico.parentElement.style.display = 'none'; return; }
+        var vals = data.map(function(p){ return p.close; });
+        _drawSparkline(canvasCarico, vals, colorCarico, pmc);
+      });
+    }
+  }
+
+  function _drawSparkline(canvas, values, color, refLine) {
+    if (!canvas || !values.length) return;
+    var W = canvas.offsetWidth || 150;
+    var H = 64;
+    canvas.width  = W * window.devicePixelRatio;
+    canvas.height = H * window.devicePixelRatio;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    var ctx = canvas.getContext('2d');
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+    var min = Math.min.apply(null, values);
+    var max = Math.max.apply(null, values);
+    var pad = 6;
+    var range = max - min || 1;
+
+    function xOf(i)  { return pad + (i / (values.length - 1)) * (W - pad*2); }
+    function yOf(v)  { return pad + (1 - (v - min) / range) * (H - pad*2); }
+
+    // Gradiente riempimento
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, color + '30');
+    grad.addColorStop(1, color + '00');
+
+    // Area
+    ctx.beginPath();
+    ctx.moveTo(xOf(0), H);
+    ctx.lineTo(xOf(0), yOf(values[0]));
+    values.forEach(function(v, i){ ctx.lineTo(xOf(i), yOf(v)); });
+    ctx.lineTo(xOf(values.length-1), H);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Linea
+    ctx.beginPath();
+    ctx.moveTo(xOf(0), yOf(values[0]));
+    values.forEach(function(v, i){ ctx.lineTo(xOf(i), yOf(v)); });
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 1.8;
+    ctx.lineJoin    = 'round';
+    ctx.lineCap     = 'round';
+    ctx.stroke();
+
+    // Linea di riferimento (prezzo apertura o PMC)
+    if (refLine != null && refLine >= min && refLine <= max) {
+      var yRef = yOf(refLine);
+      ctx.beginPath();
+      ctx.setLineDash([4, 3]);
+      ctx.moveTo(pad, yRef);
+      ctx.lineTo(W - pad, yRef);
+      ctx.strokeStyle = color + '70';
+      ctx.lineWidth   = 0.8;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Punto finale
+    var lastX = xOf(values.length-1);
+    var lastY = yOf(values[values.length-1]);
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 3, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
   }
 
   // ---- Bottom Sheet ----
