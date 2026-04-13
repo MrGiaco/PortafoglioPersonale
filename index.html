@@ -130,6 +130,8 @@
       <!-- ===== DASHBOARD ===== -->
       <section id="section-dashboard" class="section active">
 
+        <div class="dash-date" id="dashDate"></div>
+
         <div class="patrimonio-card">
           <div class="patrimonio-label">PATRIMONIO TOTALE</div>
           <div class="patrimonio-value" id="patrimonioTotale">€ 0,00</div>
@@ -462,7 +464,7 @@
   </div><!-- /main-wrapper -->
 
   <!-- FAB (mobile) -->
-  <button class="fab" onclick="App.fabAction()" title="Aggiungi">
+  <button class="fab" id="fabBtn" onclick="App.fabAction()" title="Aggiungi">
     <i class="bi bi-plus-lg"></i>
   </button>
 
@@ -792,80 +794,6 @@
     </div>
   </div>
 
-  <!-- Dettaglio Titolo -->
-  <div id="modal-dettaglioTitolo" class="modal hidden" style="max-width:600px">
-    <div class="modal-handle"></div>
-    <div class="modal-hero" id="detHero">
-      <div class="modal-hero-top">
-        <div class="modal-hero-left">
-          <div class="det-logo-wrap" id="detLogoWrap">
-            <img id="detLogoImg" src="" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:10px;display:none" />
-            <span id="detLogoFallback" style="font-size:13px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif"></span>
-          </div>
-          <div>
-            <div class="modal-hero-title" id="detTitoloNome">Dettaglio</div>
-            <div class="modal-hero-sub" id="detTitoloSub">—</div>
-          </div>
-        </div>
-        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <!-- Prezzo e variazione -->
-      <div style="margin-top:14px;position:relative;z-index:1">
-        <div style="font-size:32px;font-weight:800;color:#fff;letter-spacing:-.02em;font-family:'Plus Jakarta Sans',sans-serif" id="detPrezzo">€ 0,00</div>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:10px">
-          <div class="det-chg-badge" id="detChgBadge">— oggi</div>
-          <div class="det-tipo-badge" id="detTipoBadge">—</div>
-        </div>
-      </div>
-      <!-- 6 statistiche -->
-      <div class="det-stats-grid" id="detStatsGrid"></div>
-    </div>
-
-    <div class="modal-body" style="padding:14px 18px 20px;gap:0">
-
-      <!-- Periodo grafico -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif">Andamento storico</div>
-        <div class="det-period-pills" id="detPeriodPills">
-          <button class="det-pp active" onclick="Portfolio.setDetPeriod('1M',this)">1M</button>
-          <button class="det-pp" onclick="Portfolio.setDetPeriod('3M',this)">3M</button>
-          <button class="det-pp" onclick="Portfolio.setDetPeriod('6M',this)">6M</button>
-          <button class="det-pp" onclick="Portfolio.setDetPeriod('1A',this)">1A</button>
-        </div>
-      </div>
-      <div style="position:relative;margin-bottom:14px">
-        <canvas id="detChart" height="140"></canvas>
-        <div id="detChartLoading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg-card);border-radius:10px">
-          <div class="spinner"></div>
-        </div>
-      </div>
-
-      <!-- Info aggiuntive -->
-      <div class="det-info-grid" id="detInfoGrid"></div>
-
-      <!-- Storico operazioni -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
-        <div style="font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif">Storico operazioni</div>
-        <button class="btn btn--ghost btn--sm" onclick="Portfolio.nuovoAcquisto(Portfolio.getDettaglioId()); Modals.close()">
-          <i class="bi bi-plus-circle"></i> Acquisto
-        </button>
-      </div>
-      <div id="detOperazioni" class="det-ops-list"></div>
-
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn btn--ghost" onclick="Modals.close()">Chiudi</button>
-      <button class="btn btn--ghost" onclick="Portfolio.editTitolo(Portfolio.getDettaglioId()); Modals.close()">
-        <i class="bi bi-pencil"></i> Modifica
-      </button>
-      <button class="btn btn--danger" onclick="Portfolio.vendeTitolo()">
-        <i class="bi bi-cash-coin"></i> Vendi
-      </button>
-    </div>
-  </div>
-
-  <!-- Impostazioni Carta -->
   <!-- Impostazioni Conto -->
   <div id="modal-impostazioniConto" class="modal hidden">
     <div class="modal-handle"></div>
