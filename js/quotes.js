@@ -51,12 +51,16 @@ const Quotes = (() => {
     const result = json?.chart?.result?.[0];
     if (!result) throw new Error(`Ticker ${ticker} non trovato`);
 
-    const meta       = result.meta;
-    const price      = meta.regularMarketPrice ?? 0;
-    const prevClose  = meta.chartPreviousClose ?? meta.regularMarketPrice ?? price;
-    const change     = price - prevClose;
-    const changePct  = prevClose !== 0 ? (change / prevClose) * 100 : 0;
-    const currency   = meta.currency ?? 'EUR';
+    const meta      = result.meta;
+    const closes    = result.indicators?.quote?.[0]?.close ?? [];
+    const price     = meta.regularMarketPrice ?? closes[closes.length - 1] ?? 0;
+    // Usa la penultima chiusura dall'array — è sempre la chiusura del giorno precedente
+    const prevClose = closes.length >= 2
+      ? (closes[closes.length - 2] ?? price)
+      : (meta.chartPreviousClose ?? price);
+    const change    = price - prevClose;
+    const changePct = prevClose !== 0 ? (change / prevClose) * 100 : 0;
+    const currency  = meta.currency ?? 'EUR';
 
     const quote = {
       ticker,
