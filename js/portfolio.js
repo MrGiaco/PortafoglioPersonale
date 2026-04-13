@@ -1518,6 +1518,21 @@ const Portfolio = (() => {
     }
   }
 
+  async function deleteOperazione(titoloId, opIdx) {
+    var t = data.investimenti.titoli.find(function(x){ return x.id===titoloId; });
+    if (!t || !t.operazioni[opIdx]) return;
+    var ok = await Dialog.confirmDanger(
+      '<i class="bi bi-trash3-fill" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Elimina operazione</strong><br><span style="font-size:13px;color:var(--text-muted)">Questa azione non può essere annullata.</span>',
+      'Elimina', 'Annulla'
+    );
+    if (!ok) return;
+    t.operazioni.splice(opIdx, 1);
+    renderDetOperazioni(t);
+    saveAndSync();
+    App.showToast('Operazione eliminata', 'info');
+  }
+
   function renderDetOperazioni(t) {
     var container = $('detOperazioni'); if (!container) return;
     var ops = (t.operazioni||[]).slice().reverse();
