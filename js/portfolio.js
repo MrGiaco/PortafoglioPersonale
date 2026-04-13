@@ -689,66 +689,47 @@ const Portfolio = (() => {
       var lista = titoli.filter(function(t){ return t.tipo === sez.key; });
       if (!lista.length) return;
 
-      var valSez  = lista.reduce(function(s,t){ return s + (t.prezzoAttuale||t.prezzoAcquisto)*t.quantita; }, 0);
-      var costSez = lista.reduce(function(s,t){ return s + (t.pmc||t.prezzoAcquisto)*t.quantita; }, 0);
-      var plSez   = valSez - costSez;
-      var plPctSez= costSez > 0 ? (plSez/costSez)*100 : 0;
-      var posS    = plSez >= 0;
+      var valSez   = lista.reduce(function(s,t){ return s + (t.prezzoAttuale||t.prezzoAcquisto)*t.quantita; }, 0);
+      var costSez  = lista.reduce(function(s,t){ return s + (t.pmc||t.prezzoAcquisto)*t.quantita; }, 0);
+      var plSez    = valSez - costSez;
+      var plPctSez = costSez > 0 ? (plSez/costSez)*100 : 0;
+      var posS     = plSez >= 0;
       var collapsed = _sezioneCollapsed(sez.key);
 
-      html += '<div class="inv-section">' +
-        '<div class="inv-section__header" onclick="Portfolio.toggleSezione(\'' + sez.key + '\')">' +
-          '<div class="inv-section__header-left">' +
-            '<div class="inv-section__icon" style="background:' + sez.colore + '22;color:' + sez.colore + '">' +
+      // Header sezione con bordo sinistro colorato
+      html += '<div class="isez" id="isez-' + sez.key + '">' +
+        '<div class="isez-hdr" onclick="Portfolio.toggleSezione(\'' + sez.key + '\')" style="border-left-color:' + sez.colore + '">' +
+          '<div class="isez-left">' +
+            '<div class="isez-ico" style="background:' + sez.colore + '18;color:' + sez.colore + '">' +
               '<i class="bi ' + sez.icon + '"></i>' +
             '</div>' +
             '<div>' +
-              '<div class="inv-section__title">' + sez.label + '</div>' +
-              '<div class="inv-section__sub">' + lista.length + ' ' + (lista.length === 1 ? 'titolo' : 'titoli') + ' · ' + formatEur(valSez) + '</div>' +
+              '<div class="isez-title">' + sez.label + '</div>' +
+              '<div class="isez-sub">' + lista.length + ' ' + (lista.length === 1 ? 'titolo' : 'titoli') + ' · ' + formatEur(valSez) + '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="inv-section__header-right">' +
-            '<span class="inv-section__pl ' + (posS ? 'pos' : 'neg') + '">' + formatPct(plPctSez) + '</span>' +
-            '<i class="bi bi-chevron-down inv-section__chevron" id="invSezIcon-' + sez.key + '" style="' + (collapsed ? 'transform:rotate(-90deg)' : '') + '"></i>' +
+          '<div class="isez-right">' +
+            '<span class="isez-pl ' + (posS?'pos':'neg') + '">' + formatPct(plPctSez) + '</span>' +
+            '<i class="bi bi-chevron-down isez-chev" id="invSezIcon-' + sez.key + '" style="' + (collapsed ? 'transform:rotate(-90deg)' : '') + '"></i>' +
           '</div>' +
         '</div>' +
-        '<div class="inv-section__body' + (collapsed ? ' collapsed' : '') + '" id="invSez-' + sez.key + '">' +
-          lista.map(titoloCardHTML).join('') +
-          '<div class="inv-section__subtotal">' +
-            '<div class="inv-st-row">' +
-              '<span class="inv-st-label">Subtotale ' + sez.label + '</span>' +
-              '<span class="inv-st-val">' + formatEur(valSez) + '</span>' +
-            '</div>' +
-            '<div class="inv-st-row">' +
-              '<span class="inv-st-label">P&amp;L</span>' +
-              '<span class="inv-st-val ' + (posS?'pos':'neg') + '">' + formatEurSigned(plSez) + ' (' + formatPct(plPctSez) + ')</span>' +
+        '<div class="isez-body' + (collapsed ? ' collapsed' : '') + '" id="invSez-' + sez.key + '">' +
+          '<div class="itc-list">' +
+            lista.map(titoloCardHTML).join('') +
+          '</div>' +
+          '<div class="isez-subtotal">' +
+            '<span class="isez-sub-lbl">Subtotale ' + sez.label + '</span>' +
+            '<div class="isez-sub-right">' +
+              '<div class="isez-sub-item"><div class="isez-sub-item-lbl">Valore</div><div class="isez-sub-item-val">' + formatEur(valSez) + '</div></div>' +
+              '<div class="isez-sub-item"><div class="isez-sub-item-lbl">P&L</div><div class="isez-sub-item-val ' + (posS?'pos':'neg') + '">' + formatEurSigned(plSez) + ' (' + formatPct(plPctSez) + ')</div></div>' +
             '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
     });
 
-    // Totale complessivo in fondo
-    var totVal  = titoli.reduce(function(s,t){ return s + (t.prezzoAttuale||t.prezzoAcquisto)*t.quantita; }, 0);
-    var totCost = titoli.reduce(function(s,t){ return s + (t.pmc||t.prezzoAcquisto)*t.quantita; }, 0);
-    var totPL   = totVal - totCost;
-    var totPct  = totCost > 0 ? (totPL/totCost)*100 : 0;
-    var totPos  = totPL >= 0;
-
-    html += '<div class="inv-totale-card">' +
-      '<div class="inv-tot-label">TOTALE PORTAFOGLIO</div>' +
-      '<div class="inv-tot-valore">' + formatEur(totVal) + '</div>' +
-      '<div class="inv-tot-grid">' +
-        '<div class="inv-tot-item"><div class="inv-tot-item-label">Investito</div><div class="inv-tot-item-val">' + formatEur(totCost) + '</div></div>' +
-        '<div class="inv-tot-item"><div class="inv-tot-item-label">P&amp;L</div><div class="inv-tot-item-val ' + (totPos?'pos':'neg') + '">' + formatEurSigned(totPL) + '</div></div>' +
-        '<div class="inv-tot-item"><div class="inv-tot-item-label">Rendimento</div><div class="inv-tot-item-val ' + (totPos?'pos':'neg') + '">' + formatPct(totPct) + '</div></div>' +
-      '</div>' +
-    '</div>';
-
     container.innerHTML = html;
-
-    // Disegna i grafici dopo che il DOM è stato aggiornato
-    setTimeout(function(){ _renderMiniCharts(); }, 50);
+    setTimeout(function(){ _renderSparklines(); }, 50);
   }
 
   // ---- showTab mantenuto per compatibilità (non più usato) ----
@@ -769,11 +750,19 @@ const Portfolio = (() => {
 
     var badge = $('invRendimentoBadge');
     if (badge) {
-      badge.innerHTML = '<i class="bi bi-arrow-' + (isPos ? 'up' : 'down') + '-right"></i> ' + formatPct(rend);
+      badge.innerHTML = (isPos?'▲':'▼') + ' ' + formatPct(rend) + ' rendimento';
       badge.className = 'inv-hero-badge' + (isPos ? '' : ' neg');
     }
     var plEl = $('invPL');
     if (plEl) plEl.style.color = isPos ? 'rgba(134,239,172,1)' : 'rgba(252,165,165,1)';
+
+    // Mini totali conto + carta nella hero
+    var saldoConto  = getSaldoConto();
+    var debitoCarta = getDebitoCarta();
+    var patrimTot   = saldoConto + valoreAttuale - debitoCarta;
+    setEl('invMiniConto',  formatEur(saldoConto));
+    setEl('invMiniCarta',  formatEur(debitoCarta));
+    setEl('invMiniPatrim', formatEur(patrimTot));
   }
 
   function titoloCardHTML(t) {
@@ -788,148 +777,70 @@ const Portfolio = (() => {
     var av      = avatarLetters(t.nome);
     var ticker  = t.ticker || t.codeZB || '';
     var logoSrc = t.ticker ? 'icons/titoli/' + t.ticker + '.png' : '';
+    var hasQuote = !!(t.ticker || t.codeZB);
 
-    var hasQuotaSource = !!(t.ticker || t.codeZB);
     var dayChgPct = 0, dayChg = 0, dayLabel = 'oggi';
-
-    if (!hasQuotaSource) {
-      dayChgPct = pmc > 0 ? ((prezzo - pmc) / pmc) * 100 : 0;
+    if (!hasQuote) {
+      dayChgPct = pmc > 0 ? ((prezzo-pmc)/pmc)*100 : 0;
       dayChg    = prezzo - pmc;
       dayLabel  = 'vs PMC';
     } else {
       dayChgPct = t.changePct || 0;
       dayChg    = t.change    || 0;
-      dayLabel  = 'oggi';
     }
-    var dayPos = dayChgPct >= 0;
-    var qtyLabel = (t.tipo === 'azione') ? 'azioni' : 'quote';
+    var dayPos  = dayChgPct >= 0;
+    var qtyLabel = t.tipo === 'azione' ? 'azioni' : 'quote';
     var qtyFmt   = t.quantita % 1 === 0 ? String(Math.round(t.quantita)) : t.quantita.toFixed(3);
 
-    return '<div class="tc2" onclick="Portfolio.openTitoloSheet(\'' + t.id + '\')">' +
-      '<div class="tc2-body">' +
-
-        // Riga 1: Logo + ticker/qty + badge tipo
-        '<div class="tc2-meta">' +
-          '<div class="tc2-logo" style="background:' + col.bg + ';color:' + col.fg + '">' +
-            (logoSrc ? '<img src="' + logoSrc + '" onerror="this.style.display=\'none\'" />' : '') +
-            '<span>' + escHtml(av) + '</span>' +
-          '</div>' +
-          '<div class="tc2-meta-info">' +
-            '<div class="tc2-ticker">' + escHtml(ticker || tipoLabel(t.tipo)) + '</div>' +
-            '<div class="tc2-qty">' + qtyFmt + ' ' + qtyLabel + '</div>' +
-          '</div>' +
-          '<span class="tc2-badge" style="background:' + col.bg + ';color:' + col.fg + '">' + tipoLabel(t.tipo) + '</span>' +
+    return '<div class="itc" onclick="Portfolio.apriDettaglio(\'' + t.id + '\')">' +
+      // Top: logo + ticker/qty + badge + prezzo + variazione
+      '<div class="itc-top">' +
+        '<div class="itc-logo" style="background:' + col.bg + ';color:' + col.fg + '">' +
+          (logoSrc ? '<img src="' + logoSrc + '" onerror="this.style.display=\'none\'" />' : '') +
+          '<span>' + escHtml(av) + '</span>' +
         '</div>' +
-
-        // Riga 2: Nome completo + prezzo + variazione giornaliera
-        '<div class="tc2-row2">' +
-          '<div class="tc2-nome">' + escHtml(t.nome) + '</div>' +
-          '<div class="tc2-price-col">' +
-            '<div class="tc2-price">' + formatEur(prezzo, 4) + '</div>' +
-            '<div class="tc2-daypill ' + (dayPos?'pos':'neg') + '">' +
-              (dayPos?'▲':'▼') + ' ' + formatPct(dayChgPct) +
-              '<span class="tc2-day-lbl">' + dayLabel + '</span>' +
-            '</div>' +
+        '<div class="itc-meta">' +
+          '<div class="itc-ticker">' + escHtml(ticker || tipoLabel(t.tipo)) + ' · ' + qtyFmt + ' ' + qtyLabel + '</div>' +
+          '<div class="itc-name">' + escHtml(t.nome) + '</div>' +
+        '</div>' +
+        '<div class="itc-price-col">' +
+          '<div class="itc-price">' + formatEur(prezzo, 2) + '</div>' +
+          '<div class="itc-daypill ' + (dayPos?'pos':'neg') + '">' +
+            (dayPos?'▲':'▼') + ' ' + formatPct(dayChgPct) +
           '</div>' +
         '</div>' +
+      '</div>' +
 
-        // Griglia stat
-        '<div class="tc2-stats">' +
-          '<div class="tc2-st">' +
-            '<div class="tc2-st-lbl">Valore posizione</div>' +
-            '<div class="tc2-st-val">' + formatEur(valore) + '</div>' +
-            '<div class="tc2-st-sub">' + qtyFmt + ' × ' + formatEur(prezzo,4) + '</div>' +
-          '</div>' +
-          '<div class="tc2-st">' +
-            '<div class="tc2-st-lbl">PMC unitario</div>' +
-            '<div class="tc2-st-val">' + formatEur(pmc,4) + '</div>' +
-            '<div class="tc2-st-sub">costo medio</div>' +
-          '</div>' +
-          '<div class="tc2-st">' +
-            (t.dayHigh ? (
-              '<div class="tc2-st-lbl">Range giornaliero</div>' +
-              '<div class="tc2-st-val" style="font-size:11px">' + formatEur(t.dayLow,2) + ' – ' + formatEur(t.dayHigh,2) + '</div>' +
-              '<div class="tc2-st-sub">min – max oggi</div>'
-            ) : (
-              '<div class="tc2-st-lbl">Var. ' + dayLabel + '</div>' +
-              '<div class="tc2-st-val ' + (dayPos?'pos':'neg') + '">' + formatEurSigned(dayChg) + '</div>' +
-              '<div class="tc2-st-sub">' + formatPct(dayChgPct) + '</div>'
-            )) +
-          '</div>' +
+      // Sparkline intraday
+      (hasQuote ?
+        '<canvas id="sp_' + t.id + '" class="itc-spark"></canvas>'
+      : '<div class="itc-spark-manual"><i class="bi bi-dash"></i> aggiornamento manuale</div>') +
+
+      // Bottom: valore posizione + P&L
+      '<div class="itc-bottom">' +
+        '<div class="itc-stat">' +
+          '<div class="itc-stat-lbl">Valore</div>' +
+          '<div class="itc-stat-val">' + formatEur(valore) + '</div>' +
         '</div>' +
-
-        // P&L totale
-        '<div class="tc2-pl">' +
-          '<div>' +
-            '<div class="tc2-pl-lbl">P&amp;L totale posizione</div>' +
-            '<div class="tc2-pl-val ' + (isPos?'pos':'neg') + '">' +
-              formatEurSigned(pl) +
-              '<span class="tc2-pl-pct"> (' + formatPct(plPct) + ')</span>' +
-            '</div>' +
-          '</div>' +
-          '<div style="text-align:right">' +
-            '<div class="tc2-pl-lbl">Investito</div>' +
-            '<div class="tc2-pl-costo">' + formatEur(costo) + '</div>' +
-          '</div>' +
+        '<div class="itc-stat" style="text-align:right">' +
+          '<div class="itc-stat-lbl">P&amp;L</div>' +
+          '<div class="itc-stat-val ' + (isPos?'pos':'neg') + '">' + formatEurSigned(pl) + ' (' + formatPct(plPct) + ')</div>' +
         '</div>' +
-
-        // Due grafici affiancati (canvas — popolati dopo il render)
-        (hasQuotaSource ?
-          '<div class="tc2-charts">' +
-            '<div class="tc2-chart-box">' +
-              '<div class="tc2-chart-hdr"><span class="tc2-chart-lbl">Intraday</span><span class="tc2-chart-pct ' + (dayPos?'pos':'neg') + '">' + formatPct(dayChgPct) + '</span></div>' +
-              '<canvas id="cIntra_' + t.id + '" class="tc2-canvas"></canvas>' +
-              '<div class="tc2-chart-ftr"><span>apertura</span><span>adesso</span></div>' +
-            '</div>' +
-            '<div class="tc2-chart-box">' +
-              '<div class="tc2-chart-hdr"><span class="tc2-chart-lbl">Dal carico</span><span class="tc2-chart-pct ' + (isPos?'pos':'neg') + '">' + formatPct(plPct) + '</span></div>' +
-              '<canvas id="cCarico_' + t.id + '" class="tc2-canvas"></canvas>' +
-              '<div class="tc2-chart-ftr"><span>' + formatDate(t.dataAcquisto) + '</span><span>oggi</span></div>' +
-            '</div>' +
-          '</div>'
-        : '') +
-
       '</div>' +
     '</div>';
   }
 
-  // Disegna i mini-grafici dopo che il DOM è stato aggiornato
-  function _renderMiniCharts() {
-    var titoli = getTitoli().filter(function(t){ return !!(t.ticker || t.codeZB); });
-    titoli.forEach(function(t) {
-      _drawMiniChart(t);
-    });
-  }
-
-  function _drawMiniChart(t) {
-    var prezzo = t.prezzoAttuale || t.prezzoAcquisto;
-    var pmc    = t.pmc || t.prezzoAcquisto;
-    var isPos  = prezzo >= pmc;
-
-    var canvasIntra  = document.getElementById('cIntra_'  + t.id);
-    var canvasCarico = document.getElementById('cCarico_' + t.id);
-    if (!canvasIntra && !canvasCarico) return;
-
-    var colorIntra  = (t.changePct || 0) >= 0 ? '#15803d' : '#b91c1c';
-    var colorCarico = isPos ? '#15803d' : '#b91c1c';
-
-    // Grafico intraday
-    if (canvasIntra) {
+  // Disegna sparkline intraday su ogni card
+  function _renderSparklines() {
+    getTitoli().filter(function(t){ return !!(t.ticker || t.codeZB); }).forEach(function(t) {
+      var canvas = document.getElementById('sp_' + t.id);
+      if (!canvas) return;
+      var colorLine = (t.changePct || 0) >= 0 ? '#15803d' : '#b91c1c';
       Quotes.fetchIntraday(t).then(function(data) {
-        if (!data.length) { canvasIntra.parentElement.style.display = 'none'; return; }
-        var vals = data.map(function(p){ return p.close; });
-        _drawSparkline(canvasIntra, vals, colorIntra, vals[0]);
+        if (!data || !data.length) return;
+        _drawSparkline(canvas, data.map(function(p){ return p.close; }), colorLine, null);
       });
-    }
-
-    // Grafico dal carico
-    if (canvasCarico) {
-      Quotes.fetchSincePMC(t).then(function(data) {
-        if (!data.length) { canvasCarico.parentElement.style.display = 'none'; return; }
-        var vals = data.map(function(p){ return p.close; });
-        _drawSparkline(canvasCarico, vals, colorCarico, pmc);
-      });
-    }
+    });
   }
 
   function _drawSparkline(canvas, values, color, refLine) {
@@ -1340,7 +1251,304 @@ const Portfolio = (() => {
     var t = data.investimenti.titoli.find(function(x){ return x.id===id; });
     if (!t) return;
     dettaglioId = id;
-    _detPeriod  = '1M';
+    _detPeriod  = '1G';
+
+    var prezzo  = t.prezzoAttuale || t.prezzoAcquisto;
+    var pmc     = t.pmc || t.prezzoAcquisto;
+    var valore  = prezzo * t.quantita;
+    var costo   = pmc * t.quantita;
+    var pl      = valore - costo;
+    var plPct   = costo > 0 ? (pl/costo)*100 : 0;
+    var isPos   = pl >= 0;
+    var col     = tipoColor(t.tipo);
+    var av      = avatarLetters(t.nome);
+    var ticker  = t.ticker || t.codeZB || '';
+    var logoSrc = t.ticker ? 'icons/titoli/' + t.ticker + '.png' : '';
+    var hasQuote= !!(t.ticker || t.codeZB);
+    var dayPos  = (t.changePct||0) >= 0;
+    var qtyFmt  = t.quantita % 1 === 0 ? String(Math.round(t.quantita)) : t.quantita.toFixed(3);
+    var qtyLabel= t.tipo === 'azione' ? 'azioni' : 'quote';
+    var dayChgPct = hasQuote ? (t.changePct||0) : (pmc > 0 ? ((prezzo-pmc)/pmc)*100 : 0);
+    var dayChg    = hasQuote ? (t.change||0)    : (prezzo-pmc);
+
+    // Crea o riusa overlay
+    var overlay = $('dettaglioOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'dettaglioOverlay';
+      overlay.className = 'det-overlay';
+      document.body.appendChild(overlay);
+    }
+
+    var periodButtons = ['1G','1S','1M','1A','5A','Max'].map(function(p) {
+      return '<button class="det-pt' + (p === _detPeriod ? ' active' : '') + '" onclick="Portfolio.setDetPeriod(\'' + p + '\',this)">' + p + '</button>';
+    }).join('');
+
+    overlay.innerHTML =
+      '<div class="det-page">' +
+        // STICKY HERO
+        '<div class="det-sticky">' +
+          '<div class="det-topbar">' +
+            '<button class="det-back" onclick="Portfolio.chiudiDettaglio()"><i class="bi bi-chevron-left"></i></button>' +
+            '<div class="det-topbar-center">' +
+              '<div class="det-topbar-ticker">' + escHtml(ticker || tipoLabel(t.tipo)) + '</div>' +
+              '<div class="det-topbar-mkt">' + (t.mercato||'—') + '</div>' +
+            '</div>' +
+            '<button class="det-action-btn" onclick="Portfolio.openTitoloSheet(\'' + t.id + '\')">' +
+              '<i class="bi bi-three-dots"></i>' +
+            '</button>' +
+          '</div>' +
+          '<div class="det-hero">' +
+            '<div class="det-hero-inner">' +
+              '<div class="det-hero-toprow">' +
+                '<div class="det-hero-logo" style="background:' + col.bg + ';color:' + col.fg + '">' +
+                  (logoSrc ? '<img src="' + logoSrc + '" onerror="this.style.display=\'none\'" />' : '') +
+                  '<span>' + escHtml(av) + '</span>' +
+                '</div>' +
+                '<div class="det-price-col">' +
+                  '<div class="det-price">' + formatEur(prezzo, 2) + '</div>' +
+                  '<div class="det-chg-pill ' + (dayPos?'pos':'neg') + '">' +
+                    (dayPos?'▲':'▼') + ' ' + formatEurSigned(dayChg) + ' · ' + formatPct(dayChgPct) +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="det-hero-name">' + escHtml(t.nome) + '</div>' +
+              '<div class="det-hero-sub">' + qtyFmt + ' ' + qtyLabel + ' · PMC ' + formatEur(pmc,2) + ' · ' + formatDate(t.dataAcquisto) + '</div>' +
+              '<div class="det-period-row">' + periodButtons + '</div>' +
+              '<div class="det-chart-wrap">' +
+                '<canvas id="detMainChart" class="det-main-canvas"></canvas>' +
+                '<div class="det-chart-loading" id="detChartLoading"><i class="bi bi-arrow-clockwise"></i></div>' +
+              '</div>' +
+              '<div class="det-chart-ftr">' +
+                '<span id="detChartFtrLeft"></span><span id="detChartFtrRight">adesso</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        // SCROLL CONTENT
+        '<div class="det-scroll">' +
+
+          // Card posizione
+          '<div class="det-card">' +
+            '<div class="det-card-title">Posizione</div>' +
+            '<div class="det-row2">' +
+              '<div class="det-st"><div class="det-st-lbl">Valore posizione</div><div class="det-st-val">' + formatEur(valore) + '</div><div class="det-st-sub">' + qtyFmt + ' × ' + formatEur(prezzo,2) + '</div></div>' +
+              '<div class="det-st" style="text-align:right"><div class="det-st-lbl">PMC unitario</div><div class="det-st-val">' + formatEur(pmc,4) + '</div><div class="det-st-sub">costo medio</div></div>' +
+            '</div>' +
+            '<div class="det-pl-bar">' +
+              '<div>' +
+                '<div class="det-pl-lbl">P&L totale posizione</div>' +
+                '<div class="det-pl-val ' + (isPos?'pos':'neg') + '">' + formatEurSigned(pl) + '<span class="det-pl-pct"> (' + formatPct(plPct) + ')</span></div>' +
+              '</div>' +
+              '<div style="text-align:right">' +
+                '<div class="det-pl-lbl">Investito</div>' +
+                '<div class="det-inv-val">' + formatEur(costo) + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          // Card andamento
+          '<div class="det-card">' +
+            '<div class="det-card-title">Andamento oggi</div>' +
+            (t.dayHigh ?
+              '<div class="det-range-wrap">' +
+                '<div class="det-range-lbl">Range giornaliero</div>' +
+                '<div class="det-range-bg">' +
+                  '<div class="det-range-fill"></div>' +
+                  '<div class="det-range-dot" id="detRangeDot"></div>' +
+                '</div>' +
+                '<div class="det-range-vals">' +
+                  '<span>Min ' + formatEur(t.dayLow,2) + '</span>' +
+                  '<span style="color:var(--primary);font-weight:800">' + formatEur(prezzo,2) + '</span>' +
+                  '<span>Max ' + formatEur(t.dayHigh,2) + '</span>' +
+                '</div>' +
+              '</div>'
+            : '') +
+            '<div class="det-2charts">' +
+              '<div class="det-ch-box">' +
+                '<div class="det-ch-hdr"><span class="det-ch-lbl">Dal carico</span><span class="det-ch-pct ' + (isPos?'pos':'neg') + '">' + formatPct(plPct) + '</span></div>' +
+                '<canvas id="detChCarico" class="det-sm-canvas"></canvas>' +
+                '<div class="det-ch-ftr"><span>' + formatDate(t.dataAcquisto) + '</span><span>oggi</span></div>' +
+              '</div>' +
+              '<div class="det-ch-box">' +
+                '<div class="det-ch-hdr"><span class="det-ch-lbl">52 settimane</span><span class="det-ch-pct" id="det52pct">—</span></div>' +
+                '<canvas id="detCh52" class="det-sm-canvas"></canvas>' +
+                '<div class="det-ch-ftr"><span id="det52ftrL">—</span><span>oggi</span></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          // Card dati titolo
+          '<div class="det-card">' +
+            '<div class="det-card-title">Dati titolo</div>' +
+            '<div class="det-info-grid">' +
+              '<div class="det-inf"><div class="det-inf-lbl">ISIN</div><div class="det-inf-val">' + escHtml(t.isin||'—') + '</div></div>' +
+              '<div class="det-inf"><div class="det-inf-lbl">Mercato</div><div class="det-inf-val">' + escHtml(t.mercato||'—') + '</div></div>' +
+              '<div class="det-inf"><div class="det-inf-lbl">WKN</div><div class="det-inf-val">' + escHtml(t.wkn||'—') + '</div></div>' +
+              '<div class="det-inf"><div class="det-inf-lbl">Valuta</div><div class="det-inf-val">' + escHtml(t.valuta||'EUR') + '</div></div>' +
+              '<div class="det-inf"><div class="det-inf-lbl">Commissioni</div><div class="det-inf-val">' + formatEur(t.commissioni||0) + '</div></div>' +
+              '<div class="det-inf"><div class="det-inf-lbl">Tasse/Bolli</div><div class="det-inf-val">' + formatEur(t.tasse||0) + '</div></div>' +
+            '</div>' +
+          '</div>' +
+
+          // Card operazioni
+          '<div class="det-card">' +
+            '<div class="det-card-title">Operazioni</div>' +
+            '<div id="detOperazioni"></div>' +
+          '</div>' +
+
+          // Azioni
+          '<div class="det-actions">' +
+            '<button class="det-act-buy" onclick="Portfolio.nuovoAcquisto(\'' + t.id + '\'); Portfolio.chiudiDettaglio()">' +
+              '<i class="bi bi-plus-circle"></i> Nuovo acquisto' +
+            '</button>' +
+            '<button class="det-act-sell" onclick="Portfolio.vendeTitoloById(\'' + t.id + '\')">' +
+              '<i class="bi bi-cash-coin"></i> Vendi' +
+            '</button>' +
+          '</div>' +
+
+        '</div>' + // fine scroll
+      '</div>'; // fine page
+
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Popola operazioni
+    renderDetOperazioni(t);
+
+    // Aggiorna range dot
+    if (t.dayHigh && t.dayLow) {
+      var dot = document.getElementById('detRangeDot');
+      var pct = ((prezzo - t.dayLow) / (t.dayHigh - t.dayLow)) * 100;
+      if (dot) dot.style.left = Math.min(100, Math.max(0, pct)) + '%';
+    }
+
+    // Carica grafici
+    setTimeout(function() {
+      _loadDetMainChart(t, _detPeriod);
+      _loadDetSmallCharts(t);
+    }, 80);
+  }
+
+  function chiudiDettaglio() {
+    var overlay = $('dettaglioOverlay');
+    if (overlay) overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    if (_detChart) { _detChart.destroy(); _detChart = null; }
+  }
+
+  function _loadDetMainChart(t, period) {
+    var canvas  = document.getElementById('detMainChart');
+    var loading = document.getElementById('detChartLoading');
+    if (!canvas) return;
+    if (loading) loading.style.display = 'flex';
+    if (_detChart) { _detChart.destroy(); _detChart = null; }
+
+    var fetchFn;
+    if (period === '1G') {
+      fetchFn = Quotes.fetchIntraday(t);
+    } else {
+      var map = { '1S':'5d', '1M':'1mo', '1A':'1y', '5A':'5y', 'Max':'max' };
+      fetchFn = Quotes.fetchHistory(t, map[period] || '1mo');
+    }
+
+    fetchFn.then(function(history) {
+      if (loading) loading.style.display = 'none';
+      if (!canvas || !history.length) return;
+      var pmc    = t.pmc || t.prezzoAcquisto;
+      var labels = history.map(function(p){ return p.time || new Date(p.date+'T00:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'}); });
+      var values = history.map(function(p){ return p.close; });
+      var first  = values[0], last = values[values.length-1];
+      var color  = last >= first ? '#15803d' : '#b91c1c';
+      var bgA    = last >= first ? 'rgba(21,128,61,.08)' : 'rgba(185,28,28,.06)';
+
+      // Aggiorna footer
+      var ftrL = document.getElementById('detChartFtrLeft');
+      if (ftrL) ftrL.textContent = labels[0] || '';
+
+      var ctx  = canvas.getContext('2d');
+      var grad = ctx.createLinearGradient(0,0,0,160);
+      grad.addColorStop(0, bgA); grad.addColorStop(1,'rgba(255,255,255,0)');
+
+      _detChart = new Chart(canvas, {
+        type:'line',
+        data:{ labels:labels, datasets:[
+          { label:'Prezzo', data:values, borderColor:color, backgroundColor:grad, borderWidth:2, pointRadius:0, pointHoverRadius:4, tension:0.3, fill:true },
+          { label:'PMC', data:Array(values.length).fill(pmc), borderColor:'rgba(148,163,184,.5)', borderWidth:1, borderDash:[4,4], pointRadius:0, fill:false },
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ display:false },
+            tooltip:{ mode:'index', intersect:false, callbacks:{ label:function(c){ return c.dataset.label+': '+formatEur(c.parsed.y,2); }}}},
+          scales:{ x:{ grid:{display:false}, ticks:{ maxTicksLimit:5, font:{size:9}}},
+            y:{ grid:{color:'rgba(241,245,249,.8)'}, ticks:{ callback:function(v){ return formatEur(v,2); }, font:{size:9}}}}
+        },
+      });
+    });
+  }
+
+  function _loadDetSmallCharts(t) {
+    var pmc    = t.pmc || t.prezzoAcquisto;
+    var isPos  = (t.prezzoAttuale||t.prezzoAcquisto) >= pmc;
+    var colorC = isPos ? '#15803d' : '#b91c1c';
+
+    // Dal carico
+    var cvCarico = document.getElementById('detChCarico');
+    if (cvCarico) {
+      Quotes.fetchSincePMC(t).then(function(data) {
+        if (!data.length) return;
+        _drawSparkline(cvCarico, data.map(function(p){ return p.close; }), colorC, pmc);
+      });
+    }
+
+    // 52 settimane
+    var cv52 = document.getElementById('detCh52');
+    var pct52el = document.getElementById('det52pct');
+    var ftr52L  = document.getElementById('det52ftrL');
+    if (cv52 && t.ticker) {
+      Quotes.fetchHistory(t, '1y').then(function(data) {
+        if (!data.length) return;
+        var vals = data.map(function(p){ return p.close; });
+        var col52 = vals[vals.length-1] >= vals[0] ? '#15803d' : '#b91c1c';
+        var pctV  = vals[0] > 0 ? ((vals[vals.length-1]-vals[0])/vals[0])*100 : 0;
+        if (pct52el) { pct52el.textContent = formatPct(pctV); pct52el.className = 'det-ch-pct ' + (pctV>=0?'pos':'neg'); }
+        if (ftr52L && data[0]) ftr52L.textContent = new Date(data[0].date+'T00:00:00').toLocaleDateString('it-IT',{month:'short',year:'2-digit'});
+        _drawSparkline(cv52, vals, col52, null);
+      });
+    }
+  }
+
+  function renderDetOperazioni(t) {
+    var container = $('detOperazioni'); if (!container) return;
+    var ops = (t.operazioni||[]).slice().reverse();
+    if (!ops.length) { container.innerHTML='<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">Nessuna operazione</div>'; return; }
+    container.innerHTML = ops.map(function(op, idx) {
+      var isAcq = op.tipo === 'acquisto';
+      var totOp = op.costoTot || (op.quantita * op.prezzo);
+      var realIdx = ops.length - 1 - idx;
+      return '<div class="det-op">' +
+        '<div class="det-op-ico ' + (isAcq?'g':'r') + '"><i class="bi bi-cart-' + (isAcq?'plus':'dash') + '"></i></div>' +
+        '<div class="det-op-info">' +
+          '<div class="det-op-type">' + (isAcq?'Acquisto':'Vendita') + '</div>' +
+          '<div class="det-op-date">' + formatDate(op.data) + ' · ' + formatNum(op.quantita) + ' × ' + formatEur(op.prezzo,4) + (op.comm?' · Comm. '+formatEur(op.comm):'') + '</div>' +
+        '</div>' +
+        '<div class="det-op-right">' +
+          '<div class="det-op-amt ' + (isAcq?'neg':'pos') + '">' + (isAcq?'−':'+')+formatEur(totOp) + '</div>' +
+          '<button class="det-op-del" onclick="Portfolio.deleteOperazione(\'' + t.id + '\',' + realIdx + ')"><i class="bi bi-trash3"></i></button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function setDetPeriod(period, btn) {
+    _detPeriod = period;
+    document.querySelectorAll('.det-pt').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    var t = data.investimenti.titoli.find(function(x){ return x.id===dettaglioId; });
+    if (t) _loadDetMainChart(t, period);
+  }
+
+
 
     var prezzo = t.prezzoAttuale || t.prezzoAcquisto;
     var pmc    = t.pmc || t.prezzoAcquisto;
@@ -1392,82 +1600,6 @@ const Portfolio = (() => {
       infoGrid.innerHTML = rows.map(function(r){ return '<div class="det-info-item"><div class="det-info-label">'+r.label+'</div><div class="det-info-val">'+escHtml(r.val)+'</div></div>'; }).join('');
     }
 
-    renderDetOperazioni(t);
-    Modals.open('dettaglioTitolo');
-    setTimeout(function(){ loadDetChart(t, _detPeriod); }, 200);
-  }
-
-  function renderDetOperazioni(t) {
-    var container = $('detOperazioni'); if (!container) return;
-    var ops = (t.operazioni||[]).slice().reverse();
-    if (!ops.length) { container.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Nessuna operazione registrata</div>'; return; }
-    container.innerHTML = ops.map(function(op, idx){
-      var isAcq = op.tipo==='acquisto';
-      var totOp = op.costoTot || (op.quantita*op.prezzo);
-      var realIdx = ops.length-1-idx;
-      return '<div class="det-op-item">' +
-        '<div class="det-op-icon" style="background:'+(isAcq?'var(--primary-light)':'var(--danger-light)')+';color:'+(isAcq?'var(--primary-mid)':'var(--danger)')+'"><i class="bi bi-cart-'+(isAcq?'plus':'dash')+'"></i></div>' +
-        '<div class="det-op-body"><div class="det-op-tipo">'+(isAcq?'Acquisto':'Vendita')+'</div><div class="det-op-meta">'+formatDate(op.data)+' · '+formatNum(op.quantita)+' × '+formatEur(op.prezzo,4)+(op.comm?' · Comm. '+formatEur(op.comm):'')+' </div></div>' +
-        '<div><div class="det-op-amt '+(isAcq?'neg':'pos')+'">'+(isAcq?'-':'+')+formatEur(totOp)+'</div>' +
-        '<div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px">' +
-          '<button class="det-op-btn" onclick="Portfolio.deleteOperazione(\''+t.id+'\','+realIdx+')" title="Elimina"><i class="bi bi-trash3"></i></button>' +
-        '</div></div>' +
-      '</div>';
-    }).join('');
-  }
-
-  async function deleteOperazione(titoloId, opIdx) {
-    var t = data.investimenti.titoli.find(function(x){ return x.id===titoloId; });
-    if (!t || !t.operazioni[opIdx]) return;
-    var ok = await Dialog.confirmDanger(
-      '<i class="bi bi-trash3-fill" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
-      '<strong>Elimina operazione</strong><br><span style="font-size:13px;color:var(--text-muted)">Questa azione non può essere annullata.</span>',
-      'Elimina', 'Annulla'
-    );
-    if (!ok) return;
-    t.operazioni.splice(opIdx,1);
-    renderDetOperazioni(t); saveAndSync();
-    App.showToast('Operazione eliminata','info');
-  }
-
-  function loadDetChart(t, period) {
-    var loading = $('detChartLoading'); if (loading) loading.style.display='flex';
-    if (_detChart) { _detChart.destroy(); _detChart=null; }
-    Quotes.fetchHistory(t, period).then(function(history){
-      if (loading) loading.style.display='none';
-      var canvas = $('detChart'); if (!canvas) return;
-      var pmc    = t.pmc || t.prezzoAcquisto;
-      var labels = history.map(function(p){ return new Date(p.date+'T00:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'}); });
-      var values = history.map(function(p){ return p.close; });
-      if (!values.length) return;
-      var first=values[0], last=values[values.length-1];
-      var color  = last>=first ? '#16A34A' : '#DC2626';
-      var bgAlpha= last>=first ? 'rgba(22,163,74,.08)' : 'rgba(220,38,38,.06)';
-      var ctx    = canvas.getContext('2d');
-      var grad   = ctx.createLinearGradient(0,0,0,140);
-      grad.addColorStop(0, bgAlpha); grad.addColorStop(1,'rgba(255,255,255,0)');
-      _detChart = new Chart(canvas, {
-        type:'line',
-        data:{ labels:labels, datasets:[
-          { label:'Prezzo', data:values, borderColor:color, backgroundColor:grad, borderWidth:2, pointRadius:0, pointHoverRadius:5, tension:0.3, fill:true },
-          { label:'PMC', data:Array(values.length).fill(pmc), borderColor:'rgba(148,163,184,.6)', borderWidth:1.5, borderDash:[4,4], pointRadius:0, fill:false },
-        ]},
-        options:{ responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:{ display:true, position:'bottom', labels:{ usePointStyle:true, font:{ size:11, family:'Plus Jakarta Sans' }, padding:12 }},
-            tooltip:{ mode:'index', intersect:false, callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+formatEur(ctx.parsed.y,4); }}}},
-          scales:{ x:{ grid:{display:false}, ticks:{ maxTicksLimit:6, font:{size:10,family:'Plus Jakarta Sans'}}}, y:{ grid:{color:'#F1F5F9'}, ticks:{ callback:function(v){ return formatEur(v,2); }, font:{size:10,family:'Plus Jakarta Sans'}}}}
-        },
-      });
-    });
-  }
-
-  function setDetPeriod(period, btn) {
-    _detPeriod = period;
-    document.querySelectorAll('.det-pp').forEach(function(b){ b.classList.remove('active'); });
-    if (btn) btn.classList.add('active');
-    var t = data.investimenti.titoli.find(function(x){ return x.id===dettaglioId; });
-    if (t) loadDetChart(t, period);
-  }
 
   // ---- Vendi ----
   function vendeTitolo() {
@@ -1522,7 +1654,7 @@ const Portfolio = (() => {
     showTab, setTipoCard, calcCostoCarico, saveTitolo, editTitolo, nuovoAcquisto,
     wizardNext, wizardPrev, wizardReset,
     openTitoloSheet, closeTitoloSheet, aggiornaValoreManuale, toggleSezione,
-    apriDettaglio, vendeTitolo, vendeTitoloById,
+    apriDettaglio, chiudiDettaglio, vendeTitolo, vendeTitoloById,
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo,
     formatEur, formatDate,
