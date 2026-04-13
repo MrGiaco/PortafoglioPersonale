@@ -311,7 +311,7 @@ input, select, textarea { font-family: inherit; }
   padding: 4px 10px; font-size: 12px; color: #fff; font-weight: 600;
   margin-bottom: 16px;
 }
-.patrimonio-badge.neg { background: rgba(252,165,165,.25); }
+.patrimonio-badge.neg { background: rgba(255,80,80,.25); }
 .patrimonio-pills { display: flex; gap: 8px; }
 .patrimonio-pill {
   flex: 1; background: rgba(255,255,255,.12);
@@ -1294,7 +1294,7 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 .inv-tot-item-label { font-size: 10px; color: rgba(255,255,255,.45); margin-bottom: 4px; font-weight: 500; }
 .inv-tot-item-val { font-size: 13px; font-weight: 700; color: #fff; }
 .inv-tot-item-val.pos { color: #86efac; }
-.inv-tot-item-val.neg { color: #fca5a5; }
+.inv-tot-item-val.neg { color: #ff5050; }
 
 /* =============================================
    NUOVA CARD TITOLO (tc2)
@@ -1524,7 +1524,7 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   text-transform: uppercase; color: rgba(255,255,255,.35); margin-bottom: 2px;
 }
 .inv-mini-val { font-size: 12px; font-weight: 800; color: rgba(255,255,255,.75); }
-.inv-mini-val.neg { color: rgba(252,165,165,.85); }
+.inv-mini-val.neg { color: rgba(255,80,80,.9); }
 .inv-mini-sep {
   width: 1px; height: 28px;
   background: rgba(255,255,255,.15);
@@ -1728,8 +1728,8 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   border-radius: 20px; padding: 4px 10px;
   font-size: 11px; font-weight: 700; margin-top: 4px;
 }
-.det-chg-pill.pos { background: rgba(134,239,172,.2); color: #86efac; }
-.det-chg-pill.neg { background: rgba(252,165,165,.18); color: #fca5a5; }
+.det-chg-pill.pos { background: rgba(74,222,128,.2);  color: #4ade80; }
+.det-chg-pill.neg { background: rgba(255,80,80,.22);  color: #ff5050; }
 .det-hero-name { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px; }
 .det-hero-sub { font-size: 10px; color: rgba(255,255,255,.45); font-weight: 600; margin-bottom: 12px; }
 
