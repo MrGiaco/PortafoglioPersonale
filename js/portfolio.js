@@ -1548,55 +1548,6 @@ const Portfolio = (() => {
     if (t) _loadDetMainChart(t, period);
   }
 
-
-
-    var prezzo = t.prezzoAttuale || t.prezzoAcquisto;
-    var pmc    = t.pmc || t.prezzoAcquisto;
-    var valore = prezzo * t.quantita;
-    var costo  = pmc * t.quantita;
-    var pl     = valore - costo;
-    var plPct  = costo > 0 ? (pl/costo)*100 : 0;
-    var dayPos = (t.changePct||0) >= 0;
-    var isPos  = pl >= 0;
-    var col    = tipoColor(t.tipo);
-    var ticker = t.ticker || t.codeZB || '';
-
-    // Logo
-    var logoWrap = $('detLogoWrap'), logoImg = $('detLogoImg'), logoFb = $('detLogoFallback');
-    if (logoWrap) { logoWrap.style.background=col.bg; logoWrap.style.color=col.fg; }
-    if (logoImg && logoFb) {
-      logoFb.style.display='block'; logoFb.textContent=avatarLetters(t.nome);
-      logoImg.src = 'icons/titoli/' + ticker + '.png';
-      logoImg.onload  = function(){ logoImg.style.display='block'; logoFb.style.display='none'; };
-      logoImg.onerror = function(){ logoImg.style.display='none';  logoFb.style.display='block'; };
-    }
-
-    setEl('detTitoloNome', t.nome);
-    setEl('detTitoloSub', (ticker||'—') + ' · ' + (t.mercato||'Borsa Italiana') + ' · ' + formatNum(t.quantita) + (t.tipo==='azione' ? ' az.' : ' quote'));
-    setEl('detPrezzo', formatEur(prezzo, 4));
-
-    var chgBadge = $('detChgBadge');
-    if (chgBadge) { chgBadge.textContent = (dayPos?'+':'') + formatEur(t.change||0,4) + ' (' + formatPct(t.changePct||0) + ') oggi'; chgBadge.className='det-chg-badge '+(dayPos?'pos':'neg'); }
-    var tipoBadge = $('detTipoBadge'); if (tipoBadge) tipoBadge.textContent = tipoLabel(t.tipo);
-
-    var statsGrid = $('detStatsGrid');
-    if (statsGrid) {
-      var stats = [
-        { label:'Valore pos.', val:formatEur(valore),       cls:'' },
-        { label:'P&L tot.',    val:formatEurSigned(pl),     cls:isPos?'pos':'neg' },
-        { label:'Rendimento',  val:formatPct(plPct),        cls:isPos?'pos':'neg' },
-        { label:'PMC',         val:formatEur(pmc,4),        cls:'' },
-        { label:'Costo tot.',  val:formatEur(costo),        cls:'' },
-        { label:'Var. giorn.', val:formatPct(t.changePct||0), cls:dayPos?'pos':'neg' },
-      ];
-      statsGrid.innerHTML = stats.map(function(s){
-        return '<div class="det-stat-item"><div class="det-stat-label">'+s.label+'</div><div class="det-stat-val '+s.cls+'">'+s.val+'</div></div>';
-      }).join('');
-    }
-
-    var infoGrid = $('detInfoGrid');
-
-
   // ---- Vendi ----
   function vendeTitolo() {
     if (!dettaglioId) return;
