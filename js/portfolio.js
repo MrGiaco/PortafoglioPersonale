@@ -782,8 +782,8 @@ const Portfolio = (() => {
     var t = data.investimenti.titoli.find(function(x){ return x.id === id; });
     if (!t) return;
     var valoreAttuale = formatEur(t.prezzoAttuale || t.pmc, 2);
+    var hasCodice = !!t.codeZB;
 
-    // Crea dialog con input
     var overlay = document.getElementById('dialogOverlay');
     if (!overlay) return;
     overlay.innerHTML =
@@ -794,8 +794,17 @@ const Portfolio = (() => {
           '<span style="font-size:13px;color:var(--text-muted);display:block;margin:6px 0 14px">Valore attuale: ' + valoreAttuale + '</span>' +
           '<input id="dialogValoreInput" type="number" step="0.01" min="0" ' +
             'placeholder="Nuovo valore (€)" ' +
-            'style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;outline:none;box-sizing:border-box" ' +
+            'style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:10px" ' +
             'value="' + (t.prezzoAttuale || t.pmc || '') + '" />' +
+          '<label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px">' +
+            'Codice Zonebourse <span style="font-weight:400">(per aggiornamento automatico)</span>' +
+          '</label>' +
+          '<input id="dialogCodeZBInput" type="text" ' +
+            'placeholder="Es. 184320628" ' +
+            'style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box" ' +
+            'value="' + (t.codeZB || '') + '" />' +
+          (hasCodice ? '<span style="font-size:11px;color:var(--success);display:block;margin-top:4px"><i class="bi bi-check-circle-fill"></i> Aggiornamento automatico attivo</span>' :
+            '<span style="font-size:11px;color:var(--text-muted);display:block;margin-top:4px">Lascia vuoto per aggiornamento solo manuale</span>') +
         '</div>' +
         '<div class="dialog-footer">' +
           '<button class="btn btn--ghost dialog-cancel">Annulla</button>' +
@@ -805,7 +814,6 @@ const Portfolio = (() => {
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    // Focus sull'input
     setTimeout(function() {
       var inp = document.getElementById('dialogValoreInput');
       if (inp) { inp.focus(); inp.select(); }
@@ -816,22 +824,25 @@ const Portfolio = (() => {
       document.body.style.overflow = '';
     };
     overlay.querySelector('.dialog-ok').onclick = function() {
-      var inp = document.getElementById('dialogValoreInput');
-      var nuovo = parseFloat(inp ? inp.value : '');
+      var inp    = document.getElementById('dialogValoreInput');
+      var inpZB  = document.getElementById('dialogCodeZBInput');
+      var nuovo  = parseFloat(inp ? inp.value : '');
+      var codice = inpZB ? inpZB.value.trim() : '';
       overlay.classList.remove('open');
       document.body.style.overflow = '';
-      if (isNaN(nuovo) || nuovo < 0) {
-        App.showToast('Valore non valido', 'warning');
-        return;
-      }
+      if (isNaN(nuovo) || nuovo < 0) { App.showToast('Valore non valido', 'warning'); return; }
       t.prezzoAttuale = nuovo;
       t.change = 0; t.changePct = 0;
+      if (codice) t.codeZB = codice;
+      else if (t.codeZB && !codice) t.codeZB = null;
       renderInvestimenti(); renderDashboard(); Charts.updateAll(); saveAndSync();
-      App.showToast(t.nome + ': valore aggiornato a ' + formatEur(nuovo), 'success');
+      var msg = t.nome + ': valore aggiornato a ' + formatEur(nuovo);
+      if (codice) msg += ' · Zonebourse collegato';
+      App.showToast(msg, 'success');
     };
 
-    // Conferma con Enter
-    overlay.querySelector('#dialogValoreInput') && overlay.querySelector('#dialogValoreInput').addEventListener('keydown', function(e) {
+    var inp = overlay.querySelector('#dialogValoreInput');
+    if (inp) inp.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') overlay.querySelector('.dialog-ok').click();
     });
   }
@@ -895,8 +906,20 @@ const Portfolio = (() => {
     var tipo = el.dataset.tipo;
     var hint = $('tipoHint'); if (hint) hint.textContent = tipoHints[tipo] || '';
     var zbG = $('titoloZBGroup'), yhG = $('titoloYahooGroup');
-    if (tipo === 'certificate') { if (zbG) zbG.style.display=''; if (yhG) yhG.style.display='none'; }
-    else { if (zbG) zbG.style.display='none'; if (yhG) yhG.style.display=''; }
+    var zbLabel = zbG ? zbG.querySelector('label') : null;
+    if (tipo === 'certificate') {
+      // Certificates: solo codeZB (obbligatorio)
+      if (zbG) { zbG.style.display=''; if (zbLabel) zbLabel.textContent = 'Codice Zonebourse'; }
+      if (yhG) yhG.style.display='none';
+    } else if (tipo === 'polizza') {
+      // Polizze: nessun codice (aggiornamento manuale)
+      if (zbG) zbG.style.display='none';
+      if (yhG) yhG.style.display='none';
+    } else {
+      // Azioni, fondi, PIR: Yahoo principale, ZB opzionale
+      if (yhG) yhG.style.display='';
+      if (zbG) { zbG.style.display=''; if (zbLabel) zbLabel.textContent = 'Codice Zonebourse (opzionale)'; }
+    }
   }
 
   function calcCostoCarico() {
