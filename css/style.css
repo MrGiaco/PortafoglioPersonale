@@ -20,6 +20,7 @@
   --orange:         #EA580C;
 
   --bg:             #F4F6FB;
+  --bg-secondary:   #F1F5F9;
   --bg-card:        #FFFFFF;
   --border:         #EEF0F6;
   --border-mid:     #E2E8F0;
@@ -269,6 +270,11 @@ input, select, textarea { font-family: inherit; }
 /* =============================================
    DASHBOARD
    ============================================= */
+.dash-date {
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  text-transform: capitalize; margin-bottom: 10px; padding: 0 2px;
+}
+
 .patrimonio-card {
   background: var(--primary);
   border-radius: 20px;
@@ -305,6 +311,7 @@ input, select, textarea { font-family: inherit; }
   padding: 4px 10px; font-size: 12px; color: #fff; font-weight: 600;
   margin-bottom: 16px;
 }
+.patrimonio-badge.neg { background: rgba(252,165,165,.25); }
 .patrimonio-pills { display: flex; gap: 8px; }
 .patrimonio-pill {
   flex: 1; background: rgba(255,255,255,.12);
