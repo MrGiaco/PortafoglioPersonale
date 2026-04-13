@@ -1,5 +1,5 @@
 /* =============================================
-   PORTAFOGLIO PERSONALE — style.css v3
+   PORTAFOGLIO PERSONALE — style.css v2
    Mobile-first, stile Odea Bank
    Font: Plus Jakarta Sans
    Icone: Bootstrap Icons
@@ -521,7 +521,7 @@ input, select, textarea { font-family: inherit; }
   background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
   border-radius: 20px;
   padding: 22px 20px;
-  margin: 0 16px 14px;
+  margin: 16px 16px 14px;
   position: relative; overflow: hidden;
 }
 .inv-hero-card::before {
@@ -1493,7 +1493,7 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 14px 16px 80px;
+  padding: 0 16px calc(var(--tabbar-h) + 24px);
 }
 .inv-scroll-body::-webkit-scrollbar { display: none; }
 
