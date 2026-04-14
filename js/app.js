@@ -366,6 +366,90 @@ const App = (() => {
   }
 
 
+  async function cancellaTitoli() {
+    const data = Portfolio.getData();
+    const n = (data.investimenti.titoli || []).length;
+    if (n === 0) { showToast('Nessun titolo da cancellare', 'info'); return; }
+    const ok = await Dialog.confirmDanger(
+      '<i class="ti ti-trending-up" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Cancella tutti i titoli</strong><br>' +
+      '<span style="font-size:13px;color:var(--text-muted)">Verranno eliminati ' + n + ' titoli dal portafoglio. Questa azione non può essere annullata.</span>',
+      'Cancella', 'Annulla'
+    );
+    if (!ok) return;
+    Portfolio.cancellaTitoli();
+    showToast('Titoli eliminati', 'success');
+  }
+
+  async function importTitoli() {
+    try {
+      const result = await Portfolio.importTitoliDaCSV();
+      Portfolio.renderAll();
+      Charts.updateAll();
+      Drive.save(Portfolio.getData());
+
+      // Aggiorna quotazioni per i nuovi titoli
+      setTimeout(() => Quotes.refreshAll(), 800);
+
+      // Mostra riepilogo
+      _mostraReportImportTitoli(result);
+    } catch(e) {
+      // già gestito in portfolio.js
+    }
+  }
+
+  function _mostraReportImportTitoli(result) {
+    const imp = result.importati   || [];
+    const sca = result.scartati   || [];
+    const dup = result.duplicati  || [];
+
+    let html = '<div style="text-align:left">';
+
+    if (imp.length > 0) {
+      html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px">Importati (' + imp.length + ')</div>';
+      html += '<div style="max-height:180px;overflow-y:auto;margin-bottom:12px">';
+      imp.forEach(function(t) {
+        const qta = t.quantita % 1 === 0 ? Math.round(t.quantita) : t.quantita.toFixed(3);
+        html += '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">';
+        html += '<div style="font-weight:600">' + escHtml(t.nome) + '</div>';
+        html += '<div style="color:var(--text-muted)">' + t.tipo + ' · ' + qta + ' unità · PMC ' + t.pmc.toFixed(4) + ' €</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (dup.length > 0) {
+      html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px">Già presenti (' + dup.length + ')</div>';
+      html += '<div style="max-height:120px;overflow-y:auto;margin-bottom:12px">';
+      dup.forEach(function(t) {
+        html += '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">';
+        html += '<div style="font-weight:600">' + escHtml(t.nome) + '</div>';
+        html += '<div style="color:var(--text-muted)">' + t.motivo + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (sca.length > 0) {
+      html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px">Ignorati (' + sca.length + ')</div>';
+      html += '<div style="max-height:120px;overflow-y:auto">';
+      sca.forEach(function(t) {
+        html += '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">';
+        html += '<div style="font-weight:600">' + escHtml(t.nome) + '</div>';
+        html += '<div style="color:var(--text-muted)">' + t.motivo + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (imp.length === 0 && sca.length === 0 && dup.length === 0) {
+      html += '<div style="color:var(--text-muted);font-size:13px">Nessun titolo trovato nel file.</div>';
+    }
+
+    html += '</div>';
+    Dialog.alert(html);
+  }
+
   async function cancellaMovimentiConto() {
     const data = Portfolio.getData();
     const n = (data.conto.movimenti || []).length;
@@ -417,6 +501,7 @@ const App = (() => {
     showToast, showLoading,
     exportData, importData, importDaBanca, resetApp,
     cancellaMovimentiConto, cancellaSpeseCarta,
+    cancellaTitoli, importTitoli,
     fabAction,
   };
 
