@@ -171,6 +171,7 @@ input, select, textarea { font-family: inherit; }
 /* ---- Sezioni ---- */
 .section { display: none; }
 .section.active { display: block; }
+#section-investimenti.active { display: flex; }
 
 /* ---- Tab Bar (bottom) ---- */
 .tab-bar {
@@ -1649,11 +1650,12 @@ textarea.form-control { resize: vertical; min-height: 64px; }
    DETTAGLIO TITOLO — overlay full screen
    ============================================= */
 .det-overlay {
-  position: fixed; inset: 0; z-index: 2000;
+  position: fixed; inset: 0; z-index: 9000;
   background: var(--bg-secondary);
   display: flex; flex-direction: column;
   transform: translateX(100%);
   transition: transform .28s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
 }
 .det-overlay.open { transform: translateX(0); }
 
@@ -1722,7 +1724,8 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 .det-chg-pill.pos { background: rgba(21,128,61,0.45); color: #86efac; }
 .det-chg-pill.neg { background: rgba(185,28,28,0.50); color: #fca5a5; }
 .det-hero-name { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px; }
-.det-hero-sub { font-size: 10px; color: rgba(255,255,255,.45); font-weight: 600; margin-bottom: 12px; }
+.det-hero-sub { font-size: 10px; color: rgba(255,255,255,.45); font-weight: 600; margin-bottom: 4px; }
+.det-last-update { font-size: 10px; color: rgba(255,255,255,.35); font-weight: 500; margin-bottom: 10px; }
 
 .det-period-row { display: flex; gap: 3px; margin-bottom: 10px; }
 .det-pt {
