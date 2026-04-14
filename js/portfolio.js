@@ -98,20 +98,20 @@ const Portfolio = (() => {
 
   // Categorie built-in dell'app
   var CATEGORIE_BUILTIN = {
-    stipendio:    { label:'Stipendio',         icon:'bi-briefcase-fill' },
-    investimento: { label:'Investimento',      icon:'bi-graph-up-arrow' },
-    affitto:      { label:'Affitto',           icon:'bi-house-fill' },
-    utenze:       { label:'Utenze',            icon:'bi-lightning-charge-fill' },
-    spesa:        { label:'Spesa alimentare',  icon:'bi-cart-fill' },
-    trasporti:    { label:'Trasporti',         icon:'bi-car-front-fill' },
-    salute:       { label:'Salute',            icon:'bi-heart-pulse-fill' },
-    svago:        { label:'Svago',             icon:'bi-controller' },
-    shopping:     { label:'Shopping',          icon:'bi-bag-fill' },
-    ristoranti:   { label:'Ristoranti',        icon:'bi-cup-hot-fill' },
-    viaggi:       { label:'Viaggi',            icon:'bi-airplane-fill' },
-    abbonamenti:  { label:'Abbonamenti',       icon:'bi-collection-fill' },
-    carburante:   { label:'Carburante',        icon:'bi-fuel-pump-fill' },
-    altro:        { label:'Altro',             icon:'bi-three-dots' },
+    stipendio:    { label:'Stipendio',         icon:'bi-briefcase-fill',        color:'ti-blue'   },
+    investimento: { label:'Investimento',      icon:'bi-graph-up-arrow',        color:'ti-teal'   },
+    affitto:      { label:'Affitto',           icon:'bi-house-fill',            color:'ti-indigo' },
+    utenze:       { label:'Utenze',            icon:'bi-lightning-charge-fill', color:'ti-yellow' },
+    spesa:        { label:'Spesa alimentare',  icon:'bi-basket2-fill',          color:'ti-green'  },
+    trasporti:    { label:'Trasporti',         icon:'bi-train-front-fill',      color:'ti-sky'    },
+    salute:       { label:'Salute',            icon:'bi-heart-pulse-fill',      color:'ti-pink'   },
+    svago:        { label:'Svago',             icon:'bi-controller',            color:'ti-purple' },
+    shopping:     { label:'Shopping',          icon:'bi-bag-heart-fill',        color:'ti-pink'   },
+    ristoranti:   { label:'Ristoranti',        icon:'bi-cup-hot-fill',          color:'ti-orange' },
+    viaggi:       { label:'Viaggi',            icon:'bi-airplane-fill',         color:'ti-sky'    },
+    abbonamenti:  { label:'Abbonamenti',       icon:'bi-collection-play-fill',  color:'ti-purple' },
+    carburante:   { label:'Carburante',        icon:'bi-fuel-pump-fill',        color:'ti-amber'  },
+    altro:        { label:'Altro',             icon:'bi-circle-fill',           color:'ti-slate'  },
   };
 
   // Mapping categorie banca → chiave app
@@ -150,17 +150,17 @@ const Portfolio = (() => {
 
   // Categorie custom predefinite (per banca, non presenti nelle builtin)
   var CATEGORIE_CUSTOM_DEFAULT = {
-    hi_tech:        { label:'Hi-Tech & Informatica', icon:'bi-laptop-fill' },
-    cellulare:      { label:'Cellulare',             icon:'bi-phone-fill' },
-    abbigliamento:  { label:'Abbigliamento',         icon:'bi-bag-heart-fill' },
-    casa:           { label:'Casa',                  icon:'bi-tools' },
-    polizze:        { label:'Polizze',               icon:'bi-shield-fill-check' },
-    bonifici_out:   { label:'Bonifici in uscita',    icon:'bi-send-fill' },
-    bonifici_in:    { label:'Bonifici ricevuti',     icon:'bi-inbox-fill' },
-    rimborsi:       { label:'Rimborsi',              icon:'bi-arrow-counterclockwise' },
-    imposte:        { label:'Imposte e Tasse',       icon:'bi-bank2' },
-    carta_addebito: { label:'Addebito Carta',        icon:'bi-credit-card-fill' },
-    giroconto_in:   { label:'Giroconto',             icon:'bi-arrow-left-right' },
+    hi_tech:        { label:'Hi-Tech & Informatica', icon:'bi-laptop-fill',        color:'ti-blue'   },
+    cellulare:      { label:'Cellulare',             icon:'bi-phone-fill',         color:'ti-blue'   },
+    abbigliamento:  { label:'Abbigliamento',         icon:'bi-scissors',           color:'ti-pink'   },
+    casa:           { label:'Casa',                  icon:'bi-hammer',             color:'ti-amber'  },
+    polizze:        { label:'Polizze',               icon:'bi-shield-fill-check',  color:'ti-teal'   },
+    bonifici_out:   { label:'Bonifici in uscita',    icon:'bi-send-fill',          color:'ti-red'    },
+    bonifici_in:    { label:'Bonifici ricevuti',     icon:'bi-box-arrow-in-down',  color:'ti-green'  },
+    rimborsi:       { label:'Rimborsi',              icon:'bi-arrow-return-left',  color:'ti-green'  },
+    imposte:        { label:'Imposte e Tasse',       icon:'bi-bank2',              color:'ti-slate'  },
+    carta_addebito: { label:'Addebito Carta',        icon:'bi-credit-card-fill',   color:'ti-indigo' },
+    giroconto_in:   { label:'Giroconto',             icon:'bi-arrow-left-right',   color:'ti-sky'    },
   };
 
   function getCategorieCustom() {
@@ -180,7 +180,11 @@ const Portfolio = (() => {
   }
 
   function catIcon(cat) {
-    return getCategoria(cat).icon || 'bi-three-dots';
+    return getCategoria(cat).icon || 'bi-circle-fill';
+  }
+
+  function catColor(cat) {
+    return getCategoria(cat).color || 'ti-slate';
   }
 
   // Aggiunge una categoria custom se non esiste già
@@ -1715,7 +1719,7 @@ const Portfolio = (() => {
   function transactionHTML(m, showActions) {
     var isPos  = m.tipo==='entrata';
     var icon   = catIcon(m.categoria);
-    var color  = isPos ? 'summary-card__icon--green' : 'summary-card__icon--red';
+    var color  = catColor(m.categoria);
     var amount = isPos ? '+'+formatEur(m.importo) : '-'+formatEur(m.importo);
     var cls    = isPos ? 'transaction-amount--positive' : 'transaction-amount--negative';
     return '<div class="transaction-item">' +
@@ -1728,7 +1732,7 @@ const Portfolio = (() => {
 
   function cartaSpesaHTML(s) {
     return '<div class="transaction-item">' +
-      '<div class="transaction-icon summary-card__icon--purple"><i class="bi '+catIcon(s.categoria)+'"></i></div>' +
+      '<div class="transaction-icon '+catColor(s.categoria)+'"><i class="bi '+catIcon(s.categoria)+'"></i></div>' +
       '<div class="transaction-body"><div class="transaction-desc">'+escHtml(s.descrizione)+'</div><div class="transaction-meta">'+formatDate(s.data)+' · '+catLabel(s.categoria)+(s.addebitoData?' · Addebito: '+formatDate(s.addebitoData):'')+' </div></div>' +
       '<div class="transaction-amount transaction-amount--negative">-'+formatEur(s.importo)+'</div>' +
       '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editSpesaCarta(\''+s.id+'\')" title="Modifica"><i class="bi bi-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteSpesaCarta(\''+s.id+'\')" title="Elimina"><i class="bi bi-trash3"></i></button></div>' +
@@ -1764,7 +1768,7 @@ const Portfolio = (() => {
     restoreEditingMovimento, restoreEditingSpesaCarta,
     formatEur, formatDate,
     populateCategorieSelect, importDaBanca,
-    catLabel, catIcon, CATEGORIE_BUILTIN, CATEGORIE_CUSTOM_DEFAULT,
+    catLabel, catIcon, catColor, CATEGORIE_BUILTIN, CATEGORIE_CUSTOM_DEFAULT,
   };
 
 })();
