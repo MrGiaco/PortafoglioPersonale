@@ -266,19 +266,28 @@ const Portfolio = (() => {
     });
 
     var importatiConto = 0, importatiCarta = 0, duplicati = 0, catNuove = [];
+    var scartate = []; // righe non importate con motivo
     var oggi = new Date().toISOString().slice(0,10);
 
-    dataRows.forEach(function(r) {
+    dataRows.forEach(function(r, rowIdx) {
       // Colonne: 0=Data, 1=Operazione, 2=Dettagli, 3=Conto, 4=Contabilizzazione, 5=Categoria, 6=Valuta, 7=Importo
       var dataCella = r[0];
-      if (!dataCella) return;
+      var descRaw   = String(r[1] || r[2] || '').trim() || '—';
+
+      if (!dataCella) {
+        scartate.push({ riga: rowIdx+1, desc: descRaw, motivo: 'Data mancante' });
+        return;
+      }
 
       var dataStr;
       if (dataCella instanceof Date) {
         dataStr = dataCella.toISOString().slice(0,10);
       } else {
         var d = new Date(String(dataCella));
-        if (isNaN(d.getTime())) return;
+        if (isNaN(d.getTime())) {
+          scartate.push({ riga: rowIdx+1, desc: descRaw, motivo: 'Data non valida: ' + String(dataCella) });
+          return;
+        }
         dataStr = d.toISOString().slice(0,10);
       }
 
@@ -301,6 +310,11 @@ const Portfolio = (() => {
         }
         var parsed = parseFloat(s);
         if (!isNaN(parsed)) importo = parsed;
+      }
+
+      if (importo === null) {
+        scartate.push({ riga: rowIdx+1, desc: descRaw, data: dataStr, motivo: 'Importo non leggibile: ' + String(importoRaw) });
+        return;
       }
 
       var desc = operazione || dettagli || 'Movimento';
@@ -335,12 +349,16 @@ const Portfolio = (() => {
       var isCartaDiCredito = contoOCarta.indexOf('carta') !== -1;
 
       if (isCartaDiCredito) {
-        var importoCarta = importo != null ? Math.abs(importo) : 0;
+        var importoCarta = Math.abs(importo);
         // Dedup: data + descrizione + importo
         var isDup = data.carta.spese.some(function(s) {
           return s.data === dataStr && s.descrizione === desc && s.importo === importoCarta;
         });
-        if (isDup) { duplicati++; return; }
+        if (isDup) {
+          duplicati++;
+          scartate.push({ riga: rowIdx+1, desc: desc, data: dataStr, importo: importoCarta, motivo: 'Duplicato (già presente)' });
+          return;
+        }
         data.carta.spese.push({
           id: uid(), data: dataStr, descrizione: desc,
           importo: importoCarta, categoria: catKey,
@@ -349,19 +367,17 @@ const Portfolio = (() => {
         importatiCarta++;
       } else {
         // Determina tipo dal segno dell'importo
-        var tipo;
-        if (importo != null) {
-          tipo = importo >= 0 ? 'entrata' : 'uscita';
-        } else {
-          var entrataCat = ['stipendio','investimento','bonifici_in','rimborsi','giroconto_in'];
-          tipo = entrataCat.indexOf(catKey) !== -1 ? 'entrata' : 'uscita';
-        }
-        var importoConto = importo != null ? Math.abs(importo) : 0;
+        var tipo = importo >= 0 ? 'entrata' : 'uscita';
+        var importoConto = Math.abs(importo);
         // Dedup: data + descrizione + importo
         var isDupC = data.conto.movimenti.some(function(m) {
           return m.data === dataStr && m.descrizione === desc && m.importo === importoConto;
         });
-        if (isDupC) { duplicati++; return; }
+        if (isDupC) {
+          duplicati++;
+          scartate.push({ riga: rowIdx+1, desc: desc, data: dataStr, importo: importoConto, motivo: 'Duplicato (già presente)' });
+          return;
+        }
         var mov = {
           id: uid(), data: dataStr, tipo: tipo, descrizione: desc,
           importo: importoConto, categoria: catKey,
@@ -375,7 +391,7 @@ const Portfolio = (() => {
       }
     });
 
-    return { importatiConto, importatiCarta, duplicati, catNuove };
+    return { importatiConto, importatiCarta, duplicati, catNuove, scartate };
   }
 
 
@@ -1737,20 +1753,20 @@ const Portfolio = (() => {
     var color  = catColor(m.categoria);
     var amount = isPos ? '+'+formatEur(m.importo) : '-'+formatEur(m.importo);
     var cls    = isPos ? 'transaction-amount--positive' : 'transaction-amount--negative';
-    return '<div class="transaction-item">' +
+    return '<div class="transaction-item' + (showActions ? ' clickable' : '') + '"' + (showActions ? ' onclick="Portfolio.editMovimento(\''+m.id+'\'})"' : '') + '>' +
       '<div class="transaction-icon '+color+'"><i class="ti ti-'+icon+'"></i></div>' +
       '<div class="transaction-body"><div class="transaction-desc">'+escHtml(m.descrizione)+'</div><div class="transaction-meta">'+formatDate(m.data)+' · '+catLabel(m.categoria)+'</div></div>' +
       '<div class="transaction-amount '+cls+'">'+amount+'</div>' +
-      (showActions ? '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editMovimento(\''+m.id+'\')" title="Modifica"><i class="ti ti-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteMovimento(\''+m.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' : '') +
+      (showActions ? '<div class="transaction-actions"><button class="action-btn action-btn--delete" onclick="event.stopPropagation();Portfolio.deleteMovimento(\''+m.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' : '') +
     '</div>';
   }
 
   function cartaSpesaHTML(s) {
-    return '<div class="transaction-item">' +
+    return '<div class="transaction-item clickable" onclick="Portfolio.editSpesaCarta(\''+s.id+'\'})">' +
       '<div class="transaction-icon '+catColor(s.categoria)+'"><i class="ti ti-'+catIcon(s.categoria)+'"></i></div>' +
       '<div class="transaction-body"><div class="transaction-desc">'+escHtml(s.descrizione)+'</div><div class="transaction-meta">'+formatDate(s.data)+' · '+catLabel(s.categoria)+(s.addebitoData?' · Addebito: '+formatDate(s.addebitoData):'')+' </div></div>' +
       '<div class="transaction-amount transaction-amount--negative">-'+formatEur(s.importo)+'</div>' +
-      '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editSpesaCarta(\''+s.id+'\')" title="Modifica"><i class="ti ti-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteSpesaCarta(\''+s.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' +
+      '<div class="transaction-actions"><button class="action-btn action-btn--delete" onclick="event.stopPropagation();Portfolio.deleteSpesaCarta(\''+s.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' +
     '</div>';
   }
 
@@ -1762,6 +1778,17 @@ const Portfolio = (() => {
 
   function detVendi() {
     vendeTitoloById(dettaglioId);
+  }
+
+  function cancellaMovimentiConto() {
+    data.conto.movimenti = [];
+    data.conto.saldo = 0;
+    renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
+  }
+
+  function cancellaSpeseCarta() {
+    data.carta.spese = [];
+    renderCarta(); renderDashboard(); saveAndSync();
   }
 
   function resetNuovoAcquisto() { _nuovoAcquistoId = null; }
@@ -1780,6 +1807,7 @@ const Portfolio = (() => {
     detNuovoAcquisto, detVendi,
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo, resetNuovoAcquisto,
+    cancellaMovimentiConto, cancellaSpeseCarta,
     restoreEditingMovimento, restoreEditingSpesaCarta,
     formatEur, formatDate,
     populateCategorieSelect, importDaBanca,
