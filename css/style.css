@@ -1617,6 +1617,15 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   font-size: 13px; font-weight: 700; color: var(--text-primary);
   margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.itc-name-row {
+  font-size: 14px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.itc-divider { height: 1px; background: var(--border); margin: 7px 0 6px; }
+.itc-upd { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+.itc-upd-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.itc-upd-dot.fresh { background: #16a34a; }
+.itc-upd-dot.stale { background: #d97706; }
 .itc-price-col { text-align: right; flex-shrink: 0; }
 .itc-price { font-size: 16px; font-weight: 900; color: var(--text-primary); letter-spacing: -.02em; margin-bottom: 3px; }
 .itc-daypill {
@@ -1844,15 +1853,15 @@ textarea.form-control { resize: vertical; min-height: 64px; }
    ICONE TRANSAZIONI — colore diretto sull'icona
    Puntato su i per battere la specificità di body
    ============================================= */
-.ti-green  > i { color:#16a34a !important; }
-.ti-red    > i { color:#dc2626 !important; }
-.ti-blue   > i { color:#2563eb !important; }
-.ti-indigo > i { color:#4f46e5 !important; }
-.ti-purple > i { color:#9333ea !important; }
-.ti-pink   > i { color:#db2777 !important; }
-.ti-orange > i { color:#ea580c !important; }
-.ti-amber  > i { color:#d97706 !important; }
-.ti-yellow > i { color:#ca8a04 !important; }
-.ti-teal   > i { color:#0d9488 !important; }
-.ti-sky    > i { color:#0284c7 !important; }
-.ti-slate  > i { color:#64748b !important; }
+.ic-green  > i { color:#16a34a !important; }
+.ic-red    > i { color:#dc2626 !important; }
+.ic-blue   > i { color:#2563eb !important; }
+.ic-indigo > i { color:#4f46e5 !important; }
+.ic-purple > i { color:#9333ea !important; }
+.ic-pink   > i { color:#db2777 !important; }
+.ic-orange > i { color:#ea580c !important; }
+.ic-amber  > i { color:#d97706 !important; }
+.ic-yellow > i { color:#ca8a04 !important; }
+.ic-teal   > i { color:#0d9488 !important; }
+.ic-sky    > i { color:#0284c7 !important; }
+.ic-slate  > i { color:#64748b !important; }
