@@ -341,9 +341,9 @@ const Quotes = (() => {
   }
 
   function getChangeIcon(value) {
-    if (value > 0) return 'bi-arrow-up-right';
-    if (value < 0) return 'bi-arrow-down-right';
-    return 'bi-dash';
+    if (value > 0) return 'arrow-up-right';
+    if (value < 0) return 'arrow-down-right';
+    return 'minus';
   }
 
   // Svuota cache (utile per forzare refresh)
