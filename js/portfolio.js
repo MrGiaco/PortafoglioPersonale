@@ -98,20 +98,20 @@ const Portfolio = (() => {
 
   // Categorie built-in dell'app
   var CATEGORIE_BUILTIN = {
-    stipendio:    { label:'Stipendio',         icon:'bi-briefcase-fill',        color:'ti-blue'   },
-    investimento: { label:'Investimento',      icon:'bi-graph-up-arrow',        color:'ti-teal'   },
-    affitto:      { label:'Affitto',           icon:'bi-house-fill',            color:'ti-indigo' },
-    utenze:       { label:'Utenze',            icon:'bi-lightning-charge-fill', color:'ti-yellow' },
-    spesa:        { label:'Spesa alimentare',  icon:'bi-basket2-fill',          color:'ti-green'  },
-    trasporti:    { label:'Trasporti',         icon:'bi-train-front-fill',      color:'ti-sky'    },
-    salute:       { label:'Salute',            icon:'bi-heart-pulse-fill',      color:'ti-pink'   },
-    svago:        { label:'Svago',             icon:'bi-controller',            color:'ti-purple' },
-    shopping:     { label:'Shopping',          icon:'bi-bag-heart-fill',        color:'ti-pink'   },
-    ristoranti:   { label:'Ristoranti',        icon:'bi-cup-hot-fill',          color:'ti-orange' },
-    viaggi:       { label:'Viaggi',            icon:'bi-airplane-fill',         color:'ti-sky'    },
-    abbonamenti:  { label:'Abbonamenti',       icon:'bi-collection-play-fill',  color:'ti-purple' },
-    carburante:   { label:'Carburante',        icon:'bi-fuel-pump-fill',        color:'ti-amber'  },
-    altro:        { label:'Altro',             icon:'bi-circle-fill',           color:'ti-slate'  },
+    stipendio:    { label:'Stipendio',         icon:'ti-briefcase',        color:'ic-blue'   },
+    investimento: { label:'Investimento',      icon:'ti-trending-up',        color:'ic-teal'   },
+    affitto:      { label:'Affitto',           icon:'ti-home',            color:'ic-indigo' },
+    utenze:       { label:'Utenze',            icon:'ti-bolt', color:'ic-yellow' },
+    spesa:        { label:'Spesa alimentare',  icon:'ti-shopping-cart',          color:'ic-green'  },
+    trasporti:    { label:'Trasporti',         icon:'ti-train',      color:'ic-sky'    },
+    salute:       { label:'Salute',            icon:'ti-heartbeat',      color:'ic-pink'   },
+    svago:        { label:'Svago',             icon:'ti-device-gamepad-2',            color:'ic-purple' },
+    shopping:     { label:'Shopping',          icon:'ti-shopping-bag',        color:'ic-pink'   },
+    ristoranti:   { label:'Ristoranti',        icon:'ti-coffee',          color:'ic-orange' },
+    viaggi:       { label:'Viaggi',            icon:'ti-plane',         color:'ic-sky'    },
+    abbonamenti:  { label:'Abbonamenti',       icon:'ti-rotate-clockwise',  color:'ic-purple' },
+    carburante:   { label:'Carburante',        icon:'ti-gas-station',        color:'ic-amber'  },
+    altro:        { label:'Altro',             icon:'ti-circle-filled',           color:'ic-slate'  },
   };
 
   // Mapping categorie banca → chiave app
@@ -150,17 +150,17 @@ const Portfolio = (() => {
 
   // Categorie custom predefinite (per banca, non presenti nelle builtin)
   var CATEGORIE_CUSTOM_DEFAULT = {
-    hi_tech:        { label:'Hi-Tech & Informatica', icon:'bi-laptop-fill',        color:'ti-blue'   },
-    cellulare:      { label:'Cellulare',             icon:'bi-phone-fill',         color:'ti-blue'   },
-    abbigliamento:  { label:'Abbigliamento',         icon:'bi-scissors',           color:'ti-pink'   },
-    casa:           { label:'Casa',                  icon:'bi-hammer',             color:'ti-amber'  },
-    polizze:        { label:'Polizze',               icon:'bi-shield-fill-check',  color:'ti-teal'   },
-    bonifici_out:   { label:'Bonifici in uscita',    icon:'bi-send-fill',          color:'ti-red'    },
-    bonifici_in:    { label:'Bonifici ricevuti',     icon:'bi-box-arrow-in-down',  color:'ti-green'  },
-    rimborsi:       { label:'Rimborsi',              icon:'bi-arrow-return-left',  color:'ti-green'  },
-    imposte:        { label:'Imposte e Tasse',       icon:'bi-bank2',              color:'ti-slate'  },
-    carta_addebito: { label:'Addebito Carta',        icon:'bi-credit-card-fill',   color:'ti-indigo' },
-    giroconto_in:   { label:'Giroconto',             icon:'bi-arrow-left-right',   color:'ti-sky'    },
+    hi_tech:        { label:'Hi-Tech & Informatica', icon:'ti-device-laptop',        color:'ic-blue'   },
+    cellulare:      { label:'Cellulare',             icon:'ti-device-mobile',         color:'ic-blue'   },
+    abbigliamento:  { label:'Abbigliamento',         icon:'ti-scissors',           color:'ic-pink'   },
+    casa:           { label:'Casa',                  icon:'ti-hammer',             color:'ic-amber'  },
+    polizze:        { label:'Polizze',               icon:'ti-shield-check',  color:'ic-teal'   },
+    bonifici_out:   { label:'Bonifici in uscita',    icon:'ti-send',          color:'ic-red'    },
+    bonifici_in:    { label:'Bonifici ricevuti',     icon:'ti-login-2',  color:'ic-green'  },
+    rimborsi:       { label:'Rimborsi',              icon:'ti-arrow-back-up',  color:'ic-green'  },
+    imposte:        { label:'Imposte e Tasse',       icon:'ti-building-bank',              color:'ic-slate'  },
+    carta_addebito: { label:'Addebito Carta',        icon:'ti-credit-card',   color:'ic-indigo' },
+    giroconto_in:   { label:'Giroconto',             icon:'ti-arrows-left-right',   color:'ic-sky'    },
   };
 
   function getCategorieCustom() {
@@ -172,7 +172,7 @@ const Portfolio = (() => {
     var custom = getCategorieCustom();
     if (custom[key]) return custom[key];
     if (CATEGORIE_CUSTOM_DEFAULT[key]) return CATEGORIE_CUSTOM_DEFAULT[key];
-    return { label: key, icon: 'bi-three-dots' };
+    return { label: key, icon: 'ti-dots' };
   }
 
   function catLabel(cat) {
@@ -180,11 +180,11 @@ const Portfolio = (() => {
   }
 
   function catIcon(cat) {
-    return getCategoria(cat).icon || 'bi-circle-fill';
+    return getCategoria(cat).icon || 'ti-circle-filled';
   }
 
   function catColor(cat) {
-    return getCategoria(cat).color || 'ti-slate';
+    return getCategoria(cat).color || 'ic-slate';
   }
 
   // Aggiunge una categoria custom se non esiste già
@@ -192,7 +192,7 @@ const Portfolio = (() => {
     if (CATEGORIE_BUILTIN[key] || CATEGORIE_CUSTOM_DEFAULT[key]) return false; // già esiste
     if (!data.impostazioni.categorie_custom) data.impostazioni.categorie_custom = {};
     if (data.impostazioni.categorie_custom[key]) return false; // già aggiunta
-    data.impostazioni.categorie_custom[key] = { label: label, icon: icon || 'bi-tag-fill' };
+    data.impostazioni.categorie_custom[key] = { label: label, icon: icon || 'ti-tag' };
     return true;
   }
 
@@ -311,19 +311,19 @@ const Portfolio = (() => {
       if (!catKey) {
         catKey = catBanca.replace(/[^a-z0-9]/g, '_').slice(0, 30) || 'altro';
         var iconMap = {
-          'spesa':'bi-cart-fill', 'aliment':'bi-cart-fill',
-          'ristor':'bi-cup-hot-fill', 'bar':'bi-cup-hot-fill',
-          'viagg':'bi-airplane-fill', 'hotel':'bi-building-fill',
-          'salut':'bi-heart-pulse-fill', 'farm':'bi-capsule-pill',
-          'sport':'bi-trophy-fill', 'svago':'bi-controller',
-          'tech':'bi-laptop-fill', 'infor':'bi-laptop-fill',
-          'abbig':'bi-bag-heart-fill', 'moda':'bi-bag-heart-fill',
-          'assic':'bi-shield-fill-check', 'poliz':'bi-shield-fill-check',
-          'tassa':'bi-bank2', 'impost':'bi-bank2',
-          'carb':'bi-fuel-pump-fill', 'benzin':'bi-fuel-pump-fill',
-          'bonif':'bi-send-fill', 'trasfer':'bi-arrow-left-right',
+          'spesa':'ti-shopping-cart', 'aliment':'ti-shopping-cart',
+          'ristor':'ti-coffee', 'bar':'ti-coffee',
+          'viagg':'ti-plane', 'hotel':'ti-building',
+          'salut':'ti-heartbeat', 'farm':'ti-pill',
+          'sport':'ti-trophy', 'svago':'ti-device-gamepad-2',
+          'tech':'ti-device-laptop', 'infor':'ti-device-laptop',
+          'abbig':'ti-shopping-bag', 'moda':'ti-shopping-bag',
+          'assic':'ti-shield-check', 'poliz':'ti-shield-check',
+          'tassa':'ti-building-bank', 'impost':'ti-building-bank',
+          'carb':'ti-gas-station', 'benzin':'ti-gas-station',
+          'bonif':'ti-send', 'trasfer':'ti-arrows-left-right',
         };
-        var autoIcon = 'bi-tag-fill';
+        var autoIcon = 'ti-tag';
         Object.keys(iconMap).forEach(function(k) {
           if (catBanca.indexOf(k) !== -1) autoIcon = iconMap[k];
         });
@@ -445,10 +445,10 @@ const Portfolio = (() => {
     var el = $('dashDate');
     if (el) el.textContent = new Date().toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-    var saldoConto = getSaldoConto();
-    var totInv     = getTotaleInvestimenti();
-    var totale     = saldoConto + totInv;
+    var saldoConto  = getSaldoConto();
+    var totInv      = getTotaleInvestimenti();
     var debitoCarta = getDebitoCarta();
+    var totale      = saldoConto + totInv - debitoCarta;
 
     setEl('patrimonioTotale',  formatEur(totale));
     setEl('summaryContoValue', formatEur(saldoConto));
@@ -462,7 +462,7 @@ const Portfolio = (() => {
     var container = $('lastTransazioni');
     if (!container) return;
     var all = data.conto.movimenti.slice().sort(function(a,b){ return new Date(b.data)-new Date(a.data); }).slice(0,5);
-    container.innerHTML = all.length ? all.map(function(m){ return transactionHTML(m, false); }).join('') : emptyState('bi-inbox','Nessuna transazione');
+    container.innerHTML = all.length ? all.map(function(m){ return transactionHTML(m, false); }).join('') : emptyState('ti-inbox','Nessuna transazione');
   }
 
   function getTotaleInvestimenti() {
@@ -518,7 +518,7 @@ const Portfolio = (() => {
     list.sort(function(a,b){ return new Date(b.data)-new Date(a.data); });
     var container = $('contoMovimenti');
     if (!container) return;
-    container.innerHTML = list.length ? list.map(function(m){ return transactionHTML(m, true); }).join('') : emptyState('bi-bank2','Nessun movimento trovato');
+    container.innerHTML = list.length ? list.map(function(m){ return transactionHTML(m, true); }).join('') : emptyState('ti-building-bank','Nessun movimento trovato');
   }
 
   function setMovTipo(tipo) {
@@ -528,7 +528,7 @@ const Portfolio = (() => {
     if (uBtn) uBtn.classList.toggle('active', tipo === 'uscita');
     var title = $('movHeroTitle'), icon = $('movHeroIcon');
     if (title) title.textContent = tipo === 'entrata' ? 'Nuova Entrata' : 'Nuova Uscita';
-    if (icon)  icon.innerHTML    = tipo === 'entrata' ? '<i class="bi bi-arrow-down-circle-fill"></i>' : '<i class="bi bi-arrow-up-circle-fill"></i>';
+    if (icon)  icon.innerHTML    = tipo === 'entrata' ? '<i class="ti ti-circle-arrow-down"></i>' : '<i class="ti ti-circle-arrow-up"></i>';
   }
 
   function saveMovimento() {
@@ -617,7 +617,7 @@ const Portfolio = (() => {
     list.sort(function(a,b){ return new Date(b.data)-new Date(a.data); });
     var container = $('cartaMovimenti');
     if (!container) return;
-    container.innerHTML = list.length ? list.map(cartaSpesaHTML).join('') : emptyState('bi-credit-card','Nessuna spesa trovata');
+    container.innerHTML = list.length ? list.map(cartaSpesaHTML).join('') : emptyState('ti-credit-card','Nessuna spesa trovata');
   }
 
   function saveSpesaCarta() {
@@ -683,11 +683,11 @@ const Portfolio = (() => {
 
   // ---- Configurazione sezioni ----
   var SEZIONI_INV = [
-    { key: 'azione',      label: 'Azioni',        icon: 'bi-graph-up-arrow',     colore: '#2563EB' },
-    { key: 'fondo',       label: 'Fondi',          icon: 'bi-pie-chart-fill',     colore: '#7C3AED' },
-    { key: 'certificate', label: 'Certificates',   icon: 'bi-award-fill',         colore: '#D97706' },
-    { key: 'pir',         label: 'PIR',            icon: 'bi-shield-fill-check',  colore: '#16A34A' },
-    { key: 'polizza',     label: 'Polizze',        icon: 'bi-umbrella-fill',      colore: '#DC2626' },
+    { key: 'azione',      label: 'Azioni',        icon: 'ti-trending-up',     colore: '#2563EB' },
+    { key: 'fondo',       label: 'Fondi',          icon: 'ti-chart-pie',     colore: '#7C3AED' },
+    { key: 'certificate', label: 'Certificates',   icon: 'ti-award',         colore: '#D97706' },
+    { key: 'pir',         label: 'PIR',            icon: 'ti-shield-check',  colore: '#16A34A' },
+    { key: 'polizza',     label: 'Polizze',        icon: 'ti-umbrella',      colore: '#DC2626' },
   ];
 
   function _sezioneCollapsed(key) {
@@ -740,7 +740,7 @@ const Portfolio = (() => {
           '</div>' +
           '<div class="isez-right">' +
             '<span class="isez-pl ' + (posS?'pos':'neg') + '">' + formatPct(plPctSez) + '</span>' +
-            '<i class="bi bi-chevron-down isez-chev" id="invSezIcon-' + sez.key + '" style="' + (collapsed ? 'transform:rotate(-90deg)' : '') + '"></i>' +
+            '<i class="ti ti-chevron-down isez-chev" id="invSezIcon-' + sez.key + '" style="' + (collapsed ? 'transform:rotate(-90deg)' : '') + '"></i>' +
           '</div>' +
         '</div>' +
         '<div class="isez-body' + (collapsed ? ' collapsed' : '') + '" id="invSez-' + sez.key + '">' +
@@ -822,43 +822,50 @@ const Portfolio = (() => {
     var qtyLabel = t.tipo === 'azione' ? 'azioni' : 'quote';
     var qtyFmt   = t.quantita % 1 === 0 ? String(Math.round(t.quantita)) : t.quantita.toFixed(3);
 
+    var dayChgTot = dayChg * t.quantita;
+    var lastUpd   = t.lastUpdate ? _formatLastUpdateFull(t.lastUpdate) : null;
+    var updSource = hasQuote ? (t.codeZB ? 'ZoneBourse' : 'Yahoo Finance') : null;
+    var isRecent  = t.lastUpdate && (Date.now() - t.lastUpdate < 5*60*1000);
+
     return '<div class="itc" onclick="Portfolio.apriDettaglio(\'' + t.id + '\')">' +
-      // Top: logo + ticker/qty + badge + prezzo + variazione
+      '<div class="itc-name-row">' + escHtml(t.nome) + '</div>' +
       '<div class="itc-top">' +
         '<div class="itc-logo" style="background:' + col.bg + ';color:' + col.fg + '">' +
           (logoSrc ? '<img src="' + logoSrc + '" onload="this.nextElementSibling.style.display=\'none\'" onerror="this.style.display=\'none\'" />' : '') +
           '<span>' + escHtml(av) + '</span>' +
         '</div>' +
         '<div class="itc-meta">' +
-          '<div class="itc-ticker">' + escHtml(ticker || tipoLabel(t.tipo)) + ' · ' + qtyFmt + ' ' + qtyLabel + '</div>' +
-          '<div class="itc-name">' + escHtml(t.nome) + '</div>' +
+          '<div class="itc-ticker">' + escHtml(ticker || tipoLabel(t.tipo)) + ' &nbsp; ' + qtyFmt + ' ' + qtyLabel + '</div>' +
         '</div>' +
         '<div class="itc-price-col">' +
           '<div class="itc-price">' + formatEur(prezzo, 2) + '</div>' +
-          '<div class="itc-daypill ' + (dayPos?'pos':'neg') + '">' +
-            (dayPos?'▲':'▼') + ' ' + formatPct(dayChgPct) +
-          '</div>' +
+          '<div class="itc-daypill ' + (dayPos?'pos':'neg') + '">' + (dayPos?'▲':'▼') + ' ' + formatPct(dayChgPct) + '</div>' +
         '</div>' +
       '</div>' +
-
-      // Sparkline intraday
-      (hasQuote ?
-        '<canvas id="sp_' + t.id + '" class="itc-spark"></canvas>'
-      : '<div class="itc-spark-manual"><i class="bi bi-dash"></i> aggiornamento manuale</div>') +
-
-      // Bottom: valore posizione + P&L
+      (hasQuote ? '<canvas id="sp_' + t.id + '" class="itc-spark"></canvas>' : '<div class="itc-spark-manual"><i class="ti ti-minus"></i> aggiornamento manuale</div>') +
+      '<div class="itc-divider"></div>' +
       '<div class="itc-bottom">' +
         '<div class="itc-stat">' +
           '<div class="itc-stat-lbl">Valore</div>' +
           '<div class="itc-stat-val">' + formatEur(valore) + '</div>' +
         '</div>' +
         '<div class="itc-stat" style="text-align:right">' +
-          '<div class="itc-stat-lbl">P&amp;L</div>' +
-          '<div class="itc-stat-val ' + (isPos?'pos':'neg') + '">' + formatEurSigned(pl) + ' (' + formatPct(plPct) + ')</div>' +
+          '<div class="itc-stat-lbl">P&amp;L totale</div>' +
+          '<div class="itc-stat-val ' + (isPos?'pos':'neg') + '">' + formatEurSigned(pl) + ' &nbsp;' + formatPct(plPct) + '</div>' +
         '</div>' +
       '</div>' +
+      (hasQuote ?
+        '<div class="itc-bottom" style="margin-top:5px">' +
+          '<div class="itc-stat">' +
+            (lastUpd ? '<div class="itc-upd"><span class="itc-upd-dot ' + (isRecent?'fresh':'stale') + '"></span>' + updSource + ' &nbsp; ' + lastUpd + '</div>' : '') +
+          '</div>' +
+          '<div class="itc-stat" style="text-align:right">' +
+            '<div class="itc-stat-lbl">Guadagno/perdita oggi</div>' +
+            '<div class="itc-stat-val ' + (dayPos?'pos':'neg') + '">' + formatEurSigned(dayChgTot) + ' &nbsp;' + formatPct(dayChgPct) + '</div>' +
+          '</div>' +
+        '</div>'
+      : '') +
     '</div>';
-  }
 
   // Disegna sparkline intraday su ogni card
   function _renderSparklines() {
@@ -956,30 +963,30 @@ const Portfolio = (() => {
         '<div class="sheet-handle"></div>' +
         '<div class="sheet-title">' + escHtml(t.nome) + '</div>' +
         '<div class="sheet-item" onclick="Portfolio.apriDettaglio(\'' + t.id + '\'); Portfolio.closeTitoloSheet()">' +
-          '<div class="sheet-icon" style="background:#EFF6FF;color:#1E3A8A"><i class="bi bi-bar-chart-line"></i></div>' +
+          '<div class="sheet-icon" style="background:#EFF6FF;color:#1E3A8A"><i class="ti ti-chart-line"></i></div>' +
           '<div class="sheet-item-body"><div class="sheet-item-title">Dettaglio</div><div class="sheet-item-sub">Grafico storico, operazioni e statistiche</div></div>' +
-          '<i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
+          '<i class="ti ti-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
         '</div>' +
         '<div class="sheet-item" onclick="Portfolio.editTitolo(\'' + t.id + '\'); Portfolio.closeTitoloSheet()">' +
-          '<div class="sheet-icon" style="background:#F4F6FB;color:#64748B"><i class="bi bi-pencil"></i></div>' +
+          '<div class="sheet-icon" style="background:#F4F6FB;color:#64748B"><i class="ti ti-pencil"></i></div>' +
           '<div class="sheet-item-body"><div class="sheet-item-title">Modifica titolo</div><div class="sheet-item-sub">Modifica dati e operazioni</div></div>' +
-          '<i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
+          '<i class="ti ti-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
         '</div>' +
         (!t.ticker && !t.codeZB ?
         '<div class="sheet-item" onclick="Portfolio.aggiornaValoreManuale(\'' + t.id + '\'); Portfolio.closeTitoloSheet()">' +
-          '<div class="sheet-icon" style="background:#F0FDF4;color:#16A34A"><i class="bi bi-pencil-square"></i></div>' +
+          '<div class="sheet-icon" style="background:#F0FDF4;color:#16A34A"><i class="ti ti-edit"></i></div>' +
           '<div class="sheet-item-body"><div class="sheet-item-title">Aggiorna valore</div><div class="sheet-item-sub">Inserisci manualmente il valore attuale</div></div>' +
-          '<i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
+          '<i class="ti ti-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
         '</div>' : '') +
         '<div class="sheet-item" onclick="Portfolio.nuovoAcquisto(\'' + t.id + '\'); Portfolio.closeTitoloSheet()">' +
-          '<div class="sheet-icon" style="background:#F0FDF4;color:#16A34A"><i class="bi bi-plus-circle"></i></div>' +
+          '<div class="sheet-icon" style="background:#F0FDF4;color:#16A34A"><i class="ti ti-circle-plus"></i></div>' +
           '<div class="sheet-item-body"><div class="sheet-item-title">Nuovo acquisto</div><div class="sheet-item-sub">Aggiungi quote alla posizione esistente</div></div>' +
-          '<i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
+          '<i class="ti ti-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
         '</div>' +
         '<div class="sheet-item" onclick="Portfolio.vendeTitoloById(\'' + t.id + '\'); Portfolio.closeTitoloSheet()">' +
-          '<div class="sheet-icon" style="background:#FEF2F2;color:#DC2626"><i class="bi bi-cash-coin"></i></div>' +
+          '<div class="sheet-icon" style="background:#FEF2F2;color:#DC2626"><i class="ti ti-cash"></i></div>' +
           '<div class="sheet-item-body"><div class="sheet-item-title">Vendi</div><div class="sheet-item-sub">Registra una vendita parziale o totale</div></div>' +
-          '<i class="bi bi-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
+          '<i class="ti ti-chevron-right" style="color:#CBD5E1;font-size:14px"></i>' +
         '</div>' +
       '</div>';
     overlay.classList.add('open');
@@ -997,7 +1004,7 @@ const Portfolio = (() => {
     overlay.innerHTML =
       '<div class="dialog-box">' +
         '<div class="dialog-body">' +
-          '<i class="bi bi-pencil-square" style="color:var(--primary);font-size:24px;display:block;margin-bottom:10px"></i>' +
+          '<i class="ti ti-edit" style="color:var(--primary);font-size:24px;display:block;margin-bottom:10px"></i>' +
           '<strong>' + escHtml(t.nome) + '</strong>' +
           '<span style="font-size:13px;color:var(--text-muted);display:block;margin:6px 0 14px">Valore attuale: ' + valoreAttuale + '</span>' +
           '<input id="dialogValoreInput" type="number" step="0.01" min="0" ' +
@@ -1011,7 +1018,7 @@ const Portfolio = (() => {
             'placeholder="Es. 184320628" ' +
             'style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box" ' +
             'value="' + (t.codeZB || '') + '" />' +
-          (hasCodice ? '<span style="font-size:11px;color:var(--success);display:block;margin-top:4px"><i class="bi bi-check-circle-fill"></i> Aggiornamento automatico attivo</span>' :
+          (hasCodice ? '<span style="font-size:11px;color:var(--success);display:block;margin-top:4px"><i class="ti ti-circle-check"></i> Aggiornamento automatico attivo</span>' :
             '<span style="font-size:11px;color:var(--text-muted);display:block;margin-top:4px">Lascia vuoto per aggiornamento solo manuale</span>') +
         '</div>' +
         '<div class="dialog-footer">' +
@@ -1092,8 +1099,8 @@ const Portfolio = (() => {
     var back = $('wizardBack'); if (back) back.style.display = n > 1 ? 'inline-flex' : 'none';
     var next = $('wizardNext');
     if (next) next.innerHTML = n === wizardTot
-      ? '<i class="bi bi-check-lg"></i> Aggiungi'
-      : 'Avanti <i class="bi bi-chevron-right"></i>';
+      ? '<i class="ti ti-check"></i> Aggiungi'
+      : 'Avanti <i class="ti ti-chevron-right"></i>';
   }
 
   function wizardNext() { if (wizardStep < wizardTot) wizardGoTo(wizardStep+1); else saveTitolo(); }
@@ -1435,7 +1442,14 @@ const Portfolio = (() => {
     }, 80);
   }
 
-    function _formatLastUpdate(ts) {
+    function _formatLastUpdateFull(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    return d.toLocaleDateString('it-IT', {day:'numeric', month:'short', year:'numeric'}) + '   ' +
+           d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  function _formatLastUpdate(ts) {
     if (!ts) return '';
     var d = new Date(ts);
     var now = new Date();
@@ -1462,20 +1476,20 @@ const Portfolio = (() => {
       '<div style="background:var(--bg-card);border-radius:20px 20px 0 0;width:100%;padding:8px 0 32px">' +
         '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 16px"></div>' +
         '<div class="sheet-item" onclick="Portfolio.editTitolo(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
-          '<i class="bi bi-pencil-square"></i><span>Modifica titolo</span>' +
+          '<i class="ti ti-edit"></i><span>Modifica titolo</span>' +
         '</div>' +
         (t.tipo==='polizza'||!t.ticker&&!t.codeZB ?
           '<div class="sheet-item" onclick="Portfolio.aggiornaValoreManuale(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
-            '<i class="bi bi-pencil"></i><span>Aggiorna valore</span>' +
+            '<i class="ti ti-pencil"></i><span>Aggiorna valore</span>' +
           '</div>' : '') +
         '<div class="sheet-item" onclick="Portfolio.nuovoAcquisto(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
-          '<i class="bi bi-plus-circle"></i><span>Nuovo acquisto</span>' +
+          '<i class="ti ti-circle-plus"></i><span>Nuovo acquisto</span>' +
         '</div>' +
         '<div class="sheet-item" onclick="Portfolio.vendeTitoloById(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
-          '<i class="bi bi-cash-coin"></i><span>Registra vendita</span>' +
+          '<i class="ti ti-cash"></i><span>Registra vendita</span>' +
         '</div>' +
         '<div class="sheet-item" style="color:var(--danger)" onclick="Portfolio.eliminaTitolo(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
-          '<i class="bi bi-trash3"></i><span>Elimina titolo</span>' +
+          '<i class="ti ti-trash"></i><span>Elimina titolo</span>' +
         '</div>' +
       '</div>';
     document.body.appendChild(menu);
@@ -1622,7 +1636,7 @@ const Portfolio = (() => {
     var t = data.investimenti.titoli.find(function(x){ return x.id===titoloId; });
     if (!t || !t.operazioni[opIdx]) return;
     var ok = await Dialog.confirmDanger(
-      '<i class="bi bi-trash3-fill" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<i class="ti ti-trash-filled" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
       '<strong>Elimina operazione</strong><br><span style="font-size:13px;color:var(--text-muted)">Questa azione non può essere annullata.</span>',
       'Elimina', 'Annulla'
     );
@@ -1659,14 +1673,14 @@ const Portfolio = (() => {
       var totOp = op.costoTot || (op.quantita * op.prezzo);
       var realIdx = ops.length - 1 - idx;
       return '<div class="det-op">' +
-        '<div class="det-op-ico ' + (isAcq?'g':'r') + '"><i class="bi bi-cart-' + (isAcq?'plus':'dash') + '"></i></div>' +
+        '<div class="det-op-ico ' + (isAcq?'g':'r') + '"><i class="ti ti-shopping-cart' + (isAcq?'plus':'dash') + '"></i></div>' +
         '<div class="det-op-info">' +
           '<div class="det-op-type">' + (isAcq?'Acquisto':'Vendita') + '</div>' +
           '<div class="det-op-date">' + formatDate(op.data) + ' · ' + formatNum(op.quantita) + ' × ' + formatEur(op.prezzo,4) + (op.comm?' · Comm. '+formatEur(op.comm):'') + '</div>' +
         '</div>' +
         '<div class="det-op-right">' +
           '<div class="det-op-amt ' + (isAcq?'neg':'pos') + '">' + (isAcq?'−':'+')+formatEur(totOp) + '</div>' +
-          '<button class="det-op-del" onclick="Portfolio.deleteOperazione(\'' + t.id + '\',' + realIdx + ')"><i class="bi bi-trash3"></i></button>' +
+          '<button class="det-op-del" onclick="Portfolio.deleteOperazione(\'' + t.id + '\',' + realIdx + ')"><i class="ti ti-trash"></i></button>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1684,7 +1698,7 @@ const Portfolio = (() => {
     var t = data.investimenti.titoli.find(function(x){ return x.id===id; });
     if (!t) return;
     var ok = await Dialog.confirmDanger(
-      '<i class="bi bi-trash3-fill" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<i class="ti ti-trash-filled" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
       '<strong>Elimina titolo</strong><br><span style="font-size:13px;color:var(--text-muted)">Eliminare ' + escHtml(t.nome) + '? Questa azione non può essere annullata.</span>',
       'Elimina', 'Annulla'
     );
@@ -1726,7 +1740,7 @@ const Portfolio = (() => {
       '<div class="transaction-icon '+color+'"><i class="bi '+icon+'"></i></div>' +
       '<div class="transaction-body"><div class="transaction-desc">'+escHtml(m.descrizione)+'</div><div class="transaction-meta">'+formatDate(m.data)+' · '+catLabel(m.categoria)+'</div></div>' +
       '<div class="transaction-amount '+cls+'">'+amount+'</div>' +
-      (showActions ? '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editMovimento(\''+m.id+'\')" title="Modifica"><i class="bi bi-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteMovimento(\''+m.id+'\')" title="Elimina"><i class="bi bi-trash3"></i></button></div>' : '') +
+      (showActions ? '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editMovimento(\''+m.id+'\')" title="Modifica"><i class="ti ti-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteMovimento(\''+m.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' : '') +
     '</div>';
   }
 
@@ -1735,7 +1749,7 @@ const Portfolio = (() => {
       '<div class="transaction-icon '+catColor(s.categoria)+'"><i class="bi '+catIcon(s.categoria)+'"></i></div>' +
       '<div class="transaction-body"><div class="transaction-desc">'+escHtml(s.descrizione)+'</div><div class="transaction-meta">'+formatDate(s.data)+' · '+catLabel(s.categoria)+(s.addebitoData?' · Addebito: '+formatDate(s.addebitoData):'')+' </div></div>' +
       '<div class="transaction-amount transaction-amount--negative">-'+formatEur(s.importo)+'</div>' +
-      '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editSpesaCarta(\''+s.id+'\')" title="Modifica"><i class="bi bi-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteSpesaCarta(\''+s.id+'\')" title="Elimina"><i class="bi bi-trash3"></i></button></div>' +
+      '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editSpesaCarta(\''+s.id+'\')" title="Modifica"><i class="ti ti-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteSpesaCarta(\''+s.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' +
     '</div>';
   }
 
