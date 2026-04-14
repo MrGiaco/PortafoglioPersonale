@@ -548,6 +548,13 @@
           </div>
 
           <div class="settings-card settings-card--danger">
+            <h3><i class="ti ti-eraser"></i> Cancella Transazioni</h3>
+            <p>Elimina tutte le transazioni del conto corrente o tutte le spese della carta. Il saldo iniziale e i dati della carta non vengono modificati.</p>
+            <button class="btn btn--danger btn--block mt-2" onclick="App.cancellaMovimentiConto()"><i class="ti ti-building-bank"></i> Cancella movimenti conto</button>
+            <button class="btn btn--danger btn--block mt-2" onclick="App.cancellaSpeseCarta()"><i class="ti ti-credit-card"></i> Cancella spese carta</button>
+          </div>
+
+          <div class="settings-card settings-card--danger">
             <h3><i class="ti ti-trash-filled"></i> Reimposta App</h3>
             <p>Cancella tutti i dati locali. I dati su Drive non vengono eliminati.</p>
             <button class="btn btn--danger btn--block mt-2" onclick="App.resetApp()"><i class="ti ti-alert-triangle"></i> Reimposta</button>
