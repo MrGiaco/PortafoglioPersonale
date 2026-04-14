@@ -1719,8 +1719,8 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   border-radius: 20px; padding: 4px 10px;
   font-size: 11px; font-weight: 700; margin-top: 4px;
 }
-.det-chg-pill.pos { background: rgba(134,239,172,.2); color: #86efac; }
-.det-chg-pill.neg { background: rgba(252,165,165,.18); color: #fca5a5; }
+.det-chg-pill.pos { background: rgba(21,128,61,0.45); color: #86efac; }
+.det-chg-pill.neg { background: rgba(185,28,28,0.50); color: #fca5a5; }
 .det-hero-name { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px; }
 .det-hero-sub { font-size: 10px; color: rgba(255,255,255,.45); font-weight: 600; margin-bottom: 12px; }
 
