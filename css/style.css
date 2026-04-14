@@ -1204,11 +1204,11 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   opacity: 1; pointer-events: all;
 }
 .dialog-box {
-  background: var(--surface);
+  background: var(--bg-card);
   border-radius: 18px;
   padding: 24px 20px 16px;
   max-width: 320px; width: 100%;
-  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
   animation: dialogIn .2s cubic-bezier(.34,1.56,.64,1);
 }
 @keyframes dialogIn {
