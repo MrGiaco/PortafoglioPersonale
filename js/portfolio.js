@@ -1953,18 +1953,50 @@ const Portfolio = (() => {
         }
       });
 
-      // Titolo completamente venduto → skip
+      // STEP 1: Genera SEMPRE i movimenti sul conto corrente (indipendentemente da titolo chiuso o duplicato)
+      g.operazioni.forEach(function(op) {
+        var isAcquisto = op.tipo === 'Compra' || op.tipo === 'Trasferimento Titoli (in entrata)';
+        var isVendita  = op.tipo === 'Vendi'  || op.tipo === 'Trasferimento Titoli (in uscita)';
+        if (!isAcquisto && !isVendita) return;
+
+        var tipoMov    = isAcquisto ? 'uscita' : 'entrata';
+        var descMov    = (isAcquisto ? 'Acquisto ' : 'Vendita ') + g.nome;
+        var importoMov = Math.abs(op.valore + (isAcquisto ? op.comm + op.tasse : -(op.comm + op.tasse)));
+        var importoRound = Math.round(importoMov * 100) / 100;
+        if (importoRound <= 0) return;
+
+        // Dedup: stessa data + descrizione + importo
+        var isDup = data.conto.movimenti.some(function(m) {
+          return m.data === op.data &&
+                 m.descrizione === descMov &&
+                 Math.round(m.importo * 100) / 100 === importoRound;
+        });
+        if (isDup) return;
+
+        var qta = op.azioni % 1 === 0 ? String(Math.round(op.azioni)) : op.azioni.toFixed(3);
+        var noteParts = [qta + ' unità'];
+        if (op.comm  > 0) noteParts.push('Comm. '  + op.comm.toFixed(2)  + ' €');
+        if (op.tasse > 0) noteParts.push('Tasse ' + op.tasse.toFixed(2) + ' €');
+
+        data.conto.movimenti.push({
+          id: uid(), data: op.data, tipo: tipoMov,
+          descrizione: descMov, importo: importoRound,
+          categoria: 'investimento', note: noteParts.join(' | '),
+        });
+        data.conto.saldo = tipoMov === 'entrata'
+          ? data.conto.saldo + importoRound
+          : data.conto.saldo - importoRound;
+      });
+
+      // STEP 2: Aggiunge il titolo solo se posizione ancora aperta e non duplicata
       if (qtaTot <= 0.0001) {
         scartati.push({ nome: g.nome, motivo: 'Posizione chiusa (quantità netta = 0)' });
         return;
       }
 
       var pmc = qtaTot > 0 ? costoTot / qtaTot : 0;
-
-      // Determina tipo titolo dal simbolo e nome
       var tipoTitolo = _determinaTipo(g.simbolo, g.isin, g.nome);
 
-      // Verifica duplicato
       var dup = data.investimenti.titoli.find(function(t) {
         return (g.isin && t.isin === g.isin) ||
                (g.simbolo && t.ticker === g.simbolo) ||
@@ -1975,14 +2007,13 @@ const Portfolio = (() => {
         return;
       }
 
-      // Determina ticker e codeZB
       var ticker = null, codeZB = null;
       if (g.simbolo) {
         if (g.simbolo.endsWith('.F')) { codeZB = g.simbolo; }
         else { ticker = g.simbolo; }
       }
 
-      var titolo = {
+      data.investimenti.titoli.push({
         id:            uid(),
         tipo:          tipoTitolo,
         nome:          g.nome,
@@ -2006,51 +2037,8 @@ const Portfolio = (() => {
         venduto: false,
         note: '',
         operazioni: operazioniSalvate,
-      };
-
-      data.investimenti.titoli.push(titolo);
-      importati.push({ nome: g.nome, tipo: tipoTitolo, quantita: qtaTot, pmc: pmc });
-
-      // Genera movimenti sul conto corrente per ogni operazione
-      g.operazioni.forEach(function(op) {
-        var isAcquisto = op.tipo === 'Compra' || op.tipo === 'Trasferimento Titoli (in entrata)';
-        var isVendita  = op.tipo === 'Vendi'  || op.tipo === 'Trasferimento Titoli (in uscita)';
-        if (!isAcquisto && !isVendita) return;
-
-        var tipoMov     = isAcquisto ? 'uscita' : 'entrata';
-        var descMov     = (isAcquisto ? 'Acquisto ' : 'Vendita ') + g.nome;
-        var importoMov  = op.valore + (isAcquisto ? op.comm + op.tasse : -(op.comm + op.tasse));
-        importoMov      = Math.abs(importoMov);
-
-        // Dedup: stessa data + descrizione + importo (arrotondato a 2 decimali)
-        var importoRound = Math.round(importoMov * 100) / 100;
-        var isDup = data.conto.movimenti.some(function(m) {
-          return m.data === op.data &&
-                 m.descrizione === descMov &&
-                 Math.round(m.importo * 100) / 100 === importoRound;
-        });
-        if (isDup) return;
-
-        var noteParts = [];
-        var qta = op.azioni % 1 === 0 ? Math.round(op.azioni) : op.azioni.toFixed(3);
-        noteParts.push(qta + ' unità');
-        if (op.comm > 0) noteParts.push('Comm. ' + op.comm.toFixed(2) + ' €');
-        if (op.tasse > 0) noteParts.push('Tasse ' + op.tasse.toFixed(2) + ' €');
-
-        var mov = {
-          id:          uid(),
-          data:        op.data,
-          tipo:        tipoMov,
-          descrizione: descMov,
-          importo:     importoRound,
-          categoria:   'investimento',
-          note:        noteParts.join(' | '),
-        };
-        data.conto.movimenti.push(mov);
-        data.conto.saldo = tipoMov === 'entrata'
-          ? data.conto.saldo + importoRound
-          : data.conto.saldo - importoRound;
       });
+      importati.push({ nome: g.nome, tipo: tipoTitolo, quantita: qtaTot, pmc: pmc });
     });
 
     return { importati: importati, scartati: scartati, duplicati: giaDuplicati };
