@@ -6,8 +6,8 @@
   "scope": "/PortafoglioPersonale/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#2563EB",
-  "background_color": "#F8FAFC",
+  "theme_color": "#1E3A8A",
+  "background_color": "#1E3A8A",
   "lang": "it",
   "categories": ["finance", "productivity"],
   "icons": [
