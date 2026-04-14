@@ -307,15 +307,94 @@ const App = (() => {
       Portfolio.renderAll();
       Charts.updateAll();
       Drive.save(Portfolio.getData());
+
       let msg = `Importati ${result.importatiConto} movimenti conto, ${result.importatiCarta} spese carta.`;
       if (result.duplicati > 0)  msg += ` (${result.duplicati} duplicati ignorati)`;
       if (result.catNuove.length > 0) msg += ` · Nuove categorie: ${result.catNuove.join(', ')}`;
       showToast(msg, 'success', 6000);
+
+      // Mostra report righe scartate se presenti
+      if (result.scartate && result.scartate.length > 0) {
+        _mostraReportScartate(result.scartate);
+      }
     } catch(e) {
       // già gestito in portfolio.js
     }
   }
 
+  function _mostraReportScartate(scartate) {
+    // Separa duplicati dagli errori veri
+    const errori    = scartate.filter(function(r){ return r.motivo !== 'Duplicato (già presente)'; });
+    const duplicati = scartate.filter(function(r){ return r.motivo === 'Duplicato (già presente)'; });
+
+    let html = '<div style="text-align:left">';
+    html += '<div style="font-size:13px;font-weight:700;margin-bottom:12px">';
+    html += scartate.length + ' righe non importate';
+    html += '</div>';
+
+    if (errori.length > 0) {
+      html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px">Errori (' + errori.length + ')</div>';
+      html += '<div style="max-height:200px;overflow-y:auto;margin-bottom:12px">';
+      errori.forEach(function(r) {
+        html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">';
+        html += '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(r.desc) + '</div>';
+        if (r.data) html += '<div style="color:var(--text-muted)">' + r.data + '</div>';
+        html += '<div style="color:var(--danger);margin-top:2px"><i class="ti ti-alert-triangle"></i> ' + escHtml(r.motivo) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    if (duplicati.length > 0) {
+      html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:6px">Duplicati ignorati (' + duplicati.length + ')</div>';
+      html += '<div style="max-height:150px;overflow-y:auto">';
+      duplicati.forEach(function(r) {
+        html += '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">';
+        html += '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(r.desc) + '</div>';
+        if (r.data) html += '<div style="color:var(--text-muted)">' + r.data + (r.importo != null ? ' · ' + r.importo.toFixed(2) + ' €' : '') + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+    Dialog.alert(html);
+  }
+
+  function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+
+  async function cancellaMovimentiConto() {
+    const data = Portfolio.getData();
+    const n = (data.conto.movimenti || []).length;
+    if (n === 0) { showToast('Nessun movimento da cancellare', 'info'); return; }
+    const ok = await Dialog.confirmDanger(
+      '<i class="ti ti-building-bank" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Cancella movimenti conto</strong><br>' +
+      '<span style="font-size:13px;color:var(--text-muted)">Verranno eliminati ' + n + ' movimenti. Il saldo iniziale rimarrà invariato. Questa azione non può essere annullata.</span>',
+      'Cancella', 'Annulla'
+    );
+    if (!ok) return;
+    Portfolio.cancellaMovimentiConto();
+    showToast('Movimenti conto eliminati', 'success');
+  }
+
+  async function cancellaSpeseCarta() {
+    const data = Portfolio.getData();
+    const n = (data.carta.spese || []).length;
+    if (n === 0) { showToast('Nessuna spesa da cancellare', 'info'); return; }
+    const ok = await Dialog.confirmDanger(
+      '<i class="ti ti-credit-card" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Cancella spese carta</strong><br>' +
+      '<span style="font-size:13px;color:var(--text-muted)">Verranno eliminate ' + n + ' spese. I dati della carta rimarranno invariati. Questa azione non può essere annullata.</span>',
+      'Cancella', 'Annulla'
+    );
+    if (!ok) return;
+    Portfolio.cancellaSpeseCarta();
+    showToast('Spese carta eliminate', 'success');
+  }
 
   async function resetApp() {
     const ok = await Dialog.confirmDanger(
@@ -337,6 +416,7 @@ const App = (() => {
     init, navigate, toggleSidebar, closeSidebar,
     showToast, showLoading,
     exportData, importData, importDaBanca, resetApp,
+    cancellaMovimentiConto, cancellaSpeseCarta,
     fabAction,
   };
 
