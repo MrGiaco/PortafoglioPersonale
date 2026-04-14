@@ -167,17 +167,17 @@ const App = (() => {
 
     // FAB icona contestuale (nascosto nel dettaglio)
     const fabIcons = {
-      dashboard:    'bi-plus-lg',
-      conto:        'bi-plus-lg',
-      carta:        'bi-plus-lg',
-      investimenti: 'bi-plus-lg',
-      report:       'bi-download',
+      dashboard:    'plus',
+      conto:        'plus',
+      carta:        'plus',
+      investimenti: 'plus',
+      report:       'download',
       impostazioni: '',
     };
     const fab = $('fabBtn');
     if (fab) {
       fab.classList.toggle('hidden', section === 'impostazioni' || section === 'dettaglio');
-      fab.innerHTML = `<i class="bi ${fabIcons[section] || 'bi-plus-lg'}"></i>`;
+      fab.innerHTML = `<i class="ti ti-${fabIcons[section] || 'plus'}"></i>`;
     }
 
     // Chiudi sidebar su mobile
@@ -259,17 +259,17 @@ const App = (() => {
   // ---- Toast ----
   function showToast(msg, type = 'info', duration = 3500) {
     const icons = {
-      success: 'bi-check-circle-fill',
-      error:   'bi-x-circle-fill',
-      warning: 'bi-exclamation-triangle-fill',
-      info:    'bi-info-circle-fill',
+      success: 'circle-check',
+      error:   'circle-x',
+      warning: 'alert-triangle',
+      info:    'info-circle',
     };
     const container = $('toastContainer');
     if (!container) return;
 
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
-    toast.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i><span>${msg}</span>`;
+    toast.innerHTML = `<i class="ti ti-${icons[type] || icons.info}"></i><span>${msg}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
@@ -319,7 +319,7 @@ const App = (() => {
 
   async function resetApp() {
     const ok = await Dialog.confirmDanger(
-      '<i class="bi bi-exclamation-triangle-fill" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<i class="ti ti-alert-triangle" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
       '<strong>Reimposta app</strong><br><span style="font-size:13px;color:var(--text-muted)">Tutti i dati locali verranno cancellati. I dati su Drive non vengono eliminati.</span>',
       'Reimposta', 'Annulla'
     );
