@@ -1842,16 +1842,17 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 
 /* =============================================
    ICONE TRANSAZIONI — colore diretto sull'icona
+   Puntato su i per battere la specificità di body
    ============================================= */
-.ti-green  { color:#16a34a; }
-.ti-red    { color:#dc2626; }
-.ti-blue   { color:#2563eb; }
-.ti-indigo { color:#4f46e5; }
-.ti-purple { color:#9333ea; }
-.ti-pink   { color:#db2777; }
-.ti-orange { color:#ea580c; }
-.ti-amber  { color:#d97706; }
-.ti-yellow { color:#ca8a04; }
-.ti-teal   { color:#0d9488; }
-.ti-sky    { color:#0284c7; }
-.ti-slate  { color:#64748b; }
+.ti-green  > i { color:#16a34a !important; }
+.ti-red    > i { color:#dc2626 !important; }
+.ti-blue   > i { color:#2563eb !important; }
+.ti-indigo > i { color:#4f46e5 !important; }
+.ti-purple > i { color:#9333ea !important; }
+.ti-pink   > i { color:#db2777 !important; }
+.ti-orange > i { color:#ea580c !important; }
+.ti-amber  > i { color:#d97706 !important; }
+.ti-yellow > i { color:#ca8a04 !important; }
+.ti-teal   > i { color:#0d9488 !important; }
+.ti-sky    > i { color:#0284c7 !important; }
+.ti-slate  > i { color:#64748b !important; }
