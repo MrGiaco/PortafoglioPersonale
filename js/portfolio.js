@@ -98,20 +98,20 @@ const Portfolio = (() => {
 
   // Categorie built-in dell'app
   var CATEGORIE_BUILTIN = {
-    stipendio:    { label:'Stipendio',         icon:'ti-briefcase',        color:'ic-blue'   },
-    investimento: { label:'Investimento',      icon:'ti-trending-up',        color:'ic-teal'   },
-    affitto:      { label:'Affitto',           icon:'ti-home',            color:'ic-indigo' },
-    utenze:       { label:'Utenze',            icon:'ti-bolt', color:'ic-yellow' },
-    spesa:        { label:'Spesa alimentare',  icon:'ti-shopping-cart',          color:'ic-green'  },
-    trasporti:    { label:'Trasporti',         icon:'ti-train',      color:'ic-sky'    },
-    salute:       { label:'Salute',            icon:'ti-heartbeat',      color:'ic-pink'   },
-    svago:        { label:'Svago',             icon:'ti-device-gamepad-2',            color:'ic-purple' },
-    shopping:     { label:'Shopping',          icon:'ti-shopping-bag',        color:'ic-pink'   },
-    ristoranti:   { label:'Ristoranti',        icon:'ti-coffee',          color:'ic-orange' },
-    viaggi:       { label:'Viaggi',            icon:'ti-plane',         color:'ic-sky'    },
-    abbonamenti:  { label:'Abbonamenti',       icon:'ti-rotate-clockwise',  color:'ic-purple' },
-    carburante:   { label:'Carburante',        icon:'ti-gas-station',        color:'ic-amber'  },
-    altro:        { label:'Altro',             icon:'ti-circle-filled',           color:'ic-slate'  },
+    stipendio:    { label:'Stipendio',         icon:'briefcase',        color:'ic-blue'   },
+    investimento: { label:'Investimento',      icon:'trending-up',        color:'ic-teal'   },
+    affitto:      { label:'Affitto',           icon:'home',            color:'ic-indigo' },
+    utenze:       { label:'Utenze',            icon:'bolt', color:'ic-yellow' },
+    spesa:        { label:'Spesa alimentare',  icon:'shopping-cart',          color:'ic-green'  },
+    trasporti:    { label:'Trasporti',         icon:'train',      color:'ic-sky'    },
+    salute:       { label:'Salute',            icon:'heartbeat',      color:'ic-pink'   },
+    svago:        { label:'Svago',             icon:'device-gamepad-2',            color:'ic-purple' },
+    shopping:     { label:'Shopping',          icon:'shopping-bag',        color:'ic-pink'   },
+    ristoranti:   { label:'Ristoranti',        icon:'coffee',          color:'ic-orange' },
+    viaggi:       { label:'Viaggi',            icon:'plane',         color:'ic-sky'    },
+    abbonamenti:  { label:'Abbonamenti',       icon:'rotate-clockwise',  color:'ic-purple' },
+    carburante:   { label:'Carburante',        icon:'gas-station',        color:'ic-amber'  },
+    altro:        { label:'Altro',             icon:'circle-filled',           color:'ic-slate'  },
   };
 
   // Mapping categorie banca → chiave app
@@ -150,17 +150,17 @@ const Portfolio = (() => {
 
   // Categorie custom predefinite (per banca, non presenti nelle builtin)
   var CATEGORIE_CUSTOM_DEFAULT = {
-    hi_tech:        { label:'Hi-Tech & Informatica', icon:'ti-device-laptop',        color:'ic-blue'   },
-    cellulare:      { label:'Cellulare',             icon:'ti-device-mobile',         color:'ic-blue'   },
-    abbigliamento:  { label:'Abbigliamento',         icon:'ti-scissors',           color:'ic-pink'   },
-    casa:           { label:'Casa',                  icon:'ti-hammer',             color:'ic-amber'  },
-    polizze:        { label:'Polizze',               icon:'ti-shield-check',  color:'ic-teal'   },
-    bonifici_out:   { label:'Bonifici in uscita',    icon:'ti-send',          color:'ic-red'    },
-    bonifici_in:    { label:'Bonifici ricevuti',     icon:'ti-login-2',  color:'ic-green'  },
-    rimborsi:       { label:'Rimborsi',              icon:'ti-arrow-back-up',  color:'ic-green'  },
-    imposte:        { label:'Imposte e Tasse',       icon:'ti-building-bank',              color:'ic-slate'  },
-    carta_addebito: { label:'Addebito Carta',        icon:'ti-credit-card',   color:'ic-indigo' },
-    giroconto_in:   { label:'Giroconto',             icon:'ti-arrows-left-right',   color:'ic-sky'    },
+    hi_tech:        { label:'Hi-Tech & Informatica', icon:'device-laptop',        color:'ic-blue'   },
+    cellulare:      { label:'Cellulare',             icon:'device-mobile',         color:'ic-blue'   },
+    abbigliamento:  { label:'Abbigliamento',         icon:'scissors',           color:'ic-pink'   },
+    casa:           { label:'Casa',                  icon:'hammer',             color:'ic-amber'  },
+    polizze:        { label:'Polizze',               icon:'shield-check',  color:'ic-teal'   },
+    bonifici_out:   { label:'Bonifici in uscita',    icon:'send',          color:'ic-red'    },
+    bonifici_in:    { label:'Bonifici ricevuti',     icon:'login-2',  color:'ic-green'  },
+    rimborsi:       { label:'Rimborsi',              icon:'arrow-back-up',  color:'ic-green'  },
+    imposte:        { label:'Imposte e Tasse',       icon:'building-bank',              color:'ic-slate'  },
+    carta_addebito: { label:'Addebito Carta',        icon:'credit-card',   color:'ic-indigo' },
+    giroconto_in:   { label:'Giroconto',             icon:'arrows-left-right',   color:'ic-sky'    },
   };
 
   function getCategorieCustom() {
@@ -172,7 +172,7 @@ const Portfolio = (() => {
     var custom = getCategorieCustom();
     if (custom[key]) return custom[key];
     if (CATEGORIE_CUSTOM_DEFAULT[key]) return CATEGORIE_CUSTOM_DEFAULT[key];
-    return { label: key, icon: 'ti-dots' };
+    return { label: key, icon: 'dots' };
   }
 
   function catLabel(cat) {
@@ -180,7 +180,7 @@ const Portfolio = (() => {
   }
 
   function catIcon(cat) {
-    return getCategoria(cat).icon || 'ti-circle-filled';
+    return getCategoria(cat).icon || 'circle-filled';
   }
 
   function catColor(cat) {
@@ -192,7 +192,7 @@ const Portfolio = (() => {
     if (CATEGORIE_BUILTIN[key] || CATEGORIE_CUSTOM_DEFAULT[key]) return false; // già esiste
     if (!data.impostazioni.categorie_custom) data.impostazioni.categorie_custom = {};
     if (data.impostazioni.categorie_custom[key]) return false; // già aggiunta
-    data.impostazioni.categorie_custom[key] = { label: label, icon: icon || 'ti-tag' };
+    data.impostazioni.categorie_custom[key] = { label: label, icon: icon || 'tag' };
     return true;
   }
 
@@ -311,19 +311,19 @@ const Portfolio = (() => {
       if (!catKey) {
         catKey = catBanca.replace(/[^a-z0-9]/g, '_').slice(0, 30) || 'altro';
         var iconMap = {
-          'spesa':'ti-shopping-cart', 'aliment':'ti-shopping-cart',
-          'ristor':'ti-coffee', 'bar':'ti-coffee',
-          'viagg':'ti-plane', 'hotel':'ti-building',
-          'salut':'ti-heartbeat', 'farm':'ti-pill',
-          'sport':'ti-trophy', 'svago':'ti-device-gamepad-2',
-          'tech':'ti-device-laptop', 'infor':'ti-device-laptop',
-          'abbig':'ti-shopping-bag', 'moda':'ti-shopping-bag',
-          'assic':'ti-shield-check', 'poliz':'ti-shield-check',
-          'tassa':'ti-building-bank', 'impost':'ti-building-bank',
-          'carb':'ti-gas-station', 'benzin':'ti-gas-station',
-          'bonif':'ti-send', 'trasfer':'ti-arrows-left-right',
+          'spesa':'shopping-cart', 'aliment':'shopping-cart',
+          'ristor':'coffee', 'bar':'coffee',
+          'viagg':'plane', 'hotel':'building',
+          'salut':'heartbeat', 'farm':'pill',
+          'sport':'trophy', 'svago':'device-gamepad-2',
+          'tech':'device-laptop', 'infor':'device-laptop',
+          'abbig':'shopping-bag', 'moda':'shopping-bag',
+          'assic':'shield-check', 'poliz':'shield-check',
+          'tassa':'building-bank', 'impost':'building-bank',
+          'carb':'gas-station', 'benzin':'gas-station',
+          'bonif':'send', 'trasfer':'arrows-left-right',
         };
-        var autoIcon = 'ti-tag';
+        var autoIcon = 'tag';
         Object.keys(iconMap).forEach(function(k) {
           if (catBanca.indexOf(k) !== -1) autoIcon = iconMap[k];
         });
@@ -381,7 +381,7 @@ const Portfolio = (() => {
 
 
   function emptyState(icon, msg) {
-    return '<div class="empty-state"><i class="bi ' + icon + '"></i><p>' + msg + '</p></div>';
+    return '<div class="empty-state"><i class="ti ti-' + icon + '"></i><p>' + msg + '</p></div>';
   }
 
   // =============================================
@@ -462,7 +462,7 @@ const Portfolio = (() => {
     var container = $('lastTransazioni');
     if (!container) return;
     var all = data.conto.movimenti.slice().sort(function(a,b){ return new Date(b.data)-new Date(a.data); }).slice(0,5);
-    container.innerHTML = all.length ? all.map(function(m){ return transactionHTML(m, false); }).join('') : emptyState('ti-inbox','Nessuna transazione');
+    container.innerHTML = all.length ? all.map(function(m){ return transactionHTML(m, false); }).join('') : emptyState('inbox','Nessuna transazione');
   }
 
   function getTotaleInvestimenti() {
@@ -518,7 +518,7 @@ const Portfolio = (() => {
     list.sort(function(a,b){ return new Date(b.data)-new Date(a.data); });
     var container = $('contoMovimenti');
     if (!container) return;
-    container.innerHTML = list.length ? list.map(function(m){ return transactionHTML(m, true); }).join('') : emptyState('ti-building-bank','Nessun movimento trovato');
+    container.innerHTML = list.length ? list.map(function(m){ return transactionHTML(m, true); }).join('') : emptyState('building-bank','Nessun movimento trovato');
   }
 
   function setMovTipo(tipo) {
@@ -617,7 +617,7 @@ const Portfolio = (() => {
     list.sort(function(a,b){ return new Date(b.data)-new Date(a.data); });
     var container = $('cartaMovimenti');
     if (!container) return;
-    container.innerHTML = list.length ? list.map(cartaSpesaHTML).join('') : emptyState('ti-credit-card','Nessuna spesa trovata');
+    container.innerHTML = list.length ? list.map(cartaSpesaHTML).join('') : emptyState('credit-card','Nessuna spesa trovata');
   }
 
   function saveSpesaCarta() {
@@ -683,11 +683,11 @@ const Portfolio = (() => {
 
   // ---- Configurazione sezioni ----
   var SEZIONI_INV = [
-    { key: 'azione',      label: 'Azioni',        icon: 'ti-trending-up',     colore: '#2563EB' },
-    { key: 'fondo',       label: 'Fondi',          icon: 'ti-chart-pie',     colore: '#7C3AED' },
-    { key: 'certificate', label: 'Certificates',   icon: 'ti-award',         colore: '#D97706' },
-    { key: 'pir',         label: 'PIR',            icon: 'ti-shield-check',  colore: '#16A34A' },
-    { key: 'polizza',     label: 'Polizze',        icon: 'ti-umbrella',      colore: '#DC2626' },
+    { key: 'azione',      label: 'Azioni',        icon: 'trending-up',   colore: '#2563EB' },
+    { key: 'fondo',       label: 'Fondi',          icon: 'chart-pie',    colore: '#7C3AED' },
+    { key: 'certificate', label: 'Certificates',   icon: 'award',        colore: '#D97706' },
+    { key: 'pir',         label: 'PIR',            icon: 'shield-check', colore: '#16A34A' },
+    { key: 'polizza',     label: 'Polizze',        icon: 'umbrella',     colore: '#DC2626' },
   ];
 
   function _sezioneCollapsed(key) {
@@ -731,7 +731,7 @@ const Portfolio = (() => {
         '<div class="isez-hdr" onclick="Portfolio.toggleSezione(\'' + sez.key + '\')" style="border-left-color:' + sez.colore + ';border-radius:' + (collapsed ? '14px' : '14px 14px 0 0') + '">' +
           '<div class="isez-left">' +
             '<div class="isez-ico" style="color:' + sez.colore + '">' +
-              '<i class="bi ' + sez.icon + '" style="font-size:20px"></i>' +
+              '<i class="ti ti-' + sez.icon + '" style="font-size:20px"></i>' +
             '</div>' +
             '<div>' +
               '<div class="isez-title">' + sez.label + '</div>' +
@@ -1738,7 +1738,7 @@ const Portfolio = (() => {
     var amount = isPos ? '+'+formatEur(m.importo) : '-'+formatEur(m.importo);
     var cls    = isPos ? 'transaction-amount--positive' : 'transaction-amount--negative';
     return '<div class="transaction-item">' +
-      '<div class="transaction-icon '+color+'"><i class="bi '+icon+'"></i></div>' +
+      '<div class="transaction-icon '+color+'"><i class="ti ti-'+icon+'"></i></div>' +
       '<div class="transaction-body"><div class="transaction-desc">'+escHtml(m.descrizione)+'</div><div class="transaction-meta">'+formatDate(m.data)+' · '+catLabel(m.categoria)+'</div></div>' +
       '<div class="transaction-amount '+cls+'">'+amount+'</div>' +
       (showActions ? '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editMovimento(\''+m.id+'\')" title="Modifica"><i class="ti ti-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteMovimento(\''+m.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' : '') +
@@ -1747,7 +1747,7 @@ const Portfolio = (() => {
 
   function cartaSpesaHTML(s) {
     return '<div class="transaction-item">' +
-      '<div class="transaction-icon '+catColor(s.categoria)+'"><i class="bi '+catIcon(s.categoria)+'"></i></div>' +
+      '<div class="transaction-icon '+catColor(s.categoria)+'"><i class="ti ti-'+catIcon(s.categoria)+'"></i></div>' +
       '<div class="transaction-body"><div class="transaction-desc">'+escHtml(s.descrizione)+'</div><div class="transaction-meta">'+formatDate(s.data)+' · '+catLabel(s.categoria)+(s.addebitoData?' · Addebito: '+formatDate(s.addebitoData):'')+' </div></div>' +
       '<div class="transaction-amount transaction-amount--negative">-'+formatEur(s.importo)+'</div>' +
       '<div class="transaction-actions"><button class="action-btn" onclick="Portfolio.editSpesaCarta(\''+s.id+'\')" title="Modifica"><i class="ti ti-pencil"></i></button><button class="action-btn" onclick="Portfolio.deleteSpesaCarta(\''+s.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' +
