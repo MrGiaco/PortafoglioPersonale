@@ -515,7 +515,7 @@ input, select, textarea { font-family: inherit; }
 .cc-bank { font-size: 14px; font-weight: 700; }
 .cc-logo { font-size: 26px; }
 .cc-number { font-size: 16px; font-weight: 600; letter-spacing: .14em; margin-bottom: 16px; font-family: monospace; }
-.cc-bottom { display: flex; gap: 24px; }
+.cc-bottom { display: flex; gap: 24px; flex-wrap: wrap; }
 .cc-label { font-size: 10px; opacity: .55; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
 .cc-value { font-size: 13px; font-weight: 700; }
 
