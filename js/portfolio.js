@@ -414,6 +414,7 @@ const Portfolio = (() => {
     t.dayLow        = quote.dayLow    || 0;
     t.prevClose     = quote.prevClose || 0;
     t.currency      = quote.currency  || 'EUR';
+    t.lastUpdate    = Date.now();
   }
 
   function saveAndSync() { Drive.save(getData()); }
@@ -798,7 +799,7 @@ const Portfolio = (() => {
       // Top: logo + ticker/qty + badge + prezzo + variazione
       '<div class="itc-top">' +
         '<div class="itc-logo" style="background:' + col.bg + ';color:' + col.fg + '">' +
-          (logoSrc ? '<img src="' + logoSrc + '" onerror="this.style.display=\'none\'" />' : '') +
+          (logoSrc ? '<img src="' + logoSrc + '" onload="this.nextElementSibling.style.display=\'none\'" onerror="this.style.display=\'none\'" />' : '') +
           '<span>' + escHtml(av) + '</span>' +
         '</div>' +
         '<div class="itc-meta">' +
@@ -1296,7 +1297,7 @@ const Portfolio = (() => {
               '<div class="det-topbar-ticker">' + escHtml(ticker || tipoLabel(t.tipo)) + '</div>' +
               '<div class="det-topbar-mkt">' + (t.mercato||'—') + '</div>' +
             '</div>' +
-            '<button class="det-action-btn" onclick="Portfolio.openTitoloSheet(\'' + t.id + '\')">' +
+            '<button class="det-action-btn" onclick="Portfolio.openDettaglioMenu(\'' + t.id + '\')">' +
               '<i class="bi bi-three-dots"></i>' +
             '</button>' +
           '</div>' +
@@ -1304,7 +1305,7 @@ const Portfolio = (() => {
             '<div class="det-hero-inner">' +
               '<div class="det-hero-toprow">' +
                 '<div class="det-hero-logo" style="background:' + col.bg + ';color:' + col.fg + '">' +
-                  (logoSrc ? '<img src="' + logoSrc + '" onerror="this.style.display=\'none\'" />' : '') +
+                  (logoSrc ? '<img src="' + logoSrc + '" onload="this.nextElementSibling.style.display=\'none\'" onerror="this.style.display=\'none\'" />' : '') +
                   '<span>' + escHtml(av) + '</span>' +
                 '</div>' +
                 '<div class="det-price-col">' +
@@ -1316,6 +1317,7 @@ const Portfolio = (() => {
               '</div>' +
               '<div class="det-hero-name">' + escHtml(t.nome) + '</div>' +
               '<div class="det-hero-sub">' + qtyFmt + ' ' + qtyLabel + ' · PMC ' + formatEur(pmc,2) + ' · ' + formatDate(t.dataAcquisto) + '</div>' +
+              (t.lastUpdate ? '<div class="det-last-update">Aggiornato ' + _formatLastUpdate(t.lastUpdate) + '</div>' : '') +
               '<div class="det-period-row">' + periodButtons + '</div>' +
               '<div class="det-chart-wrap">' +
                 '<canvas id="detMainChart" class="det-main-canvas"></canvas>' +
@@ -1431,6 +1433,51 @@ const Portfolio = (() => {
       _loadDetMainChart(t, _detPeriod);
       _loadDetSmallCharts(t);
     }, 80);
+  }
+
+  function _formatLastUpdate(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    var now = new Date();
+    var diffMin = Math.floor((now - d) / 60000);
+    var timeStr = d.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+    if (diffMin < 1) return 'adesso · ' + timeStr;
+    if (diffMin < 60) return diffMin + ' min fa · ' + timeStr;
+    var dateStr = d.toLocaleDateString('it-IT', {day:'numeric', month:'short'});
+    return dateStr + ' · ' + timeStr;
+  }
+
+  function openDettaglioMenu(id) {
+    var t = data.investimenti.titoli.find(function(x){ return x.id===id; });
+    if (!t) return;
+    var overlay = $('dettaglioOverlay');
+    var existing = $('detMenuOverlay');
+    if (existing) existing.remove();
+    var menu = document.createElement('div');
+    menu.id = 'detMenuOverlay';
+    menu.style.cssText = 'position:absolute;inset:0;z-index:10;background:rgba(0,0,0,.4);display:flex;align-items:flex-end';
+    menu.onclick = function(e){ if(e.target===menu) menu.remove(); };
+    menu.innerHTML =
+      '<div style="background:var(--bg-card);border-radius:20px 20px 0 0;width:100%;padding:8px 0 32px">' +
+        '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 16px"></div>' +
+        '<div class="sheet-item" onclick="Portfolio.editTitolo(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
+          '<i class="bi bi-pencil-square"></i><span>Modifica titolo</span>' +
+        '</div>' +
+        (t.tipo==='polizza'||!t.ticker&&!t.codeZB ?
+          '<div class="sheet-item" onclick="Portfolio.aggiornaValoreManuale(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
+            '<i class="bi bi-pencil"></i><span>Aggiorna valore</span>' +
+          '</div>' : '') +
+        '<div class="sheet-item" onclick="Portfolio.nuovoAcquisto(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
+          '<i class="bi bi-plus-circle"></i><span>Nuovo acquisto</span>' +
+        '</div>' +
+        '<div class="sheet-item" onclick="Portfolio.vendeTitoloById(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
+          '<i class="bi bi-cash-coin"></i><span>Registra vendita</span>' +
+        '</div>' +
+        '<div class="sheet-item" style="color:var(--danger)" onclick="Portfolio.eliminaTitolo(\''+t.id+'\');document.getElementById(\'detMenuOverlay\').remove()">' +
+          '<i class="bi bi-trash3"></i><span>Elimina titolo</span>' +
+        '</div>' +
+      '</div>';
+    if (overlay) overlay.appendChild(menu);
   }
 
   function chiudiDettaglio() {
@@ -1617,7 +1664,23 @@ const Portfolio = (() => {
     if (t) _loadDetMainChart(t, period);
   }
 
-  // ---- Vendi ----
+  async function eliminaTitolo(id) {
+    var t = data.investimenti.titoli.find(function(x){ return x.id===id; });
+    if (!t) return;
+    var ok = await Dialog.confirmDanger(
+      '<i class="bi bi-trash3-fill" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Elimina titolo</strong><br><span style="font-size:13px;color:var(--text-muted)">Eliminare ' + escHtml(t.nome) + '? Questa azione non può essere annullata.</span>',
+      'Elimina', 'Annulla'
+    );
+    if (!ok) return;
+    data.investimenti.titoli = data.investimenti.titoli.filter(function(x){ return x.id!==id; });
+    chiudiDettaglio();
+    renderInvestimenti();
+    saveAndSync();
+    App.showToast('Titolo eliminato','info');
+  }
+
+
   function vendeTitolo() {
     if (!dettaglioId) return;
     var t = data.investimenti.titoli.find(function(x){ return x.id===dettaglioId; });
@@ -1670,7 +1733,7 @@ const Portfolio = (() => {
     showTab, setTipoCard, calcCostoCarico, saveTitolo, editTitolo, nuovoAcquisto,
     wizardNext, wizardPrev, wizardReset,
     openTitoloSheet, closeTitoloSheet, aggiornaValoreManuale, toggleSezione,
-    apriDettaglio, chiudiDettaglio, vendeTitolo, vendeTitoloById,
+    apriDettaglio, chiudiDettaglio, openDettaglioMenu, eliminaTitolo, vendeTitolo, vendeTitoloById,
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo,
     formatEur, formatDate,
