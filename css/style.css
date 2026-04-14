@@ -414,12 +414,14 @@ input, select, textarea { font-family: inherit; }
 .transaction-actions { display: flex; gap: 4px; }
 
 .action-btn {
-  width: 28px; height: 28px; border-radius: 6px;
+  width: 32px; height: 32px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; color: var(--text-muted);
-  transition: var(--transition);
+  font-size: 17px; color: var(--text-muted);
+  transition: var(--transition); flex-shrink: 0;
 }
-.action-btn:hover { background: var(--danger-light); color: var(--danger); }
+.action-btn--delete:hover { background: var(--danger-light); color: var(--danger); }
+.transaction-item.clickable { cursor: pointer; }
+.transaction-item.clickable:active { background: var(--bg); }
 
 .empty-state {
   text-align: center; padding: 40px 20px; color: var(--text-muted);
