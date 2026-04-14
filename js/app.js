@@ -391,7 +391,16 @@ const App = (() => {
       // Aggiorna quotazioni per i nuovi titoli
       setTimeout(() => Quotes.refreshAll(), 800);
 
-      // Mostra riepilogo
+      // Toast rapido
+      const nMov = result.importati.reduce(function(s, t) { return s + (t.nMovimenti || 0); }, 0);
+      showToast(
+        result.importati.length + ' titoli importati' +
+        (result.duplicati.length > 0 ? ' · ' + result.duplicati.length + ' già presenti' : '') +
+        (result.scartati.length  > 0 ? ' · ' + result.scartati.length  + ' ignorati'     : ''),
+        'success', 5000
+      );
+
+      // Mostra riepilogo dettagliato
       _mostraReportImportTitoli(result);
     } catch(e) {
       // già gestito in portfolio.js
