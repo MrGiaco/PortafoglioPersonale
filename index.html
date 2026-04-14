@@ -544,14 +544,21 @@
           <div class="settings-card">
             <h3><i class="ti ti-building-bank"></i> Importa da Banca</h3>
             <p>Importa i movimenti dal file Excel scaricato dalla tua banca. Le categorie nuove vengono aggiunte automaticamente.</p>
-            <button class="btn btn--primary btn--block mt-2" onclick="App.importDaBanca()"><i class="ti ti-file-spreadsheet"></i> Importa file banca (.xlsx)</button>
+            <button class="btn btn--primary btn--block mt-2" onclick="App.importDaBanca()"><i class="ti ti-file-spreadsheet"></i> Importa movimenti banca (.xlsx)</button>
+          </div>
+
+          <div class="settings-card">
+            <h3><i class="ti ti-trending-up"></i> Importa Titoli</h3>
+            <p>Importa il portafoglio titoli da un file CSV esportato dalla banca. Calcola automaticamente quantità e PMC ponderata per ogni titolo.</p>
+            <button class="btn btn--primary btn--block mt-2" onclick="App.importTitoli()"><i class="ti ti-file-spreadsheet"></i> Importa titoli (.csv)</button>
           </div>
 
           <div class="settings-card settings-card--danger">
-            <h3><i class="ti ti-eraser"></i> Cancella Transazioni</h3>
-            <p>Elimina tutte le transazioni del conto corrente o tutte le spese della carta. Il saldo iniziale e i dati della carta non vengono modificati.</p>
+            <h3><i class="ti ti-eraser"></i> Cancella Dati</h3>
+            <p>Elimina tutte le transazioni o i titoli. Il saldo iniziale e i dati della carta non vengono modificati.</p>
             <button class="btn btn--danger btn--block mt-2" onclick="App.cancellaMovimentiConto()"><i class="ti ti-building-bank"></i> Cancella movimenti conto</button>
             <button class="btn btn--danger btn--block mt-2" onclick="App.cancellaSpeseCarta()"><i class="ti ti-credit-card"></i> Cancella spese carta</button>
+            <button class="btn btn--danger btn--block mt-2" onclick="App.cancellaTitoli()"><i class="ti ti-trending-up"></i> Cancella tutti i titoli</button>
           </div>
 
           <div class="settings-card settings-card--danger">
