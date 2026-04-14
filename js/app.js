@@ -88,7 +88,7 @@ const Dialog = (() => {
 
 const App = (() => {
 
-  const SECTIONS = ['dashboard', 'conto', 'carta', 'investimenti', 'report', 'impostazioni'];
+  const SECTIONS = ['dashboard', 'conto', 'carta', 'investimenti', 'dettaglio', 'report', 'impostazioni'];
   let currentSection = 'dashboard';
 
   const $ = id => document.getElementById(id);
@@ -143,6 +143,13 @@ const App = (() => {
       el.classList.toggle('active', el.dataset.section === section);
     });
 
+    // Topbar e tabbar: nascoste nel dettaglio (ha la propria topbar)
+    const topbar = document.querySelector('.topbar');
+    const tabbar = document.querySelector('.tab-bar');
+    const isDettaglio = section === 'dettaglio';
+    if (topbar) topbar.style.display = isDettaglio ? 'none' : '';
+    if (tabbar) tabbar.style.display = isDettaglio ? 'none' : '';
+
     // Topbar: saluto su dashboard, titolo sulle altre
     const greeting = $('topbarGreeting');
     const titleEl  = $('topbarTitle');
@@ -158,7 +165,7 @@ const App = (() => {
     };
     if (titleEl) titleEl.textContent = titles[section] || '';
 
-    // FAB icona contestuale
+    // FAB icona contestuale (nascosto nel dettaglio)
     const fabIcons = {
       dashboard:    'bi-plus-lg',
       conto:        'bi-plus-lg',
@@ -169,7 +176,7 @@ const App = (() => {
     };
     const fab = $('fabBtn');
     if (fab) {
-      fab.classList.toggle('hidden', section === 'impostazioni');
+      fab.classList.toggle('hidden', section === 'impostazioni' || section === 'dettaglio');
       fab.innerHTML = `<i class="bi ${fabIcons[section] || 'bi-plus-lg'}"></i>`;
     }
 
