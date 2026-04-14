@@ -337,6 +337,134 @@
 
       </section>
 
+      <!-- ===== DETTAGLIO TITOLO ===== -->
+      <section id="section-dettaglio" class="section hidden" style="padding:0;display:flex;flex-direction:column;overflow:hidden;">
+        <!-- STICKY HERO -->
+        <div class="det-sticky">
+          <div class="det-topbar">
+            <button class="det-back" onclick="App.navigate('investimenti')"><i class="bi bi-chevron-left"></i></button>
+            <div class="det-topbar-center">
+              <div class="det-topbar-ticker" id="detTopbarTicker">—</div>
+              <div class="det-topbar-mkt" id="detTopbarMkt">—</div>
+            </div>
+            <button class="det-action-btn" id="detMenuBtn" onclick="Portfolio.openDettaglioMenu()">
+              <i class="bi bi-three-dots"></i>
+            </button>
+          </div>
+          <div class="det-hero" id="detHero">
+            <div class="det-hero-inner">
+              <div class="det-hero-toprow">
+                <div class="det-hero-logo" id="detHeroLogo"><span id="detHeroAv">—</span></div>
+                <div class="det-price-col">
+                  <div class="det-price" id="detPrice">—</div>
+                  <div class="det-chg-pill" id="detChgPill">—</div>
+                </div>
+              </div>
+              <div class="det-hero-name" id="detHeroName">—</div>
+              <div class="det-hero-sub" id="detHeroSub">—</div>
+              <div class="det-last-update" id="detLastUpdate" style="display:none"></div>
+              <div class="det-period-row" id="detPeriodRow"></div>
+              <div class="det-chart-wrap">
+                <canvas id="detMainChart" class="det-main-canvas"></canvas>
+                <div class="det-chart-loading" id="detChartLoading"><i class="bi bi-arrow-clockwise"></i></div>
+              </div>
+              <div class="det-chart-ftr">
+                <span id="detChartFtrLeft"></span><span id="detChartFtrRight">adesso</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- SCROLL -->
+        <div class="det-scroll" id="detScroll">
+          <!-- Card posizione -->
+          <div class="det-card">
+            <div class="det-card-title">Posizione</div>
+            <div class="det-row2">
+              <div class="det-st">
+                <div class="det-st-lbl">Valore posizione</div>
+                <div class="det-st-val" id="detValPos">—</div>
+                <div class="det-st-sub" id="detValPosSub">—</div>
+              </div>
+              <div class="det-st" style="text-align:right">
+                <div class="det-st-lbl">PMC unitario</div>
+                <div class="det-st-val" id="detPMC">—</div>
+                <div class="det-st-sub">costo medio</div>
+              </div>
+            </div>
+            <div class="det-pl-bar">
+              <div>
+                <div class="det-pl-lbl">P&amp;L totale posizione</div>
+                <div class="det-pl-val" id="detPL">—</div>
+              </div>
+              <div style="text-align:right">
+                <div class="det-pl-lbl">Investito</div>
+                <div class="det-inv-val" id="detInv">—</div>
+              </div>
+            </div>
+          </div>
+          <!-- Card andamento -->
+          <div class="det-card">
+            <div class="det-card-title">Andamento oggi</div>
+            <div id="detRangeWrap" style="display:none" class="det-range-wrap">
+              <div class="det-range-lbl">Range giornaliero</div>
+              <div class="det-range-bg">
+                <div class="det-range-fill"></div>
+                <div class="det-range-dot" id="detRangeDot"></div>
+              </div>
+              <div class="det-range-vals">
+                <span id="detRangeMin">—</span>
+                <span id="detRangeCur" style="color:var(--primary);font-weight:800">—</span>
+                <span id="detRangeMax">—</span>
+              </div>
+            </div>
+            <div class="det-2charts">
+              <div class="det-ch-box">
+                <div class="det-ch-hdr">
+                  <span class="det-ch-lbl">Dal carico</span>
+                  <span class="det-ch-pct" id="detChCaricoPct">—</span>
+                </div>
+                <canvas id="detChCarico" class="det-sm-canvas"></canvas>
+                <div class="det-ch-ftr"><span id="detChCaricoFtrL">—</span><span>oggi</span></div>
+              </div>
+              <div class="det-ch-box">
+                <div class="det-ch-hdr">
+                  <span class="det-ch-lbl">52 settimane</span>
+                  <span class="det-ch-pct" id="det52pct">—</span>
+                </div>
+                <canvas id="detCh52" class="det-sm-canvas"></canvas>
+                <div class="det-ch-ftr"><span id="det52ftrL">—</span><span>oggi</span></div>
+              </div>
+            </div>
+          </div>
+          <!-- Card dati titolo -->
+          <div class="det-card">
+            <div class="det-card-title">Dati titolo</div>
+            <div class="det-info-grid">
+              <div class="det-inf"><div class="det-inf-lbl">ISIN</div><div class="det-inf-val" id="detIsin">—</div></div>
+              <div class="det-inf"><div class="det-inf-lbl">Mercato</div><div class="det-inf-val" id="detMercato">—</div></div>
+              <div class="det-inf"><div class="det-inf-lbl">WKN</div><div class="det-inf-val" id="detWkn">—</div></div>
+              <div class="det-inf"><div class="det-inf-lbl">Valuta</div><div class="det-inf-val" id="detValuta">—</div></div>
+              <div class="det-inf"><div class="det-inf-lbl">Commissioni</div><div class="det-inf-val" id="detComm">—</div></div>
+              <div class="det-inf"><div class="det-inf-lbl">Tasse/Bolli</div><div class="det-inf-val" id="detTasse">—</div></div>
+            </div>
+          </div>
+          <!-- Card operazioni -->
+          <div class="det-card">
+            <div class="det-card-title">Operazioni</div>
+            <div id="detOperazioni"></div>
+          </div>
+          <!-- Azioni -->
+          <div class="det-actions" id="detActionBar">
+            <button class="det-act-buy" id="detBtnBuy" onclick="Portfolio.detNuovoAcquisto()">
+              <i class="bi bi-plus-circle"></i> Nuovo acquisto
+            </button>
+            <button class="det-act-sell" id="detBtnSell" onclick="Portfolio.detVendi()">
+              <i class="bi bi-cash-coin"></i> Vendi
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- ===== REPORT ===== -->
       <section id="section-report" class="section hidden">
 
