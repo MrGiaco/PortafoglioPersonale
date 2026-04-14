@@ -866,6 +866,7 @@ const Portfolio = (() => {
         '</div>'
       : '') +
     '</div>';
+  }
 
   // Disegna sparkline intraday su ogni card
   function _renderSparklines() {
