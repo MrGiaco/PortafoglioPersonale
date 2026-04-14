@@ -2010,6 +2010,47 @@ const Portfolio = (() => {
 
       data.investimenti.titoli.push(titolo);
       importati.push({ nome: g.nome, tipo: tipoTitolo, quantita: qtaTot, pmc: pmc });
+
+      // Genera movimenti sul conto corrente per ogni operazione
+      g.operazioni.forEach(function(op) {
+        var isAcquisto = op.tipo === 'Compra' || op.tipo === 'Trasferimento Titoli (in entrata)';
+        var isVendita  = op.tipo === 'Vendi'  || op.tipo === 'Trasferimento Titoli (in uscita)';
+        if (!isAcquisto && !isVendita) return;
+
+        var tipoMov     = isAcquisto ? 'uscita' : 'entrata';
+        var descMov     = (isAcquisto ? 'Acquisto ' : 'Vendita ') + g.nome;
+        var importoMov  = op.valore + (isAcquisto ? op.comm + op.tasse : -(op.comm + op.tasse));
+        importoMov      = Math.abs(importoMov);
+
+        // Dedup: stessa data + descrizione + importo (arrotondato a 2 decimali)
+        var importoRound = Math.round(importoMov * 100) / 100;
+        var isDup = data.conto.movimenti.some(function(m) {
+          return m.data === op.data &&
+                 m.descrizione === descMov &&
+                 Math.round(m.importo * 100) / 100 === importoRound;
+        });
+        if (isDup) return;
+
+        var noteParts = [];
+        var qta = op.azioni % 1 === 0 ? Math.round(op.azioni) : op.azioni.toFixed(3);
+        noteParts.push(qta + ' unità');
+        if (op.comm > 0) noteParts.push('Comm. ' + op.comm.toFixed(2) + ' €');
+        if (op.tasse > 0) noteParts.push('Tasse ' + op.tasse.toFixed(2) + ' €');
+
+        var mov = {
+          id:          uid(),
+          data:        op.data,
+          tipo:        tipoMov,
+          descrizione: descMov,
+          importo:     importoRound,
+          categoria:   'investimento',
+          note:        noteParts.join(' | '),
+        };
+        data.conto.movimenti.push(mov);
+        data.conto.saldo = tipoMov === 'entrata'
+          ? data.conto.saldo + importoRound
+          : data.conto.saldo - importoRound;
+      });
     });
 
     return { importati: importati, scartati: scartati, duplicati: giaDuplicati };
