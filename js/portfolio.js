@@ -1367,7 +1367,7 @@ const Portfolio = (() => {
     var periodRow = $('detPeriodRow');
     if (periodRow) {
       periodRow.innerHTML = ['1G','1S','1M','1A','5A','Max'].map(function(p) {
-        return '<button class="det-pt' + (p === _detPeriod ? ' active' : '') + '" onclick="Portfolio.setDetPeriod('' + p + '',this)">' + p + '</button>';
+        return '<button class="det-pt' + (p === _detPeriod ? ' active' : '') + '" onclick="Portfolio.setDetPeriod(\'' + p + '\',this)">' + p + '</button>';
       }).join('');
     }
 
