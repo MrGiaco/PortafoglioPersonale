@@ -395,9 +395,9 @@ input, select, textarea { font-family: inherit; }
 .transaction-item:active { background: var(--bg); }
 
 .transaction-icon {
-  width: 38px; height: 38px; border-radius: 11px;
+  width: 28px; height: 38px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 17px; flex-shrink: 0;
+  font-size: 20px; flex-shrink: 0;
 }
 
 .transaction-body { flex: 1; min-width: 0; }
@@ -1838,3 +1838,20 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   padding: 13px; font-size: 13px; font-weight: 800; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
+
+
+/* =============================================
+   ICONE TRANSAZIONI — colore diretto sull'icona
+   ============================================= */
+.ti-green  { color:#16a34a; }
+.ti-red    { color:#dc2626; }
+.ti-blue   { color:#2563eb; }
+.ti-indigo { color:#4f46e5; }
+.ti-purple { color:#9333ea; }
+.ti-pink   { color:#db2777; }
+.ti-orange { color:#ea580c; }
+.ti-amber  { color:#d97706; }
+.ti-yellow { color:#ca8a04; }
+.ti-teal   { color:#0d9488; }
+.ti-sky    { color:#0284c7; }
+.ti-slate  { color:#64748b; }
