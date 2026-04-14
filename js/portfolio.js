@@ -23,6 +23,9 @@ const Portfolio = (() => {
   let _detPeriod  = '1M';
   let wizardStep  = 1;
   const wizardTot = 3;
+  let _nuovoAcquistoId   = null; // ID titolo a cui aggiungere nuovo acquisto (PMC ponderata)
+  let _editingMovimento  = null; // copia del movimento in modifica (rollback se modal chiuso)
+  let _editingSpesaCarta = null; // copia della spesa carta in modifica (rollback se modal chiuso)
 
   const $ = id => document.getElementById(id);
   const uid = () => `${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
@@ -534,6 +537,7 @@ const Portfolio = (() => {
     var mov = { id:uid(), data:data_m, tipo:movTipo, descrizione:desc, importo:importo, categoria:cat, note:note };
     data.conto.movimenti.push(mov);
     data.conto.saldo = movTipo === 'entrata' ? data.conto.saldo + importo : data.conto.saldo - importo;
+    _editingMovimento = null; // salvataggio riuscito, niente rollback
     Modals.close();
     renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
     App.showToast('Movimento ' + movTipo + ' salvato','success');
@@ -552,6 +556,7 @@ const Portfolio = (() => {
   function editMovimento(id) {
     var mov = data.conto.movimenti.find(function(m){ return m.id === id; });
     if (!mov) return;
+    _editingMovimento = JSON.parse(JSON.stringify(mov)); // salva copia per rollback
     data.conto.saldo = mov.tipo === 'entrata' ? data.conto.saldo - mov.importo : data.conto.saldo + mov.importo;
     data.conto.movimenti = data.conto.movimenti.filter(function(m){ return m.id !== id; });
     Modals.open('nuovoMovimento');
@@ -563,6 +568,15 @@ const Portfolio = (() => {
       populateCategorieSelect('movCategoria', mov.categoria);
       setMovTipo(mov.tipo);
     }, 50);
+    renderConto(); renderDashboard();
+  }
+
+  function restoreEditingMovimento() {
+    if (!_editingMovimento) return;
+    var m = _editingMovimento;
+    data.conto.movimenti.push(m);
+    data.conto.saldo = m.tipo === 'entrata' ? data.conto.saldo + m.importo : data.conto.saldo - m.importo;
+    _editingMovimento = null;
     renderConto(); renderDashboard();
   }
 
@@ -610,6 +624,7 @@ const Portfolio = (() => {
     var addebito= $('cartaAddebito')    ? $('cartaAddebito').value    : '';
     if (!data_s || !desc || isNaN(importo) || importo <= 0) { App.showToast('Compila tutti i campi obbligatori','warning'); return; }
     data.carta.spese.push({ id:uid(), data:data_s, descrizione:desc, importo:importo, categoria:cat, addebitoData:addebito });
+    _editingSpesaCarta = null; // salvataggio riuscito, niente rollback
     Modals.close(); renderCarta(); saveAndSync();
     App.showToast('Spesa carta salvata','success');
   }
@@ -623,6 +638,7 @@ const Portfolio = (() => {
   function editSpesaCarta(id) {
     var spesa = data.carta.spese.find(function(s){ return s.id === id; });
     if (!spesa) return;
+    _editingSpesaCarta = JSON.parse(JSON.stringify(spesa)); // salva copia per rollback
     data.carta.spese = data.carta.spese.filter(function(s){ return s.id !== id; });
     Modals.open('nuovaSpesaCarta');
     setTimeout(function(){
@@ -632,6 +648,13 @@ const Portfolio = (() => {
       if ($('cartaAddebito'))    $('cartaAddebito').value    = spesa.addebitoData || '';
       populateCategorieSelect('cartaCategoria', spesa.categoria);
     }, 50);
+    renderCarta();
+  }
+
+  function restoreEditingSpesaCarta() {
+    if (!_editingSpesaCarta) return;
+    data.carta.spese.push(_editingSpesaCarta);
+    _editingSpesaCarta = null;
     renderCarta();
   }
 
@@ -1161,7 +1184,34 @@ const Portfolio = (() => {
       currency: valuta, note: note, venduto: false,
       operazioni: [{ data:dataAcq, tipo:'acquisto', quantita:quantita, prezzo:prezzo, cambio:cambio, comm:comm, tasse:tasse, rateo:rateo, costoTot:costoTot }],
     };
-    // Se stiamo modificando, rimuovi il vecchio titolo e ripristina saldo
+    // CASO 1: nuovo acquisto su titolo esistente → aggiorna PMC ponderata
+    if (_nuovoAcquistoId) {
+      var existing = data.investimenti.titoli.find(function(x){ return x.id === _nuovoAcquistoId; });
+      if (existing) {
+        // Calcolo PMC ponderata: (vecchio_costo_tot + nuovo_costo_tot) / (vecchia_qty + nuova_qty)
+        var vecchioQty    = existing.quantita;
+        var vecchioCosto  = existing.pmc * vecchioQty;
+        var nuovaQtyTot   = vecchioQty + quantita;
+        var nuovoCostoTot = vecchioCosto + costoTot;
+        existing.quantita    = nuovaQtyTot;
+        existing.pmc         = nuovaQtyTot > 0 ? nuovoCostoTot / nuovaQtyTot : existing.pmc;
+        existing.costoTotale = (existing.costoTotale || 0) + costoTot;
+        existing.operazioni  = existing.operazioni || [];
+        existing.operazioni.push({ data:dataAcq, tipo:'acquisto', quantita:quantita, prezzo:prezzo, cambio:cambio, comm:comm, tasse:tasse, rateo:rateo, costoTot:costoTot });
+        if (addebito) {
+          var movAcq = { id:uid(), data:dataAcq, tipo:'uscita', descrizione:'Acquisto '+nome, importo:costoTot, categoria:'investimento', note:quantita+' × '+formatEur(prezzo,4)+' | Comm: '+formatEur(comm)+' | PMC: '+formatEur(existing.pmc,4) };
+          data.conto.movimenti.push(movAcq);
+          data.conto.saldo -= costoTot;
+        }
+        _nuovoAcquistoId = null;
+        Modals.close(); renderAll(); Charts.updateAll(); saveAndSync();
+        App.showToast(nome + ': acquisto aggiunto, PMC aggiornata a ' + formatEur(existing.pmc, 4), 'success');
+        return;
+      }
+      _nuovoAcquistoId = null; // titolo non trovato, crea nuovo
+    }
+
+    // CASO 2: modifica titolo esistente → sostituisce con nuovi dati
     if (_editingTitolo) {
       data.investimenti.titoli = data.investimenti.titoli.filter(function(x){ return x.id !== _editingTitolo.id; });
       if (_editingTitolo.costoTotale) {
@@ -1175,6 +1225,7 @@ const Portfolio = (() => {
       _editingTitolo = null;
     }
 
+    // CASO 3: nuovo titolo
     data.investimenti.titoli.push(titolo);
 
     if (addebito) {
@@ -1218,6 +1269,7 @@ const Portfolio = (() => {
   function nuovoAcquisto(id) {
     var t = data.investimenti.titoli.find(function(x){ return x.id===id; });
     if (!t) return;
+    _nuovoAcquistoId = id; // segnala che stiamo aggiungendo a un titolo esistente
     Modals.open('nuovoTitolo');
     setTimeout(function(){
       document.querySelectorAll('.tipo-card').forEach(function(c){ c.classList.toggle('active', c.dataset.tipo===t.tipo); });
@@ -1640,7 +1692,24 @@ const Portfolio = (() => {
     );
     if (!ok) return;
     t.operazioni.splice(opIdx, 1);
+
+    // Ricalcola quantita, costoTotale e PMC dalle operazioni rimanenti
+    var qtaTot   = 0;
+    var costoTot = 0;
+    t.operazioni.forEach(function(op) {
+      if (op.tipo === 'acquisto') {
+        qtaTot   += op.quantita;
+        costoTot += op.costoTot || (op.quantita * op.prezzo);
+      } else if (op.tipo === 'vendita') {
+        qtaTot   -= op.quantita;
+      }
+    });
+    t.quantita    = Math.max(0, qtaTot);
+    t.costoTotale = costoTot;
+    t.pmc         = t.quantita > 0 ? costoTot / t.quantita : t.prezzoAcquisto;
+
     renderDetOperazioni(t);
+    renderInvestimenti();
     saveAndSync();
     App.showToast('Operazione eliminata', 'info');
   }
@@ -1734,6 +1803,9 @@ const Portfolio = (() => {
     '</div>';
   }
 
+
+  function resetNuovoAcquisto() { _nuovoAcquistoId = null; }
+
   // ---- API pubblica ----
   return {
     loadData, getData, getTitoli, updateQuote, getSaldoConto, saveSaldoIniziale,
@@ -1746,7 +1818,8 @@ const Portfolio = (() => {
     openTitoloSheet, closeTitoloSheet, aggiornaValoreManuale, toggleSezione,
     apriDettaglio, chiudiDettaglio, openDettaglioMenu, eliminaTitolo, vendeTitolo, vendeTitoloById,
     setDetPeriod, getDettaglioId, deleteOperazione,
-    getEditingTitolo, restoreEditingTitolo,
+    getEditingTitolo, restoreEditingTitolo, resetNuovoAcquisto,
+    restoreEditingMovimento, restoreEditingSpesaCarta,
     formatEur, formatDate,
     populateCategorieSelect, importDaBanca,
     catLabel, catIcon, CATEGORIE_BUILTIN, CATEGORIE_CUSTOM_DEFAULT,
