@@ -1319,181 +1319,119 @@ const Portfolio = (() => {
     var av      = avatarLetters(t.nome);
     var ticker  = t.ticker || t.codeZB || '';
     var logoSrc = t.ticker ? 'icons/titoli/' + t.ticker + '.png' : '';
-    var hasQuote= !!(t.ticker || t.codeZB);
     var dayPos  = (t.changePct||0) >= 0;
     var qtyFmt  = t.quantita % 1 === 0 ? String(Math.round(t.quantita)) : t.quantita.toFixed(3);
     var qtyLabel= t.tipo === 'azione' ? 'azioni' : 'quote';
+    var hasQuote= !!(t.ticker || t.codeZB);
     var dayChgPct = hasQuote ? (t.changePct||0) : (pmc > 0 ? ((prezzo-pmc)/pmc)*100 : 0);
     var dayChg    = hasQuote ? (t.change||0)    : (prezzo-pmc);
 
-    // Crea o riusa overlay
-    var overlay = $('dettaglioOverlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'dettaglioOverlay';
-      overlay.className = 'det-overlay';
-      document.body.appendChild(overlay);
+    // ---- Popola sezione statica nel DOM ----
+    setEl('detTopbarTicker', escHtml(ticker || tipoLabel(t.tipo)));
+    setEl('detTopbarMkt', t.mercato || '—');
+
+    // Logo hero
+    var heroLogo = $('detHeroLogo');
+    if (heroLogo) {
+      heroLogo.style.background = col.bg;
+      heroLogo.style.color      = col.fg;
+      if (logoSrc) {
+        heroLogo.innerHTML = '<img src="' + logoSrc + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border-radius:11px" onerror="this.remove()" /><span id="detHeroAv">' + escHtml(av) + '</span>';
+      } else {
+        heroLogo.innerHTML = '<span id="detHeroAv">' + escHtml(av) + '</span>';
+      }
     }
 
-    // Nascondi topbar e tabbar dell'app
-    var appTopbar = document.querySelector('.topbar');
-    var appTabbar = document.querySelector('.tab-bar');
-    if (appTopbar) appTopbar.style.display = 'none';
-    if (appTabbar) appTabbar.style.display = 'none';
+    // Prezzo e variazione
+    setEl('detPrice', formatEur(prezzo, 2));
+    var pill = $('detChgPill');
+    if (pill) {
+      pill.className = 'det-chg-pill ' + (dayPos ? 'pos' : 'neg');
+      pill.textContent = (dayPos ? '▲' : '▼') + ' ' + formatEurSigned(dayChg) + ' · ' + formatPct(dayChgPct);
+    }
 
-    var periodButtons = ['1G','1S','1M','1A','5A','Max'].map(function(p) {
-      return '<button class="det-pt' + (p === _detPeriod ? ' active' : '') + '" onclick="Portfolio.setDetPeriod(\'' + p + '\',this)">' + p + '</button>';
-    }).join('');
+    setEl('detHeroName', escHtml(t.nome));
+    setEl('detHeroSub', qtyFmt + ' ' + qtyLabel + ' · PMC ' + formatEur(pmc,2) + ' · ' + formatDate(t.dataAcquisto));
 
-    overlay.innerHTML =
-      '<div class="det-page">' +
-        // STICKY HERO
-        '<div class="det-sticky">' +
-          '<div class="det-topbar">' +
-            '<button class="det-back" onclick="Portfolio.chiudiDettaglio()"><i class="bi bi-chevron-left"></i></button>' +
-            '<div class="det-topbar-center">' +
-              '<div class="det-topbar-ticker">' + escHtml(ticker || tipoLabel(t.tipo)) + '</div>' +
-              '<div class="det-topbar-mkt">' + (t.mercato||'—') + '</div>' +
-            '</div>' +
-            '<button class="det-action-btn" onclick="Portfolio.openDettaglioMenu(\'' + t.id + '\')">' +
-              '<i class="bi bi-three-dots"></i>' +
-            '</button>' +
-          '</div>' +
-          '<div class="det-hero">' +
-            '<div class="det-hero-inner">' +
-              '<div class="det-hero-toprow">' +
-                '<div class="det-hero-logo" style="background:' + col.bg + ';color:' + col.fg + '">' +
-                  (logoSrc ? '<img src="' + logoSrc + '" onload="this.nextElementSibling.style.display=\'none\'" onerror="this.style.display=\'none\'" />' : '') +
-                  '<span>' + escHtml(av) + '</span>' +
-                '</div>' +
-                '<div class="det-price-col">' +
-                  '<div class="det-price">' + formatEur(prezzo, 2) + '</div>' +
-                  '<div class="det-chg-pill ' + (dayPos?'pos':'neg') + '">' +
-                    (dayPos?'▲':'▼') + ' ' + formatEurSigned(dayChg) + ' · ' + formatPct(dayChgPct) +
-                  '</div>' +
-                '</div>' +
-              '</div>' +
-              '<div class="det-hero-name">' + escHtml(t.nome) + '</div>' +
-              '<div class="det-hero-sub">' + qtyFmt + ' ' + qtyLabel + ' · PMC ' + formatEur(pmc,2) + ' · ' + formatDate(t.dataAcquisto) + '</div>' +
-              (t.lastUpdate ? '<div class="det-last-update">Aggiornato ' + _formatLastUpdate(t.lastUpdate) + '</div>' : '') +
-              '<div class="det-period-row">' + periodButtons + '</div>' +
-              '<div class="det-chart-wrap">' +
-                '<canvas id="detMainChart" class="det-main-canvas"></canvas>' +
-                '<div class="det-chart-loading" id="detChartLoading"><i class="bi bi-arrow-clockwise"></i></div>' +
-              '</div>' +
-              '<div class="det-chart-ftr">' +
-                '<span id="detChartFtrLeft"></span><span id="detChartFtrRight">adesso</span>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
+    var luEl = $('detLastUpdate');
+    if (luEl) {
+      if (t.lastUpdate) {
+        luEl.textContent = 'Aggiornato ' + _formatLastUpdate(t.lastUpdate);
+        luEl.style.display = '';
+      } else {
+        luEl.style.display = 'none';
+      }
+    }
 
-        // SCROLL CONTENT
-        '<div class="det-scroll">' +
+    // Bottoni periodo
+    var periodRow = $('detPeriodRow');
+    if (periodRow) {
+      periodRow.innerHTML = ['1G','1S','1M','1A','5A','Max'].map(function(p) {
+        return '<button class="det-pt' + (p === _detPeriod ? ' active' : '') + '" onclick="Portfolio.setDetPeriod('' + p + '',this)">' + p + '</button>';
+      }).join('');
+    }
 
-          // Card posizione
-          '<div class="det-card">' +
-            '<div class="det-card-title">Posizione</div>' +
-            '<div class="det-row2">' +
-              '<div class="det-st"><div class="det-st-lbl">Valore posizione</div><div class="det-st-val">' + formatEur(valore) + '</div><div class="det-st-sub">' + qtyFmt + ' × ' + formatEur(prezzo,2) + '</div></div>' +
-              '<div class="det-st" style="text-align:right"><div class="det-st-lbl">PMC unitario</div><div class="det-st-val">' + formatEur(pmc,4) + '</div><div class="det-st-sub">costo medio</div></div>' +
-            '</div>' +
-            '<div class="det-pl-bar">' +
-              '<div>' +
-                '<div class="det-pl-lbl">P&L totale posizione</div>' +
-                '<div class="det-pl-val ' + (isPos?'pos':'neg') + '">' + formatEurSigned(pl) + '<span class="det-pl-pct"> (' + formatPct(plPct) + ')</span></div>' +
-              '</div>' +
-              '<div style="text-align:right">' +
-                '<div class="det-pl-lbl">Investito</div>' +
-                '<div class="det-inv-val">' + formatEur(costo) + '</div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
+    // Card posizione
+    setEl('detValPos', formatEur(valore));
+    setEl('detValPosSub', qtyFmt + ' × ' + formatEur(prezzo, 2));
+    setEl('detPMC', formatEur(pmc, 4));
+    var plEl = $('detPL');
+    if (plEl) {
+      plEl.className = 'det-pl-val ' + (isPos ? 'pos' : 'neg');
+      plEl.innerHTML = formatEurSigned(pl) + '<span class="det-pl-pct"> (' + formatPct(plPct) + ')</span>';
+    }
+    setEl('detInv', formatEur(costo));
 
-          // Card andamento
-          '<div class="det-card">' +
-            '<div class="det-card-title">Andamento oggi</div>' +
-            (t.dayHigh ?
-              '<div class="det-range-wrap">' +
-                '<div class="det-range-lbl">Range giornaliero</div>' +
-                '<div class="det-range-bg">' +
-                  '<div class="det-range-fill"></div>' +
-                  '<div class="det-range-dot" id="detRangeDot"></div>' +
-                '</div>' +
-                '<div class="det-range-vals">' +
-                  '<span>Min ' + formatEur(t.dayLow,2) + '</span>' +
-                  '<span style="color:var(--primary);font-weight:800">' + formatEur(prezzo,2) + '</span>' +
-                  '<span>Max ' + formatEur(t.dayHigh,2) + '</span>' +
-                '</div>' +
-              '</div>'
-            : '') +
-            '<div class="det-2charts">' +
-              '<div class="det-ch-box">' +
-                '<div class="det-ch-hdr"><span class="det-ch-lbl">Dal carico</span><span class="det-ch-pct ' + (isPos?'pos':'neg') + '">' + formatPct(plPct) + '</span></div>' +
-                '<canvas id="detChCarico" class="det-sm-canvas"></canvas>' +
-                '<div class="det-ch-ftr"><span>' + formatDate(t.dataAcquisto) + '</span><span>oggi</span></div>' +
-              '</div>' +
-              '<div class="det-ch-box">' +
-                '<div class="det-ch-hdr"><span class="det-ch-lbl">52 settimane</span><span class="det-ch-pct" id="det52pct">—</span></div>' +
-                '<canvas id="detCh52" class="det-sm-canvas"></canvas>' +
-                '<div class="det-ch-ftr"><span id="det52ftrL">—</span><span>oggi</span></div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
+    // Range giornaliero
+    var rw = $('detRangeWrap');
+    if (rw) {
+      if (t.dayHigh && t.dayLow) {
+        rw.style.display = '';
+        setEl('detRangeMin', 'Min ' + formatEur(t.dayLow, 2));
+        setEl('detRangeCur', formatEur(prezzo, 2));
+        setEl('detRangeMax', 'Max ' + formatEur(t.dayHigh, 2));
+        var dot = $('detRangeDot');
+        if (dot) {
+          var pct = ((prezzo - t.dayLow) / (t.dayHigh - t.dayLow)) * 100;
+          dot.style.left = Math.min(100, Math.max(0, pct)) + '%';
+        }
+      } else {
+        rw.style.display = 'none';
+      }
+    }
 
-          // Card dati titolo
-          '<div class="det-card">' +
-            '<div class="det-card-title">Dati titolo</div>' +
-            '<div class="det-info-grid">' +
-              '<div class="det-inf"><div class="det-inf-lbl">ISIN</div><div class="det-inf-val">' + escHtml(t.isin||'—') + '</div></div>' +
-              '<div class="det-inf"><div class="det-inf-lbl">Mercato</div><div class="det-inf-val">' + escHtml(t.mercato||'—') + '</div></div>' +
-              '<div class="det-inf"><div class="det-inf-lbl">WKN</div><div class="det-inf-val">' + escHtml(t.wkn||'—') + '</div></div>' +
-              '<div class="det-inf"><div class="det-inf-lbl">Valuta</div><div class="det-inf-val">' + escHtml(t.valuta||'EUR') + '</div></div>' +
-              '<div class="det-inf"><div class="det-inf-lbl">Commissioni</div><div class="det-inf-val">' + formatEur(t.commissioni||0) + '</div></div>' +
-              '<div class="det-inf"><div class="det-inf-lbl">Tasse/Bolli</div><div class="det-inf-val">' + formatEur(t.tasse||0) + '</div></div>' +
-            '</div>' +
-          '</div>' +
+    // Card andamento: label date
+    var ccFtrL = $('detChCaricoFtrL');
+    if (ccFtrL) ccFtrL.textContent = formatDate(t.dataAcquisto);
+    var cPct = $('detChCaricoPct');
+    if (cPct) { cPct.className = 'det-ch-pct ' + (isPos?'pos':'neg'); cPct.textContent = formatPct(plPct); }
 
-          // Card operazioni
-          '<div class="det-card">' +
-            '<div class="det-card-title">Operazioni</div>' +
-            '<div id="detOperazioni"></div>' +
-          '</div>' +
+    // Card dati
+    setEl('detIsin',    escHtml(t.isin    || '—'));
+    setEl('detMercato', escHtml(t.mercato || '—'));
+    setEl('detWkn',     escHtml(t.wkn     || '—'));
+    setEl('detValuta',  escHtml(t.valuta  || 'EUR'));
+    setEl('detComm',    formatEur(t.commissioni || 0));
+    setEl('detTasse',   formatEur(t.tasse || 0));
 
-          // Azioni
-          '<div class="det-actions">' +
-            '<button class="det-act-buy" onclick="Portfolio.nuovoAcquisto(\'' + t.id + '\'); Portfolio.chiudiDettaglio()">' +
-              '<i class="bi bi-plus-circle"></i> Nuovo acquisto' +
-            '</button>' +
-            '<button class="det-act-sell" onclick="Portfolio.vendeTitoloById(\'' + t.id + '\')">' +
-              '<i class="bi bi-cash-coin"></i> Vendi' +
-            '</button>' +
-          '</div>' +
-
-        '</div>' + // fine scroll
-      '</div>'; // fine page
-
-    overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-
-    // Popola operazioni
+    // Operazioni
     renderDetOperazioni(t);
 
-    // Aggiorna range dot
-    if (t.dayHigh && t.dayLow) {
-      var dot = document.getElementById('detRangeDot');
-      var pct = ((prezzo - t.dayLow) / (t.dayHigh - t.dayLow)) * 100;
-      if (dot) dot.style.left = Math.min(100, Math.max(0, pct)) + '%';
-    }
+    // Reset scroll
+    var scroll = $('detScroll');
+    if (scroll) scroll.scrollTop = 0;
 
-    // Carica grafici
+    // Naviga alla sezione dettaglio (gestisce topbar/tabbar/FAB)
+    App.navigate('dettaglio');
+
+    // Grafici (dopo transizione navigate)
     setTimeout(function() {
       _loadDetMainChart(t, _detPeriod);
       _loadDetSmallCharts(t);
     }, 80);
   }
 
-  function _formatLastUpdate(ts) {
+    function _formatLastUpdate(ts) {
     if (!ts) return '';
     var d = new Date(ts);
     var now = new Date();
@@ -1506,14 +1444,15 @@ const Portfolio = (() => {
   }
 
   function openDettaglioMenu(id) {
+    // Se non viene passato id usa dettaglioId corrente
+    if (!id) id = dettaglioId;
     var t = data.investimenti.titoli.find(function(x){ return x.id===id; });
     if (!t) return;
-    var overlay = $('dettaglioOverlay');
     var existing = $('detMenuOverlay');
     if (existing) existing.remove();
     var menu = document.createElement('div');
     menu.id = 'detMenuOverlay';
-    menu.style.cssText = 'position:absolute;inset:0;z-index:10;background:rgba(0,0,0,.4);display:flex;align-items:flex-end';
+    menu.style.cssText = 'position:fixed;inset:0;z-index:10100;background:rgba(0,0,0,.4);display:flex;align-items:flex-end';
     menu.onclick = function(e){ if(e.target===menu) menu.remove(); };
     menu.innerHTML =
       '<div style="background:var(--bg-card);border-radius:20px 20px 0 0;width:100%;padding:8px 0 32px">' +
@@ -1535,19 +1474,12 @@ const Portfolio = (() => {
           '<i class="bi bi-trash3"></i><span>Elimina titolo</span>' +
         '</div>' +
       '</div>';
-    if (overlay) overlay.appendChild(menu);
+    document.body.appendChild(menu);
   }
 
   function chiudiDettaglio() {
-    var overlay = $('dettaglioOverlay');
-    if (overlay) overlay.classList.remove('open');
-    document.body.style.overflow = '';
     if (_detChart) { _detChart.destroy(); _detChart = null; }
-    // Ripristina topbar e tabbar
-    var appTopbar = document.querySelector('.topbar');
-    var appTabbar = document.querySelector('.tab-bar');
-    if (appTopbar) appTopbar.style.display = '';
-    if (appTabbar) appTabbar.style.display = '';
+    App.navigate('investimenti');
   }
 
   function _loadDetMainChart(t, period) {
@@ -1804,6 +1736,15 @@ const Portfolio = (() => {
   }
 
 
+  function detNuovoAcquisto() {
+    if (!dettaglioId) return;
+    nuovoAcquisto(dettaglioId);
+  }
+
+  function detVendi() {
+    vendeTitoloById(dettaglioId);
+  }
+
   function resetNuovoAcquisto() { _nuovoAcquistoId = null; }
 
   // ---- API pubblica ----
@@ -1817,6 +1758,7 @@ const Portfolio = (() => {
     wizardNext, wizardPrev, wizardReset,
     openTitoloSheet, closeTitoloSheet, aggiornaValoreManuale, toggleSezione,
     apriDettaglio, chiudiDettaglio, openDettaglioMenu, eliminaTitolo, vendeTitolo, vendeTitoloById,
+    detNuovoAcquisto, detVendi,
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo, resetNuovoAcquisto,
     restoreEditingMovimento, restoreEditingSpesaCarta,
