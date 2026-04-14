@@ -1,5 +1,5 @@
 // Portafoglio Personale — Service Worker
-const CACHE_NAME = 'portafoglio-v10';
+const CACHE_NAME = 'portafoglio-v13';
 const CACHE_URLS = [
   '/PortafoglioPersonale/',
   '/PortafoglioPersonale/index.html',
@@ -11,6 +11,8 @@ const CACHE_URLS = [
   '/PortafoglioPersonale/js/portfolio.js',
   '/PortafoglioPersonale/js/charts.js',
   '/PortafoglioPersonale/manifest.json',
+  '/PortafoglioPersonale/icons/icon-192-maskable.png',
+  '/PortafoglioPersonale/icons/icon-512-maskable.png',
   // Font
   'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap',
   // Bootstrap Icons
