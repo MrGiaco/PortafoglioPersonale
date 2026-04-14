@@ -1,5 +1,5 @@
 // Portafoglio Personale — Service Worker
-const CACHE_NAME = 'portafoglio-v18';
+const CACHE_NAME = 'portafoglio-v22';
 const CACHE_URLS = [
   '/PortafoglioPersonale/',
   '/PortafoglioPersonale/index.html',
@@ -74,7 +74,27 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Cache First per tutti gli altri asset
+  // Network First per CDN esterni (font, icone, librerie)
+  // Evita di servire versioni vecchie di Bootstrap/Tabler dalla cache
+  if (url.hostname.includes('cdn.jsdelivr.net') ||
+      url.hostname.includes('fonts.googleapis.com') ||
+      url.hostname.includes('fonts.gstatic.com') ||
+      url.hostname.includes('unpkg.com')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Cache First per assets locali
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
