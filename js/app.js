@@ -95,6 +95,11 @@ const App = (() => {
 
   // ---- Init (chiamato dopo unlock) ----
   async function init() {
+    const el = $('dashDate');
+    if (el) el.textContent = new Date().toLocaleDateString('it-IT', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+
     // Carica dati locali
     Drive.loadLocal();
 
@@ -369,6 +374,16 @@ const Modals = (() => {
       if (editing) {
         Portfolio.restoreEditingTitolo();
       }
+      // Reset anche del flag nuovoAcquisto
+      Portfolio.resetNuovoAcquisto();
+    }
+    // Rollback modifica movimento conto se chiuso senza salvare
+    if (current === 'nuovoMovimento' && typeof Portfolio !== 'undefined') {
+      Portfolio.restoreEditingMovimento();
+    }
+    // Rollback modifica spesa carta se chiusa senza salvare
+    if (current === 'nuovaSpesaCarta' && typeof Portfolio !== 'undefined') {
+      Portfolio.restoreEditingSpesaCarta();
     }
     current = null;
     document.body.style.overflow = '';
