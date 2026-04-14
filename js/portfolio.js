@@ -607,7 +607,7 @@ const Portfolio = (() => {
   function renderCarta() {
     setEl('ccLastDigits', data.carta.lastDigits || '0000');
     setEl('ccHolder',     data.carta.holder     || '—');
-    setEl('ccExpiry',     data.carta.expiry      || '—');
+    setEl('ccExpiry',     (data.carta.expiry && data.carta.expiry.trim()) ? data.carta.expiry.trim() : '—');
     var now  = new Date();
     var mese = data.carta.spese.filter(function(s){
       var d = new Date(s.data);
@@ -1791,7 +1791,250 @@ const Portfolio = (() => {
     renderCarta(); renderDashboard(); saveAndSync();
   }
 
+  function cancellaTitoli() {
+    data.investimenti.titoli = [];
+    renderInvestimenti(); renderDashboard(); Charts.updateAll(); saveAndSync();
+  }
+
   function resetNuovoAcquisto() { _nuovoAcquistoId = null; }
+
+  // =============================================
+  // IMPORTA TITOLI DA CSV (formato banca)
+  // =============================================
+
+  async function importTitoliDaCSV() {
+    return new Promise(function(resolve, reject) {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.csv,.txt';
+      input.onchange = async function(e) {
+        var file = e.target.files[0];
+        if (!file) { reject('Nessun file'); return; }
+        try {
+          var text = await file.text();
+          var result = _parseTitoliCSV(text);
+          resolve(result);
+        } catch(err) {
+          App.showToast('Errore lettura file: ' + err.message, 'error');
+          reject(err);
+        }
+      };
+      input.click();
+    });
+  }
+
+  function _parseTitoliCSV(text) {
+    // Normalizza fine riga e separa righe
+    var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    if (lines.length < 2) throw new Error('File vuoto o non valido');
+
+    // Parsing header (separatore ;)
+    var header = lines[0].split(';').map(function(h){ return h.trim(); });
+
+    // Indici colonne
+    var iData    = header.findIndex(function(h){ return h === 'Data'; });
+    var iTipo    = header.findIndex(function(h){ return h === 'Tipo'; });
+    var iValore  = header.findIndex(function(h){ return h === 'Valore'; });
+    var iComm    = header.findIndex(function(h){ return h.toLowerCase().includes('commissioni'); });
+    var iTasse   = header.findIndex(function(h){ return h.toLowerCase().includes('tasse'); });
+    var iAzioni  = header.findIndex(function(h){ return h === 'Azioni'; });
+    var iISIN    = header.findIndex(function(h){ return h === 'ISIN'; });
+    var iWKN     = header.findIndex(function(h){ return h === 'WKN'; });
+    var iSimbolo = header.findIndex(function(h){ return h === 'Simbolo Titolo'; });
+    var iNome    = header.findIndex(function(h){ return h === 'Nome Titolo'; });
+    var iCambio  = header.findIndex(function(h){ return h.toLowerCase().includes('tasso di cambio'); });
+
+    if (iData === -1 || iTipo === -1 || iNome === -1)
+      throw new Error('Formato CSV non riconosciuto — verificare le colonne');
+
+    function parseNum(s) {
+      if (s == null || s === '') return null;
+      s = String(s).trim().replace(/"/g, '');
+      if (s === '' || s === '-') return null;
+      // Formato italiano: 1.234,56
+      if (/^-?[\d.]+,\d+$/.test(s)) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else {
+        s = s.replace(',', '');
+      }
+      var n = parseFloat(s);
+      return isNaN(n) ? null : n;
+    }
+
+    function parseRow(line) {
+      // Gestisce campi con virgolette
+      var fields = [];
+      var cur = '', inQ = false;
+      for (var i = 0; i < line.length; i++) {
+        var c = line[i];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ';' && !inQ) { fields.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      fields.push(cur.trim());
+      return fields;
+    }
+
+    // Raggruppa operazioni per simbolo/ISIN
+    var gruppi = {}; // key → { nome, isin, wkn, simbolo, operazioni[] }
+
+    lines.slice(1).forEach(function(line) {
+      if (!line.trim()) return;
+      var r = parseRow(line);
+
+      var tipo    = (r[iTipo]    || '').trim();
+      var nome    = (r[iNome]    || '').trim();
+      var simbolo = iSimbolo >= 0 ? (r[iSimbolo] || '').trim() : '';
+      var isin    = iISIN    >= 0 ? (r[iISIN]    || '').trim() : '';
+      var wkn     = iWKN     >= 0 ? (r[iWKN]     || '').trim().replace(/"/g,'').trim() : '';
+      var dataCella = (r[iData] || '').trim();
+      var dataStr = dataCella ? dataCella.slice(0, 10) : '';
+
+      var valore  = parseNum(r[iValore]);
+      var comm    = parseNum(r[iComm])  || 0;
+      var tasse   = parseNum(r[iTasse]) || 0;
+      var azioni  = parseNum(r[iAzioni]);
+      var cambio  = iCambio >= 0 ? (parseNum(r[iCambio]) || 1) : 1;
+
+      if (!nome || azioni == null) return;
+
+      // Chiave di raggruppamento: simbolo o ISIN o nome
+      var key = simbolo || isin || nome;
+
+      if (!gruppi[key]) {
+        gruppi[key] = { nome: nome, isin: isin, wkn: wkn, simbolo: simbolo, operazioni: [] };
+      }
+
+      gruppi[key].operazioni.push({
+        data: dataStr, tipo: tipo,
+        valore: Math.abs(valore || 0),
+        comm: comm, tasse: tasse,
+        azioni: Math.abs(azioni),
+        cambio: cambio,
+      });
+    });
+
+    // Per ogni titolo calcola quantità netta e PMC
+    var importati = [], scartati = [], giaDuplicati = [];
+
+    Object.keys(gruppi).forEach(function(key) {
+      var g = gruppi[key];
+
+      // Calcola quantità e costo totale acquisti con PMC ponderata
+      var qtaTot = 0, costoTot = 0;
+      var primaData = null, ultimaData = null;
+      var operazioniSalvate = [];
+
+      g.operazioni.forEach(function(op) {
+        var isAcquisto = op.tipo === 'Compra' || op.tipo === 'Trasferimento Titoli (in entrata)';
+        var isVendita  = op.tipo === 'Vendi'  || op.tipo === 'Trasferimento Titoli (in uscita)';
+
+        if (!primaData || op.data < primaData) primaData = op.data;
+        if (!ultimaData || op.data > ultimaData) ultimaData = op.data;
+
+        if (isAcquisto) {
+          var costoOp = op.valore + op.comm + op.tasse;
+          qtaTot   += op.azioni;
+          costoTot += costoOp;
+          operazioniSalvate.push({
+            data: op.data, tipo: 'acquisto',
+            quantita: op.azioni, prezzo: op.azioni > 0 ? op.valore / op.azioni : 0,
+            cambio: op.cambio, comm: op.comm, tasse: op.tasse,
+            costoTot: costoOp,
+          });
+        } else if (isVendita) {
+          qtaTot -= op.azioni;
+          operazioniSalvate.push({
+            data: op.data, tipo: 'vendita',
+            quantita: op.azioni, prezzo: op.azioni > 0 ? op.valore / op.azioni : 0,
+            comm: op.comm, tasse: op.tasse,
+            costoTot: op.valore,
+          });
+        }
+      });
+
+      // Titolo completamente venduto → skip
+      if (qtaTot <= 0.0001) {
+        scartati.push({ nome: g.nome, motivo: 'Posizione chiusa (quantità netta = 0)' });
+        return;
+      }
+
+      var pmc = qtaTot > 0 ? costoTot / qtaTot : 0;
+
+      // Determina tipo titolo dal simbolo e nome
+      var tipoTitolo = _determinaTipo(g.simbolo, g.isin, g.nome);
+
+      // Verifica duplicato
+      var dup = data.investimenti.titoli.find(function(t) {
+        return (g.isin && t.isin === g.isin) ||
+               (g.simbolo && t.ticker === g.simbolo) ||
+               t.nome === g.nome;
+      });
+      if (dup) {
+        giaDuplicati.push({ nome: g.nome, motivo: 'Già presente in portafoglio' });
+        return;
+      }
+
+      // Determina ticker e codeZB
+      var ticker = null, codeZB = null;
+      if (g.simbolo) {
+        if (g.simbolo.endsWith('.F')) { codeZB = g.simbolo; }
+        else { ticker = g.simbolo; }
+      }
+
+      var titolo = {
+        id:            uid(),
+        tipo:          tipoTitolo,
+        nome:          g.nome,
+        ticker:        ticker,
+        codeZB:        codeZB,
+        isin:          g.isin  || '',
+        wkn:           g.wkn   || '',
+        mercato:       ticker ? (ticker.endsWith('.MI') ? 'MIL' : ticker.endsWith('.PA') ? 'PAR' : 'INT') : 'INT',
+        valuta:        'EUR',
+        dataAcquisto:  primaData || new Date().toISOString().slice(0, 10),
+        quantita:      qtaTot,
+        prezzoAcquisto: pmc,
+        cambio:        1,
+        commissioni:   g.operazioni.reduce(function(s,o){ return s + o.comm; }, 0),
+        tasse:         g.operazioni.reduce(function(s,o){ return s + o.tasse; }, 0),
+        costoTotale:   costoTot,
+        pmc:           pmc,
+        prezzoAttuale: pmc,
+        change: 0, changePct: 0,
+        currency: 'EUR',
+        venduto: false,
+        note: '',
+        operazioni: operazioniSalvate,
+      };
+
+      data.investimenti.titoli.push(titolo);
+      importati.push({ nome: g.nome, tipo: tipoTitolo, quantita: qtaTot, pmc: pmc });
+    });
+
+    return { importati: importati, scartati: scartati, duplicati: giaDuplicati };
+  }
+
+  function _determinaTipo(simbolo, isin, nome) {
+    var s = (simbolo || '').toLowerCase();
+    var n = (nome    || '').toLowerCase();
+    var i = (isin    || '').toLowerCase();
+
+    // Polizza vita
+    if (n.includes('polizza') || n.includes('life') || n.includes('prospettiva') || n.includes('intesa sanpaolo life')) return 'polizza';
+    // Certificate (ISIN XS o ticker XS*)
+    if (i.startsWith('xs') || s.startsWith('xs')) return 'certificate';
+    // Fondi con codice .F (Eurizon e simili)
+    if (s.endsWith('.f') || n.includes('eurizon') || n.includes('pac -')) {
+      // PIR
+      if (n.includes('pir') || n.includes('progetto italia') || n.includes('classe pir')) return 'pir';
+      return 'fondo';
+    }
+    // Azioni (ticker con .MI, .PA, ecc.)
+    if (s.includes('.mi') || s.includes('.pa') || s.includes('.de') || s.includes('.as')) return 'azione';
+    // Default
+    return 'azione';
+  }
 
   // ---- API pubblica ----
   return {
@@ -1807,7 +2050,8 @@ const Portfolio = (() => {
     detNuovoAcquisto, detVendi,
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo, resetNuovoAcquisto,
-    cancellaMovimentiConto, cancellaSpeseCarta,
+    cancellaMovimentiConto, cancellaSpeseCarta, cancellaTitoli,
+    importTitoliDaCSV,
     restoreEditingMovimento, restoreEditingSpesaCarta,
     formatEur, formatDate,
     populateCategorieSelect, importDaBanca,
