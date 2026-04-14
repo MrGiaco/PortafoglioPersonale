@@ -524,10 +524,10 @@ input, select, textarea { font-family: inherit; }
   border-radius: var(--radius-sm); padding: 12px 10px; text-align: center;
 }
 .stat-mini__icon {
-  width: 32px; height: 32px; border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; margin: 0 auto 6px;
+  font-size: 22px; margin: 0 auto 6px;
 }
+.stat-mini__icon > i { color: inherit !important; }
 .stat-mini__label { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; }
 .stat-mini__value { font-size: 13px; font-weight: 700; }
 
