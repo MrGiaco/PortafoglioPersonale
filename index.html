@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <!-- Bootstrap Icons — caricato prima di tutto il resto -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
   <!-- Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -29,7 +29,7 @@
 <!-- ===== LOCK SCREEN ===== -->
 <div id="lockScreen" class="lock-screen">
   <div class="lock-card">
-    <div class="lock-logo"><i class="bi bi-shield-lock-fill"></i></div>
+    <div class="lock-logo"><i class="ti ti-shield-lock"></i></div>
     <h1 class="lock-title">Portafoglio Personale</h1>
     <p class="lock-subtitle">Accedi per continuare</p>
 
@@ -50,9 +50,9 @@
         <button class="pin-key">7</button>
         <button class="pin-key">8</button>
         <button class="pin-key">9</button>
-        <button class="pin-key pin-key--bio" id="bioBtn"><i class="bi bi-fingerprint"></i></button>
+        <button class="pin-key pin-key--bio" id="bioBtn"><i class="ti ti-fingerprint"></i></button>
         <button class="pin-key">0</button>
-        <button class="pin-key pin-key--del"><i class="bi bi-backspace"></i></button>
+        <button class="pin-key pin-key--del"><i class="ti ti-backspace"></i></button>
       </div>
     </div>
 
@@ -76,7 +76,7 @@
         <button class="pin-key">9</button>
         <button class="pin-key pin-key--empty"></button>
         <button class="pin-key">0</button>
-        <button class="pin-key pin-key--del"><i class="bi bi-backspace"></i></button>
+        <button class="pin-key pin-key--del"><i class="ti ti-backspace"></i></button>
       </div>
     </div>
   </div>
@@ -88,19 +88,19 @@
   <!-- Sidebar (solo desktop) -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo-icon"><i class="bi bi-bar-chart-fill"></i></div>
+      <div class="sidebar-logo-icon"><i class="ti ti-chart-bar"></i></div>
       <div class="sidebar-logo-text">Portafoglio</div>
     </div>
     <nav class="sidebar-nav">
-      <a class="nav-item active" data-section="dashboard" onclick="App.navigate('dashboard')"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
-      <a class="nav-item" data-section="conto" onclick="App.navigate('conto')"><i class="bi bi-bank2"></i><span>Conto Corrente</span></a>
-      <a class="nav-item" data-section="carta" onclick="App.navigate('carta')"><i class="bi bi-credit-card-fill"></i><span>Carta di Credito</span></a>
-      <a class="nav-item" data-section="investimenti" onclick="App.navigate('investimenti')"><i class="bi bi-graph-up-arrow"></i><span>Investimenti</span></a>
-      <a class="nav-item" data-section="report" onclick="App.navigate('report')"><i class="bi bi-file-earmark-bar-graph-fill"></i><span>Report</span></a>
+      <a class="nav-item active" data-section="dashboard" onclick="App.navigate('dashboard')"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a class="nav-item" data-section="conto" onclick="App.navigate('conto')"><i class="ti ti-building-bank"></i><span>Conto Corrente</span></a>
+      <a class="nav-item" data-section="carta" onclick="App.navigate('carta')"><i class="ti ti-credit-card"></i><span>Carta di Credito</span></a>
+      <a class="nav-item" data-section="investimenti" onclick="App.navigate('investimenti')"><i class="ti ti-trending-up"></i><span>Investimenti</span></a>
+      <a class="nav-item" data-section="report" onclick="App.navigate('report')"><i class="ti ti-report-analytics"></i><span>Report</span></a>
     </nav>
     <div class="sidebar-footer">
-      <a class="nav-item" data-section="impostazioni" onclick="App.navigate('impostazioni')"><i class="bi bi-gear-fill"></i><span>Impostazioni</span></a>
-      <button class="nav-item nav-item--danger" onclick="Auth.lock()"><i class="bi bi-lock-fill"></i><span>Blocca</span></button>
+      <a class="nav-item" data-section="impostazioni" onclick="App.navigate('impostazioni')"><i class="ti ti-settings"></i><span>Impostazioni</span></a>
+      <button class="nav-item nav-item--danger" onclick="Auth.lock()"><i class="ti ti-lock"></i><span>Blocca</span></button>
     </div>
   </aside>
 
@@ -114,13 +114,13 @@
       </div>
       <div class="topbar-section-title hidden" id="topbarTitle"></div>
       <div class="topbar-actions">
-        <button class="topbar-btn" onclick="Quotes.refreshAll()" title="Aggiorna quotazioni"><i class="bi bi-arrow-clockwise"></i></button>
-        <button class="topbar-btn" onclick="Drive.sync()" title="Sincronizza Drive"><i class="bi bi-cloud-arrow-up-fill"></i></button>
+        <button class="topbar-btn" onclick="Quotes.refreshAll()" title="Aggiorna quotazioni"><i class="ti ti-refresh"></i></button>
+        <button class="topbar-btn" onclick="Drive.sync()" title="Sincronizza Drive"><i class="ti ti-cloud-upload"></i></button>
         <button class="topbar-btn" onclick="App.fabAction()" title="Aggiungi"
           style="background:var(--primary);border-color:var(--primary);color:#fff">
-          <i class="bi bi-plus-lg"></i>
+          <i class="ti ti-plus"></i>
         </button>
-        <div class="topbar-avatar" onclick="App.navigate('impostazioni')"><i class="bi bi-person-fill"></i></div>
+        <div class="topbar-avatar" onclick="App.navigate('impostazioni')"><i class="ti ti-user"></i></div>
       </div>
     </header>
 
@@ -133,7 +133,7 @@
         <div class="patrimonio-card">
           <div class="patrimonio-label">PATRIMONIO TOTALE</div>
           <div class="patrimonio-value" id="patrimonioTotale">€ 0,00</div>
-          <div class="patrimonio-badge" id="patrimonioChange"><i class="bi bi-arrow-up-right"></i> 0,00%</div>
+          <div class="patrimonio-badge" id="patrimonioChange"><i class="ti ti-arrow-up-right"></i> 0,00%</div>
           <div class="patrimonio-pills">
             <div class="patrimonio-pill">
               <div class="patrimonio-pill__label">Conto</div>
@@ -152,19 +152,19 @@
 
         <div class="quick-actions">
           <div class="qa-btn" onclick="Portfolio.setMovTipo('entrata'); Modals.open('nuovoMovimento')">
-            <i class="bi bi-arrow-down-circle-fill"></i>
+            <i class="ti ti-circle-arrow-down"></i>
             <div class="qa-label">Entrata</div>
           </div>
           <div class="qa-btn" onclick="Portfolio.setMovTipo('uscita'); Modals.open('nuovoMovimento')">
-            <i class="bi bi-arrow-up-circle-fill"></i>
+            <i class="ti ti-circle-arrow-up"></i>
             <div class="qa-label">Uscita</div>
           </div>
           <div class="qa-btn" onclick="App.navigate('investimenti'); setTimeout(()=>Modals.open('nuovoTitolo'),100)">
-            <i class="bi bi-graph-up-arrow"></i>
+            <i class="ti ti-trending-up"></i>
             <div class="qa-label">Acquista</div>
           </div>
           <div class="qa-btn" onclick="App.navigate('report')">
-            <i class="bi bi-file-earmark-bar-graph-fill"></i>
+            <i class="ti ti-report-analytics"></i>
             <div class="qa-label">Report</div>
           </div>
         </div>
@@ -206,14 +206,14 @@
           <div class="account-hero__value" id="contoSaldo">€ 0,00</div>
           <div class="account-hero__stats">
             <div class="hero-stat">
-              <i class="bi bi-arrow-down-circle-fill text-green-light"></i>
+              <i class="ti ti-circle-arrow-down text-green-light"></i>
               <div>
                 <div class="hero-stat__label">Entrate (mese)</div>
                 <div class="hero-stat__value" id="contoEntrate">€ 0,00</div>
               </div>
             </div>
             <div class="hero-stat">
-              <i class="bi bi-arrow-up-circle-fill text-red-light"></i>
+              <i class="ti ti-circle-arrow-up text-red-light"></i>
               <div>
                 <div class="hero-stat__label">Uscite (mese)</div>
                 <div class="hero-stat__value" id="contoUscite">€ 0,00</div>
@@ -223,7 +223,7 @@
         </div>
 
         <div class="search-bar">
-          <i class="bi bi-search"></i>
+          <i class="ti ti-search"></i>
           <input type="text" id="contoSearch" placeholder="Cerca movimenti..." oninput="Portfolio.filterMovimenti()" />
         </div>
 
@@ -247,7 +247,7 @@
           <div class="credit-card-bg">
             <div class="cc-top">
               <span class="cc-bank">Portafoglio Personale</span>
-              <i class="bi bi-credit-card-2-front-fill cc-logo"></i>
+              <i class="ti ti-credit-card cc-logo"></i>
             </div>
             <div class="cc-number">•••• •••• •••• <span id="ccLastDigits">0000</span></div>
             <div class="cc-bottom">
@@ -259,24 +259,24 @@
 
         <div class="stats-grid">
           <div class="stat-mini">
-            <div class="stat-mini__icon" style="background:var(--danger-light);color:var(--danger)"><i class="bi bi-receipt"></i></div>
+            <div class="stat-mini__icon" style="color:var(--danger)"><i class="ti ti-receipt-2"></i></div>
             <div class="stat-mini__label">Spese mese</div>
             <div class="stat-mini__value" id="cartaSpeseMese">€ 0</div>
           </div>
           <div class="stat-mini">
-            <div class="stat-mini__icon" style="background:var(--warning-light);color:var(--warning)"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-mini__icon" style="color:var(--warning)"><i class="ti ti-calendar-check"></i></div>
             <div class="stat-mini__label">Prossima scad.</div>
             <div class="stat-mini__value" id="cartaScadenza">—</div>
           </div>
           <div class="stat-mini">
-            <div class="stat-mini__icon" style="background:var(--primary-light);color:var(--primary-mid)"><i class="bi bi-pie-chart-fill"></i></div>
+            <div class="stat-mini__icon" style="color:var(--primary-mid)"><i class="ti ti-chart-pie"></i></div>
             <div class="stat-mini__label">Plafond usato</div>
             <div class="stat-mini__value" id="cartaPlafond">0%</div>
           </div>
         </div>
 
         <div class="search-bar">
-          <i class="bi bi-search"></i>
+          <i class="ti ti-search"></i>
           <input type="text" id="cartaSearch" placeholder="Cerca spese..." oninput="Portfolio.filterSpese()" />
         </div>
 
@@ -342,13 +342,13 @@
         <!-- STICKY HERO -->
         <div class="det-sticky">
           <div class="det-topbar">
-            <button class="det-back" onclick="App.navigate('investimenti')"><i class="bi bi-chevron-left"></i></button>
+            <button class="det-back" onclick="App.navigate('investimenti')"><i class="ti ti-chevron-left"></i></button>
             <div class="det-topbar-center">
               <div class="det-topbar-ticker" id="detTopbarTicker">—</div>
               <div class="det-topbar-mkt" id="detTopbarMkt">—</div>
             </div>
             <button class="det-action-btn" id="detMenuBtn" onclick="Portfolio.openDettaglioMenu()">
-              <i class="bi bi-three-dots"></i>
+              <i class="ti ti-dots"></i>
             </button>
           </div>
           <div class="det-hero" id="detHero">
@@ -366,7 +366,7 @@
               <div class="det-period-row" id="detPeriodRow"></div>
               <div class="det-chart-wrap">
                 <canvas id="detMainChart" class="det-main-canvas"></canvas>
-                <div class="det-chart-loading" id="detChartLoading"><i class="bi bi-arrow-clockwise"></i></div>
+                <div class="det-chart-loading" id="detChartLoading"><i class="ti ti-refresh"></i></div>
               </div>
               <div class="det-chart-ftr">
                 <span id="detChartFtrLeft"></span><span id="detChartFtrRight">adesso</span>
@@ -456,10 +456,10 @@
           <!-- Azioni -->
           <div class="det-actions" id="detActionBar">
             <button class="det-act-buy" id="detBtnBuy" onclick="Portfolio.detNuovoAcquisto()">
-              <i class="bi bi-plus-circle"></i> Nuovo acquisto
+              <i class="ti ti-circle-plus"></i> Nuovo acquisto
             </button>
             <button class="det-act-sell" id="detBtnSell" onclick="Portfolio.detVendi()">
-              <i class="bi bi-cash-coin"></i> Vendi
+              <i class="ti ti-cash"></i> Vendi
             </button>
           </div>
         </div>
@@ -475,7 +475,7 @@
             <option value="conto">Conto</option>
             <option value="carta">Carta</option>
           </select>
-          <button class="btn btn--ghost btn--sm" onclick="Report.export()"><i class="bi bi-download"></i> CSV</button>
+          <button class="btn btn--ghost btn--sm" onclick="Report.export()"><i class="ti ti-download"></i> CSV</button>
         </div>
 
         <div class="charts-grid">
@@ -502,55 +502,55 @@
         <div class="settings-grid">
 
           <div class="settings-card">
-            <h3><i class="bi bi-google"></i> Google Drive</h3>
+            <h3><i class="ti ti-brand-google"></i> Google Drive</h3>
             <p>Connetti il tuo Drive per salvare e sincronizzare i dati cifrati.</p>
             <div id="driveStatus" class="status-badge status-badge--off">Non connesso</div>
-            <button class="btn btn--primary btn--block" onclick="Drive.connect()"><i class="bi bi-cloud-arrow-up-fill"></i> Connetti Drive</button>
+            <button class="btn btn--primary btn--block" onclick="Drive.connect()"><i class="ti ti-cloud-upload"></i> Connetti Drive</button>
           </div>
 
           <div class="settings-card">
-            <h3><i class="bi bi-shield-lock-fill"></i> Sicurezza</h3>
+            <h3><i class="ti ti-shield-lock"></i> Sicurezza</h3>
             <p>Modifica il PIN o gestisci l'accesso biometrico.</p>
-            <button class="btn btn--ghost btn--block mt-2" onclick="Auth.changePin()"><i class="bi bi-key-fill"></i> Cambia PIN</button>
-            <button class="btn btn--ghost btn--block mt-2" onclick="Auth.toggleBiometric()"><i class="bi bi-fingerprint"></i> <span id="bioToggleLabel">Abilita Biometria</span></button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Auth.changePin()"><i class="ti ti-key"></i> Cambia PIN</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Auth.toggleBiometric()"><i class="ti ti-fingerprint"></i> <span id="bioToggleLabel">Abilita Biometria</span></button>
           </div>
 
           <div class="settings-card">
-            <h3><i class="bi bi-bank2"></i> Conto Corrente</h3>
+            <h3><i class="ti ti-building-bank"></i> Conto Corrente</h3>
             <p>Imposta il saldo iniziale del conto, ovvero il saldo reale prima di qualsiasi movimento registrato nell'app.</p>
-            <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('impostazioniConto')"><i class="bi bi-pencil-fill"></i> Configura Conto</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('impostazioniConto')"><i class="ti ti-pencil"></i> Configura Conto</button>
           </div>
 
           <div class="settings-card">
-            <h3><i class="bi bi-credit-card-fill"></i> Carta di Credito</h3>
+            <h3><i class="ti ti-credit-card"></i> Carta di Credito</h3>
             <p>Configura i dati della tua carta di credito.</p>
-            <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('impostazioniCarta')"><i class="bi bi-pencil-fill"></i> Configura Carta</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('impostazioniCarta')"><i class="ti ti-pencil"></i> Configura Carta</button>
           </div>
 
           <div class="settings-card">
-            <h3><i class="bi bi-arrow-repeat"></i> Quotazioni</h3>
+            <h3><i class="ti ti-arrows-exchange"></i> Quotazioni</h3>
             <p>Aggiorna manualmente le quotazioni dei titoli in portafoglio.</p>
-            <button class="btn btn--primary btn--block mt-2" onclick="Quotes.refreshAll()"><i class="bi bi-arrow-clockwise"></i> Aggiorna Ora</button>
+            <button class="btn btn--primary btn--block mt-2" onclick="Quotes.refreshAll()"><i class="ti ti-refresh"></i> Aggiorna Ora</button>
             <div class="settings-info" id="lastQuoteUpdate">Ultimo aggiornamento: mai</div>
           </div>
 
           <div class="settings-card">
-            <h3><i class="bi bi-database"></i> Dati</h3>
+            <h3><i class="ti ti-database"></i> Dati</h3>
             <p>Esporta o importa i tuoi dati come backup locale.</p>
-            <button class="btn btn--ghost btn--block mt-2" onclick="App.exportData()"><i class="bi bi-download"></i> Esporta Backup</button>
-            <button class="btn btn--ghost btn--block mt-2" onclick="App.importData()"><i class="bi bi-upload"></i> Importa Backup</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="App.exportData()"><i class="ti ti-download"></i> Esporta Backup</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="App.importData()"><i class="ti ti-upload"></i> Importa Backup</button>
           </div>
 
           <div class="settings-card">
-            <h3><i class="bi bi-bank2"></i> Importa da Banca</h3>
+            <h3><i class="ti ti-building-bank"></i> Importa da Banca</h3>
             <p>Importa i movimenti dal file Excel scaricato dalla tua banca. Le categorie nuove vengono aggiunte automaticamente.</p>
-            <button class="btn btn--primary btn--block mt-2" onclick="App.importDaBanca()"><i class="bi bi-file-earmark-spreadsheet-fill"></i> Importa file banca (.xlsx)</button>
+            <button class="btn btn--primary btn--block mt-2" onclick="App.importDaBanca()"><i class="ti ti-file-spreadsheet"></i> Importa file banca (.xlsx)</button>
           </div>
 
           <div class="settings-card settings-card--danger">
-            <h3><i class="bi bi-trash3-fill"></i> Reimposta App</h3>
+            <h3><i class="ti ti-trash-filled"></i> Reimposta App</h3>
             <p>Cancella tutti i dati locali. I dati su Drive non vengono eliminati.</p>
-            <button class="btn btn--danger btn--block mt-2" onclick="App.resetApp()"><i class="bi bi-exclamation-triangle-fill"></i> Reimposta</button>
+            <button class="btn btn--danger btn--block mt-2" onclick="App.resetApp()"><i class="ti ti-alert-triangle"></i> Reimposta</button>
           </div>
 
         </div>
@@ -561,27 +561,27 @@
     <!-- Tab Bar (mobile) -->
     <nav class="tab-bar">
       <div class="tab-bar-item active" data-section="dashboard" onclick="App.navigate('dashboard')">
-        <i class="bi bi-grid-1x2-fill"></i>
+        <i class="ti ti-layout-dashboard"></i>
         <span class="tab-bar-label">Home</span>
         <div class="tab-bar-dot"></div>
       </div>
       <div class="tab-bar-item" data-section="conto" onclick="App.navigate('conto')">
-        <i class="bi bi-bank2"></i>
+        <i class="ti ti-building-bank"></i>
         <span class="tab-bar-label">Conti</span>
         <div class="tab-bar-dot"></div>
       </div>
       <div class="tab-bar-item" data-section="investimenti" onclick="App.navigate('investimenti')">
-        <i class="bi bi-graph-up-arrow"></i>
+        <i class="ti ti-trending-up"></i>
         <span class="tab-bar-label">Investimenti</span>
         <div class="tab-bar-dot"></div>
       </div>
       <div class="tab-bar-item" data-section="carta" onclick="App.navigate('carta')">
-        <i class="bi bi-credit-card-fill"></i>
+        <i class="ti ti-credit-card"></i>
         <span class="tab-bar-label">Carte</span>
         <div class="tab-bar-dot"></div>
       </div>
       <div class="tab-bar-item" data-section="impostazioni" onclick="App.navigate('impostazioni')">
-        <i class="bi bi-gear-fill"></i>
+        <i class="ti ti-settings"></i>
         <span class="tab-bar-label">Altro</span>
         <div class="tab-bar-dot"></div>
       </div>
@@ -591,7 +591,7 @@
 
   <!-- FAB (mobile) -->
   <button class="fab" onclick="App.fabAction()" title="Aggiungi">
-    <i class="bi bi-plus-lg"></i>
+    <i class="ti ti-plus"></i>
   </button>
 
 </div><!-- /app -->
@@ -605,23 +605,23 @@
     <div class="modal-hero">
       <div class="modal-hero-top">
         <div class="modal-hero-left">
-          <div class="modal-hero-icon" id="movHeroIcon"><i class="bi bi-arrow-down-circle-fill"></i></div>
+          <div class="modal-hero-icon" id="movHeroIcon"><i class="ti ti-circle-arrow-down"></i></div>
           <div>
             <div class="modal-hero-title" id="movHeroTitle">Nuova Entrata</div>
             <div class="modal-hero-sub">Registra un movimento sul conto corrente</div>
           </div>
         </div>
-        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
       </div>
     </div>
     <div class="modal-body">
       <div class="modal-sec">Tipo di movimento</div>
       <div class="toggle-group" style="margin-bottom:14px">
         <button class="toggle-btn active" id="movTipoEntrata" onclick="Portfolio.setMovTipo('entrata')">
-          <i class="bi bi-arrow-down-circle-fill"></i> Entrata
+          <i class="ti ti-circle-arrow-down"></i> Entrata
         </button>
         <button class="toggle-btn" id="movTipoUscita" onclick="Portfolio.setMovTipo('uscita')">
-          <i class="bi bi-arrow-up-circle-fill"></i> Uscita
+          <i class="ti ti-circle-arrow-up"></i> Uscita
         </button>
       </div>
 
@@ -655,7 +655,7 @@
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
       <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveMovimento()">
-        <i class="bi bi-check-lg"></i> Salva movimento
+        <i class="ti ti-check"></i> Salva movimento
       </button>
     </div>
   </div>
@@ -666,13 +666,13 @@
     <div class="modal-hero">
       <div class="modal-hero-top">
         <div class="modal-hero-left">
-          <div class="modal-hero-icon"><i class="bi bi-credit-card-fill"></i></div>
+          <div class="modal-hero-icon"><i class="ti ti-credit-card"></i></div>
           <div>
             <div class="modal-hero-title">Nuova Spesa Carta</div>
             <div class="modal-hero-sub">Registra una spesa sulla carta di credito</div>
           </div>
         </div>
-        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
       </div>
     </div>
     <div class="modal-body">
@@ -705,7 +705,7 @@
         <input type="date" id="cartaAddebito" class="form-control" />
       </div>
       <div style="background:var(--primary-light);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;margin-top:2px">
-        <i class="bi bi-info-circle-fill" style="color:var(--primary-mid);font-size:16px;flex-shrink:0"></i>
+        <i class="ti ti-info-circle" style="color:var(--primary-mid);font-size:16px;flex-shrink:0"></i>
         <span style="font-size:12px;color:var(--primary-mid);font-weight:500;font-family:'Plus Jakarta Sans',sans-serif">
           La spesa sarà addebitata automaticamente sul conto alla data indicata
         </span>
@@ -714,7 +714,7 @@
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
       <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveSpesaCarta()">
-        <i class="bi bi-check-lg"></i> Salva spesa
+        <i class="ti ti-check"></i> Salva spesa
       </button>
     </div>
   </div>
@@ -726,13 +726,13 @@
     <div class="modal-hero">
       <div class="modal-hero-top">
         <div class="modal-hero-left">
-          <div class="modal-hero-icon"><i class="bi bi-graph-up-arrow"></i></div>
+          <div class="modal-hero-icon"><i class="ti ti-trending-up"></i></div>
           <div>
             <div class="modal-hero-title">Aggiungi Titolo</div>
             <div class="modal-hero-sub" id="wizardSub">Seleziona il tipo di strumento</div>
           </div>
         </div>
-        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
       </div>
       <!-- Step indicator -->
       <div style="display:flex;align-items:center;position:relative;margin-top:14px">
@@ -760,23 +760,23 @@
         <div class="modal-sec">Tipo di strumento</div>
         <div class="tipo-grid" style="margin-bottom:12px">
           <div class="tipo-card active" data-tipo="azione" onclick="Portfolio.setTipoCard(this)">
-            <i class="bi bi-graph-up"></i><span class="tipo-label">Azione</span>
+            <i class="ti ti-chart-line"></i><span class="tipo-label">Azione</span>
           </div>
           <div class="tipo-card" data-tipo="fondo" onclick="Portfolio.setTipoCard(this)">
-            <i class="bi bi-pie-chart-fill"></i><span class="tipo-label">Fondo</span>
+            <i class="ti ti-chart-pie"></i><span class="tipo-label">Fondo</span>
           </div>
           <div class="tipo-card" data-tipo="certificate" onclick="Portfolio.setTipoCard(this)">
-            <i class="bi bi-award-fill"></i><span class="tipo-label">Certificate</span>
+            <i class="ti ti-award"></i><span class="tipo-label">Certificate</span>
           </div>
           <div class="tipo-card" data-tipo="pir" onclick="Portfolio.setTipoCard(this)">
-            <i class="bi bi-shield-fill-check"></i><span class="tipo-label">PIR</span>
+            <i class="ti ti-shield-check"></i><span class="tipo-label">PIR</span>
           </div>
           <div class="tipo-card" data-tipo="polizza" onclick="Portfolio.setTipoCard(this)">
-            <i class="bi bi-umbrella-fill"></i><span class="tipo-label">Polizza Vita</span>
+            <i class="ti ti-umbrella"></i><span class="tipo-label">Polizza Vita</span>
           </div>
         </div>
         <div class="wizard-hint">
-          <i class="bi bi-info-circle-fill"></i>
+          <i class="ti ti-info-circle"></i>
           <span id="tipoHint">Le azioni quotate su Borsa Italiana usano il suffisso .MI nel ticker (es. ENI.MI).</span>
         </div>
       </div>
@@ -911,11 +911,11 @@
     <!-- Footer wizard -->
     <div class="modal-footer" style="align-items:center;justify-content:space-between">
       <button class="btn btn--ghost" id="wizardBack" onclick="Portfolio.wizardPrev()" style="display:none">
-        <i class="bi bi-chevron-left"></i> Indietro
+        <i class="ti ti-chevron-left"></i> Indietro
       </button>
       <span style="font-size:11px;font-weight:600;color:var(--text-muted);font-family:'Plus Jakarta Sans',sans-serif;flex:1;text-align:center" id="wizardCounter">Passo 1 di 3</span>
       <button class="btn btn--primary" id="wizardNext" onclick="Portfolio.wizardNext()">
-        Avanti <i class="bi bi-chevron-right"></i>
+        Avanti <i class="ti ti-chevron-right"></i>
       </button>
     </div>
   </div>
@@ -935,7 +935,7 @@
             <div class="modal-hero-sub" id="detTitoloSub">—</div>
           </div>
         </div>
-        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
       </div>
       <!-- Prezzo e variazione -->
       <div style="margin-top:14px;position:relative;z-index:1">
@@ -975,7 +975,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
         <div style="font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif">Storico operazioni</div>
         <button class="btn btn--ghost btn--sm" onclick="Portfolio.nuovoAcquisto(Portfolio.getDettaglioId()); Modals.close()">
-          <i class="bi bi-plus-circle"></i> Acquisto
+          <i class="ti ti-circle-plus"></i> Acquisto
         </button>
       </div>
       <div id="detOperazioni" class="det-ops-list"></div>
@@ -985,10 +985,10 @@
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Chiudi</button>
       <button class="btn btn--ghost" onclick="Portfolio.editTitolo(Portfolio.getDettaglioId()); Modals.close()">
-        <i class="bi bi-pencil"></i> Modifica
+        <i class="ti ti-pencil"></i> Modifica
       </button>
       <button class="btn btn--danger" onclick="Portfolio.vendeTitolo()">
-        <i class="bi bi-cash-coin"></i> Vendi
+        <i class="ti ti-cash"></i> Vendi
       </button>
     </div>
   </div>
@@ -1000,13 +1000,13 @@
     <div class="modal-hero">
       <div class="modal-hero-top">
         <div class="modal-hero-left">
-          <div class="modal-hero-icon"><i class="bi bi-bank2"></i></div>
+          <div class="modal-hero-icon"><i class="ti ti-building-bank"></i></div>
           <div>
             <div class="modal-hero-title">Configura Conto</div>
             <div class="modal-hero-sub">Imposta il saldo iniziale del conto corrente</div>
           </div>
         </div>
-        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
       </div>
     </div>
     <div class="modal-body">
@@ -1016,7 +1016,7 @@
         <input type="number" id="contoSaldoIniziale" class="form-control" placeholder="Es. 5000" step="0.01" />
       </div>
       <div style="background:var(--primary-light);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;margin-top:4px">
-        <i class="bi bi-info-circle-fill" style="color:var(--primary-mid);font-size:16px;flex-shrink:0"></i>
+        <i class="ti ti-info-circle" style="color:var(--primary-mid);font-size:16px;flex-shrink:0"></i>
         <span style="font-size:12px;color:var(--primary-mid);font-weight:500;font-family:'Plus Jakarta Sans',sans-serif">
           Il saldo mostrato nell'app sarà: <strong>Saldo iniziale + movimenti registrati</strong>
         </span>
@@ -1025,7 +1025,7 @@
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
       <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveSaldoIniziale(parseFloat(document.getElementById('contoSaldoIniziale').value) || 0); Modals.close()">
-        <i class="bi bi-check-lg"></i> Salva
+        <i class="ti ti-check"></i> Salva
       </button>
     </div>
   </div>
@@ -1036,13 +1036,13 @@
     <div class="modal-hero">
       <div class="modal-hero-top">
         <div class="modal-hero-left">
-          <div class="modal-hero-icon"><i class="bi bi-credit-card-2-front-fill"></i></div>
+          <div class="modal-hero-icon"><i class="ti ti-credit-card"></i></div>
           <div>
             <div class="modal-hero-title">Configura Carta</div>
             <div class="modal-hero-sub">Inserisci i dati della tua carta di credito</div>
           </div>
         </div>
-        <button class="modal-hero-close" onclick="Modals.close()"><i class="bi bi-x-lg"></i></button>
+        <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
       </div>
     </div>
     <div class="modal-body">
@@ -1076,7 +1076,7 @@
     <div class="modal-footer">
       <button class="btn btn--ghost" onclick="Modals.close()">Annulla</button>
       <button class="btn btn--primary" style="flex:1;justify-content:center" onclick="Portfolio.saveImpostazioniCarta()">
-        <i class="bi bi-check-lg"></i> Salva
+        <i class="ti ti-check"></i> Salva
       </button>
     </div>
   </div>
