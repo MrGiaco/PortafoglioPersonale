@@ -1283,6 +1283,12 @@ const Portfolio = (() => {
       document.body.appendChild(overlay);
     }
 
+    // Nascondi topbar e tabbar dell'app
+    var appTopbar = document.querySelector('.topbar');
+    var appTabbar = document.querySelector('.tab-bar');
+    if (appTopbar) appTopbar.style.display = 'none';
+    if (appTabbar) appTabbar.style.display = 'none';
+
     var periodButtons = ['1G','1S','1M','1A','5A','Max'].map(function(p) {
       return '<button class="det-pt' + (p === _detPeriod ? ' active' : '') + '" onclick="Portfolio.setDetPeriod(\'' + p + '\',this)">' + p + '</button>';
     }).join('');
@@ -1485,6 +1491,11 @@ const Portfolio = (() => {
     if (overlay) overlay.classList.remove('open');
     document.body.style.overflow = '';
     if (_detChart) { _detChart.destroy(); _detChart = null; }
+    // Ripristina topbar e tabbar
+    var appTopbar = document.querySelector('.topbar');
+    var appTabbar = document.querySelector('.tab-bar');
+    if (appTopbar) appTopbar.style.display = '';
+    if (appTabbar) appTabbar.style.display = '';
   }
 
   function _loadDetMainChart(t, period) {
