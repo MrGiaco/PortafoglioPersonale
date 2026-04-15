@@ -1945,7 +1945,10 @@ const Portfolio = (() => {
             comm: op.comm, tasse: op.tasse, costoTot: costoOp,
           });
         } else if (isVendita) {
-          qtaTot -= op.azioni;
+          // Sottrai dal costoTot la quota proporzionale (PMC corrente × quantità venduta)
+          var pmcCorrente = qtaTot > 0 ? costoTot / qtaTot : 0;
+          costoTot -= pmcCorrente * op.azioni;
+          qtaTot   -= op.azioni;
           operazioniSalvate.push({
             data: op.data, tipo: 'vendita',
             quantita: op.azioni,
