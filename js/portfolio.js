@@ -1852,9 +1852,12 @@ const Portfolio = (() => {
       if (s == null || s === '') return null;
       s = String(s).trim().replace(/"/g, '');
       if (s === '' || s === '-') return null;
-      // Formato italiano: 1.234,56
+      // Formato italiano con decimali: 1.234,56 → 1234.56
       if (/^-?[\d.]+,\d+$/.test(s)) {
         s = s.replace(/\./g, '').replace(',', '.');
+      // Formato italiano intero con separatore migliaia: 1.199 → 1199
+      } else if (/^-?\d{1,3}(\.(\d{3}))+$/.test(s)) {
+        s = s.replace(/\./g, '');
       } else {
         s = s.replace(',', '');
       }
