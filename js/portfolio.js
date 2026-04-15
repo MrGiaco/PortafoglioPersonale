@@ -1824,28 +1824,36 @@ const Portfolio = (() => {
   }
 
   function _parseTitoliCSV(text) {
-    // Normalizza fine riga e separa righe
     var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
     if (lines.length < 2) throw new Error('File vuoto o non valido');
 
-    // Parsing header (separatore ;)
     var header = lines[0].split(';').map(function(h){ return h.trim(); });
 
-    // Indici colonne
+    // Indici colonne (nuovo formato con codeZB esplicito)
     var iData    = header.findIndex(function(h){ return h === 'Data'; });
     var iTipo    = header.findIndex(function(h){ return h === 'Tipo'; });
     var iValore  = header.findIndex(function(h){ return h === 'Valore'; });
-    var iComm    = header.findIndex(function(h){ return h.toLowerCase().includes('commissioni'); });
-    var iTasse   = header.findIndex(function(h){ return h.toLowerCase().includes('tasse'); });
+    var iComm    = header.findIndex(function(h){ return h.toLowerCase() === 'commissioni'; });
+    var iTasse   = header.findIndex(function(h){ return h.toLowerCase() === 'tasse'; });
     var iAzioni  = header.findIndex(function(h){ return h === 'Azioni'; });
     var iISIN    = header.findIndex(function(h){ return h === 'ISIN'; });
-    var iWKN     = header.findIndex(function(h){ return h === 'WKN'; });
-    var iSimbolo = header.findIndex(function(h){ return h === 'Simbolo Titolo'; });
+    var iSimbolo = header.findIndex(function(h){ return h === 'Ticker Yahoo' || h === 'Simbolo Titolo'; }); // supporta entrambi i nomi
+    var iCodeZB  = header.findIndex(function(h){ return h === 'codeZB'; });
     var iNome    = header.findIndex(function(h){ return h === 'Nome Titolo'; });
-    var iCambio  = header.findIndex(function(h){ return h.toLowerCase().includes('tasso di cambio'); });
+    var iNote    = header.findIndex(function(h){ return h === 'Note'; });
 
     if (iData === -1 || iTipo === -1 || iNome === -1)
       throw new Error('Formato CSV non riconosciuto — verificare le colonne');
+
+    // Mappa Note → tipo titolo app
+    var NOTE_TIPO = {
+      'azioni':       'azione',
+      'certificates': 'certificate',
+      'fondi':        'fondo',
+      'pir':          'pir',
+      'polizze vita': 'polizza',
+      'polizze':      'polizza',
+    };
 
     function parseNum(s) {
       if (s == null || s === '') return null;
@@ -1862,9 +1870,7 @@ const Portfolio = (() => {
     }
 
     function parseRow(line) {
-      // Gestisce campi con virgolette
-      var fields = [];
-      var cur = '', inQ = false;
+      var fields = [], cur = '', inQ = false;
       for (var i = 0; i < line.length; i++) {
         var c = line[i];
         if (c === '"') { inQ = !inQ; }
@@ -1875,54 +1881,58 @@ const Portfolio = (() => {
       return fields;
     }
 
-    // Raggruppa operazioni per simbolo/ISIN
-    var gruppi = {}; // key → { nome, isin, wkn, simbolo, operazioni[] }
+    // Raggruppa operazioni per titolo (chiave = simbolo o ISIN o nome)
+    var gruppi = {};
 
     lines.slice(1).forEach(function(line) {
       if (!line.trim()) return;
       var r = parseRow(line);
 
-      var tipo    = (r[iTipo]    || '').trim();
-      var nome    = (r[iNome]    || '').trim();
+      var tipo    = (r[iTipo]  || '').trim();
+      var nome    = (r[iNome]  || '').trim();
       var simbolo = iSimbolo >= 0 ? (r[iSimbolo] || '').trim() : '';
+      var codeZB  = iCodeZB  >= 0 ? (r[iCodeZB]  || '').trim() : '';
       var isin    = iISIN    >= 0 ? (r[iISIN]    || '').trim() : '';
-      var wkn     = iWKN     >= 0 ? (r[iWKN]     || '').trim().replace(/"/g,'').trim() : '';
-      var dataCella = (r[iData] || '').trim();
-      var dataStr = dataCella ? dataCella.slice(0, 10) : '';
+      var note    = iNote    >= 0 ? (r[iNote]    || '').trim().toLowerCase() : '';
+      var dataStr = (r[iData] || '').trim().slice(0, 10);
 
-      var valore  = parseNum(r[iValore]);
-      var comm    = parseNum(r[iComm])  || 0;
-      var tasse   = parseNum(r[iTasse]) || 0;
-      var azioni  = parseNum(r[iAzioni]);
-      var cambio  = iCambio >= 0 ? (parseNum(r[iCambio]) || 1) : 1;
+      var valore = parseNum(r[iValore]);
+      var comm   = parseNum(r[iComm])  || 0;
+      var tasse  = parseNum(r[iTasse]) || 0;
+      var azioni = parseNum(r[iAzioni]);
 
       if (!nome || azioni == null) return;
 
-      // Chiave di raggruppamento: simbolo o ISIN o nome
-      var key = simbolo || isin || nome;
+      // Chiave raggruppamento: prima simbolo ticker (non .F), poi ISIN, poi nome
+      var tickerKey = (simbolo && !simbolo.endsWith('.F') && !simbolo.match(/^[A-Z]{2}\d/)) ? simbolo : null;
+      var key = tickerKey || isin || nome;
 
       if (!gruppi[key]) {
-        gruppi[key] = { nome: nome, isin: isin, wkn: wkn, simbolo: simbolo, operazioni: [] };
+        gruppi[key] = {
+          nome: nome, isin: isin,
+          simbolo: simbolo, codeZB: codeZB,
+          tipoNote: NOTE_TIPO[note] || null,
+          operazioni: [],
+        };
       }
+      // Aggiorna codeZB se presente (può comparire in righe diverse)
+      if (codeZB && !gruppi[key].codeZB) gruppi[key].codeZB = codeZB;
 
       gruppi[key].operazioni.push({
         data: dataStr, tipo: tipo,
         valore: Math.abs(valore || 0),
         comm: comm, tasse: tasse,
         azioni: Math.abs(azioni),
-        cambio: cambio,
       });
     });
 
-    // Per ogni titolo calcola quantità netta e PMC
     var importati = [], scartati = [], giaDuplicati = [];
 
     Object.keys(gruppi).forEach(function(key) {
       var g = gruppi[key];
 
-      // Calcola quantità e costo totale acquisti con PMC ponderata
       var qtaTot = 0, costoTot = 0;
-      var primaData = null, ultimaData = null;
+      var primaData = null;
       var operazioniSalvate = [];
 
       g.operazioni.forEach(function(op) {
@@ -1930,7 +1940,6 @@ const Portfolio = (() => {
         var isVendita  = op.tipo === 'Vendi'  || op.tipo === 'Trasferimento Titoli (in uscita)';
 
         if (!primaData || op.data < primaData) primaData = op.data;
-        if (!ultimaData || op.data > ultimaData) ultimaData = op.data;
 
         if (isAcquisto) {
           var costoOp = op.valore + op.comm + op.tasse;
@@ -1938,22 +1947,22 @@ const Portfolio = (() => {
           costoTot += costoOp;
           operazioniSalvate.push({
             data: op.data, tipo: 'acquisto',
-            quantita: op.azioni, prezzo: op.azioni > 0 ? op.valore / op.azioni : 0,
-            cambio: op.cambio, comm: op.comm, tasse: op.tasse,
-            costoTot: costoOp,
+            quantita: op.azioni,
+            prezzo: op.azioni > 0 ? op.valore / op.azioni : 0,
+            comm: op.comm, tasse: op.tasse, costoTot: costoOp,
           });
         } else if (isVendita) {
           qtaTot -= op.azioni;
           operazioniSalvate.push({
             data: op.data, tipo: 'vendita',
-            quantita: op.azioni, prezzo: op.azioni > 0 ? op.valore / op.azioni : 0,
-            comm: op.comm, tasse: op.tasse,
-            costoTot: op.valore,
+            quantita: op.azioni,
+            prezzo: op.azioni > 0 ? op.valore / op.azioni : 0,
+            comm: op.comm, tasse: op.tasse, costoTot: op.valore,
           });
         }
       });
 
-      // STEP 1: Genera SEMPRE i movimenti sul conto corrente (indipendentemente da titolo chiuso o duplicato)
+      // STEP 1: genera movimenti conto per TUTTE le operazioni (anche titoli chiusi/duplicati)
       g.operazioni.forEach(function(op) {
         var isAcquisto = op.tipo === 'Compra' || op.tipo === 'Trasferimento Titoli (in entrata)';
         var isVendita  = op.tipo === 'Vendi'  || op.tipo === 'Trasferimento Titoli (in uscita)';
@@ -1961,15 +1970,12 @@ const Portfolio = (() => {
 
         var tipoMov    = isAcquisto ? 'uscita' : 'entrata';
         var descMov    = (isAcquisto ? 'Acquisto ' : 'Vendita ') + g.nome;
-        var importoMov = Math.abs(op.valore + (isAcquisto ? op.comm + op.tasse : -(op.comm + op.tasse)));
-        var importoRound = Math.round(importoMov * 100) / 100;
-        if (importoRound <= 0) return;
+        var importoMov = Math.round(Math.abs(op.valore + (isAcquisto ? op.comm + op.tasse : -(op.comm + op.tasse))) * 100) / 100;
+        if (importoMov <= 0) return;
 
-        // Dedup: stessa data + descrizione + importo
         var isDup = data.conto.movimenti.some(function(m) {
-          return m.data === op.data &&
-                 m.descrizione === descMov &&
-                 Math.round(m.importo * 100) / 100 === importoRound;
+          return m.data === op.data && m.descrizione === descMov &&
+                 Math.round(m.importo * 100) / 100 === importoMov;
         });
         if (isDup) return;
 
@@ -1980,26 +1986,24 @@ const Portfolio = (() => {
 
         data.conto.movimenti.push({
           id: uid(), data: op.data, tipo: tipoMov,
-          descrizione: descMov, importo: importoRound,
+          descrizione: descMov, importo: importoMov,
           categoria: 'investimento', note: noteParts.join(' | '),
         });
         data.conto.saldo = tipoMov === 'entrata'
-          ? data.conto.saldo + importoRound
-          : data.conto.saldo - importoRound;
+          ? data.conto.saldo + importoMov
+          : data.conto.saldo - importoMov;
       });
 
-      // STEP 2: Aggiunge il titolo solo se posizione ancora aperta e non duplicata
+      // STEP 2: aggiunge il titolo solo se posizione aperta e non duplicata
       if (qtaTot <= 0.0001) {
         scartati.push({ nome: g.nome, motivo: 'Posizione chiusa (quantità netta = 0)' });
         return;
       }
 
-      var pmc = qtaTot > 0 ? costoTot / qtaTot : 0;
-      var tipoTitolo = _determinaTipo(g.simbolo, g.isin, g.nome);
-
       var dup = data.investimenti.titoli.find(function(t) {
         return (g.isin && t.isin === g.isin) ||
-               (g.simbolo && t.ticker === g.simbolo) ||
+               (g.simbolo && !g.simbolo.endsWith('.F') && t.ticker === g.simbolo) ||
+               (g.codeZB && t.codeZB === g.codeZB) ||
                t.nome === g.nome;
       });
       if (dup) {
@@ -2007,35 +2011,41 @@ const Portfolio = (() => {
         return;
       }
 
-      var ticker = null, codeZB = null;
+      var pmc        = qtaTot > 0 ? costoTot / qtaTot : 0;
+      var tipoTitolo = g.tipoNote || 'azione';
+
+      // Determina ticker e codeZB dal simbolo
+      var ticker = null, codeZBFinal = g.codeZB || null;
       if (g.simbolo) {
-        if (g.simbolo.endsWith('.F')) { codeZB = g.simbolo; }
-        else { ticker = g.simbolo; }
+        if (g.simbolo.endsWith('.F') || g.simbolo.match(/^0P/)) {
+          // Fondo: simbolo è codeZB Yahoo (.F), non ticker
+          if (!codeZBFinal) codeZBFinal = g.simbolo;
+        } else if (!g.simbolo.match(/^[A-Z]{2}\d/)) {
+          // Azione: simbolo è ticker (es. LDO.MI, STMPA.PA)
+          ticker = g.simbolo;
+        }
+        // Certificates: simbolo = ISIN, codeZB già impostato
+      }
+
+      var mercato = 'INT';
+      if (ticker) {
+        if (ticker.endsWith('.MI')) mercato = 'MIL';
+        else if (ticker.endsWith('.PA')) mercato = 'PAR';
       }
 
       data.investimenti.titoli.push({
-        id:            uid(),
-        tipo:          tipoTitolo,
-        nome:          g.nome,
-        ticker:        ticker,
-        codeZB:        codeZB,
-        isin:          g.isin  || '',
-        wkn:           g.wkn   || '',
-        mercato:       ticker ? (ticker.endsWith('.MI') ? 'MIL' : ticker.endsWith('.PA') ? 'PAR' : 'INT') : 'INT',
-        valuta:        'EUR',
-        dataAcquisto:  primaData || new Date().toISOString().slice(0, 10),
-        quantita:      qtaTot,
-        prezzoAcquisto: pmc,
-        cambio:        1,
-        commissioni:   g.operazioni.reduce(function(s,o){ return s + o.comm; }, 0),
-        tasse:         g.operazioni.reduce(function(s,o){ return s + o.tasse; }, 0),
-        costoTotale:   costoTot,
-        pmc:           pmc,
-        prezzoAttuale: pmc,
-        change: 0, changePct: 0,
-        currency: 'EUR',
-        venduto: false,
-        note: '',
+        id: uid(), tipo: tipoTitolo, nome: g.nome,
+        ticker: ticker, codeZB: codeZBFinal,
+        isin: g.isin || '', wkn: '',
+        mercato: mercato, valuta: 'EUR',
+        dataAcquisto: primaData || new Date().toISOString().slice(0, 10),
+        quantita: qtaTot, prezzoAcquisto: pmc,
+        cambio: 1,
+        commissioni: g.operazioni.reduce(function(s,o){ return s + o.comm;  }, 0),
+        tasse:       g.operazioni.reduce(function(s,o){ return s + o.tasse; }, 0),
+        costoTotale: costoTot, pmc: pmc, prezzoAttuale: pmc,
+        change: 0, changePct: 0, currency: 'EUR',
+        venduto: false, note: '',
         operazioni: operazioniSalvate,
       });
       importati.push({ nome: g.nome, tipo: tipoTitolo, quantita: qtaTot, pmc: pmc });
@@ -2044,28 +2054,7 @@ const Portfolio = (() => {
     return { importati: importati, scartati: scartati, duplicati: giaDuplicati };
   }
 
-  function _determinaTipo(simbolo, isin, nome) {
-    var s = (simbolo || '').toLowerCase();
-    var n = (nome    || '').toLowerCase();
-    var i = (isin    || '').toLowerCase();
-
-    // Polizza vita
-    if (n.includes('polizza') || n.includes('life') || n.includes('prospettiva') || n.includes('intesa sanpaolo life')) return 'polizza';
-    // Certificate (ISIN XS o ticker XS*)
-    if (i.startsWith('xs') || s.startsWith('xs')) return 'certificate';
-    // Fondi con codice .F (Eurizon e simili)
-    if (s.endsWith('.f') || n.includes('eurizon') || n.includes('pac -')) {
-      // PIR
-      if (n.includes('pir') || n.includes('progetto italia') || n.includes('classe pir')) return 'pir';
-      return 'fondo';
-    }
-    // Azioni (ticker con .MI, .PA, ecc.)
-    if (s.includes('.mi') || s.includes('.pa') || s.includes('.de') || s.includes('.as')) return 'azione';
-    // Default
-    return 'azione';
-  }
-
-  // ---- API pubblica ----
+    // ---- API pubblica ----
   return {
     loadData, getData, getTitoli, updateQuote, getSaldoConto, saveSaldoIniziale,
     renderAll, renderDashboard, renderConto, renderCarta, renderInvestimenti,
