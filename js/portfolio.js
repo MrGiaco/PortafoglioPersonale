@@ -384,9 +384,6 @@ const Portfolio = (() => {
           note: dettagli !== desc ? dettagli.slice(0, 120) : '',
         };
         data.conto.movimenti.push(mov);
-        data.conto.saldo = tipo === 'entrata'
-          ? data.conto.saldo + importoConto
-          : data.conto.saldo - importoConto;
         importatiConto++;
       }
     });
@@ -406,7 +403,10 @@ const Portfolio = (() => {
 
   function loadData(incoming) {
     if (!incoming) return;
-    if (incoming.conto)        data.conto        = Object.assign({ saldoIniziale: 0 }, data.conto,        incoming.conto);
+    if (incoming.conto) {
+      data.conto = Object.assign({ saldoIniziale: 0 }, data.conto, incoming.conto);
+      data.conto.saldo = 0; // campo legacy — il saldo si ricalcola dai movimenti
+    }
     if (incoming.carta)        data.carta        = Object.assign({}, data.carta,        incoming.carta);
     if (incoming.investimenti) data.investimenti = Object.assign({}, data.investimenti, incoming.investimenti);
     if (incoming.impostazioni) data.impostazioni = Object.assign({}, data.impostazioni, incoming.impostazioni);
@@ -417,7 +417,10 @@ const Portfolio = (() => {
 
   // Saldo reale = saldo iniziale + movimenti
   function getSaldoConto() {
-    return (data.conto.saldoIniziale || 0) + (data.conto.saldo || 0);
+    var delta = data.conto.movimenti.reduce(function(s, m) {
+      return m.tipo === 'entrata' ? s + m.importo : s - m.importo;
+    }, 0);
+    return (data.conto.saldoIniziale || 0) + delta;
   }
 
   function saveSaldoIniziale(valore) {
@@ -556,7 +559,6 @@ const Portfolio = (() => {
     if (!data_m || !desc || isNaN(importo) || importo <= 0) { App.showToast('Compila tutti i campi obbligatori','warning'); return; }
     var mov = { id:uid(), data:data_m, tipo:movTipo, descrizione:desc, importo:importo, categoria:cat, note:note };
     data.conto.movimenti.push(mov);
-    data.conto.saldo = movTipo === 'entrata' ? data.conto.saldo + importo : data.conto.saldo - importo;
     _editingMovimento = null; // salvataggio riuscito, niente rollback
     Modals.close();
     renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
@@ -566,8 +568,6 @@ const Portfolio = (() => {
   function deleteMovimento(id) {
     var idx = data.conto.movimenti.findIndex(function(m){ return m.id === id; });
     if (idx === -1) return;
-    var mov = data.conto.movimenti[idx];
-    data.conto.saldo = mov.tipo === 'entrata' ? data.conto.saldo - mov.importo : data.conto.saldo + mov.importo;
     data.conto.movimenti.splice(idx, 1);
     renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
     App.showToast('Movimento eliminato','info');
@@ -577,7 +577,6 @@ const Portfolio = (() => {
     var mov = data.conto.movimenti.find(function(m){ return m.id === id; });
     if (!mov) return;
     _editingMovimento = JSON.parse(JSON.stringify(mov)); // salva copia per rollback
-    data.conto.saldo = mov.tipo === 'entrata' ? data.conto.saldo - mov.importo : data.conto.saldo + mov.importo;
     data.conto.movimenti = data.conto.movimenti.filter(function(m){ return m.id !== id; });
     Modals.open('nuovoMovimento');
     setTimeout(function(){
@@ -595,7 +594,6 @@ const Portfolio = (() => {
     if (!_editingMovimento) return;
     var m = _editingMovimento;
     data.conto.movimenti.push(m);
-    data.conto.saldo = m.tipo === 'entrata' ? data.conto.saldo + m.importo : data.conto.saldo - m.importo;
     _editingMovimento = null;
     renderConto(); renderDashboard();
   }
@@ -1229,7 +1227,6 @@ const Portfolio = (() => {
         if (addebito) {
           var movAcq = { id:uid(), data:dataAcq, tipo:'uscita', descrizione:'Acquisto '+nome, importo:costoTot, categoria:'investimento', note:quantita+' × '+formatEur(prezzo,4)+' | Comm: '+formatEur(comm)+' | PMC: '+formatEur(existing.pmc,4) };
           data.conto.movimenti.push(movAcq);
-          data.conto.saldo -= costoTot;
         }
         _nuovoAcquistoId = null;
         Modals.close(); renderAll(); Charts.updateAll(); saveAndSync();
@@ -1243,7 +1240,6 @@ const Portfolio = (() => {
     if (_editingTitolo) {
       data.investimenti.titoli = data.investimenti.titoli.filter(function(x){ return x.id !== _editingTitolo.id; });
       if (_editingTitolo.costoTotale) {
-        data.conto.saldo += _editingTitolo.costoTotale;
         data.conto.movimenti = data.conto.movimenti.filter(function(m){
           return !(m.descrizione === 'Acquisto ' + _editingTitolo.nome && m.data === _editingTitolo.dataAcquisto);
         });
@@ -1259,7 +1255,6 @@ const Portfolio = (() => {
     if (addebito) {
       var mov = { id:uid(), data:dataAcq, tipo:'uscita', descrizione:'Acquisto '+nome, importo:costoTot, categoria:'investimento', note:quantita+' × '+formatEur(prezzo,4)+' | Comm: '+formatEur(comm)+' | PMC: '+formatEur(pmc,4) };
       data.conto.movimenti.push(mov);
-      data.conto.saldo -= costoTot;
     }
     Modals.close(); renderAll(); Charts.updateAll(); saveAndSync();
     App.showToast(nome + ' aggiunto al portafoglio','success');
@@ -1738,7 +1733,6 @@ const Portfolio = (() => {
     t.venduto = true;
     var mov = { id:uid(), data:new Date().toISOString().slice(0,10), tipo:'entrata', descrizione:'Vendita '+t.nome, importo:importoTot, categoria:'investimento', note:t.quantita+' × '+formatEur(prezzoVendita,4) };
     data.conto.movimenti.push(mov);
-    data.conto.saldo += importoTot;
     Modals.close(); renderAll(); Charts.updateAll(); saveAndSync();
     App.showToast(t.nome+' venduto: '+formatEur(importoTot)+' accreditati sul conto','success');
   }
@@ -1782,7 +1776,6 @@ const Portfolio = (() => {
 
   function cancellaMovimentiConto() {
     data.conto.movimenti = [];
-    data.conto.saldo = 0;
     renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
   }
 
@@ -1989,9 +1982,7 @@ const Portfolio = (() => {
           descrizione: descMov, importo: importoMov,
           categoria: 'investimento', note: noteParts.join(' | '),
         });
-        data.conto.saldo = tipoMov === 'entrata'
-          ? data.conto.saldo + importoMov
-          : data.conto.saldo - importoMov;
+
       });
 
       // STEP 2: aggiunge il titolo solo se posizione aperta e non duplicata
