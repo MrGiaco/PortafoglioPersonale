@@ -2018,13 +2018,13 @@ const Portfolio = (() => {
       var ticker = null, codeZBFinal = g.codeZB || null;
       if (g.simbolo) {
         if (g.simbolo.endsWith('.F') || g.simbolo.match(/^0P/)) {
-          // Fondo: simbolo è codeZB Yahoo (.F), non ticker
-          if (!codeZBFinal) codeZBFinal = g.simbolo;
+          // Fondo: simbolo .F è un ticker Yahoo Finance, non un codeZB ZoneBourse
+          ticker = g.simbolo;
         } else if (!g.simbolo.match(/^[A-Z]{2}\d/)) {
           // Azione: simbolo è ticker (es. LDO.MI, STMPA.PA)
           ticker = g.simbolo;
         }
-        // Certificates: simbolo = ISIN, codeZB già impostato
+        // Certificates: simbolo = ISIN, codeZB già impostato dalla colonna codeZB
       }
 
       var mercato = 'INT';
