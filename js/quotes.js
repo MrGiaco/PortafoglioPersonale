@@ -178,15 +178,11 @@ const Quotes = (() => {
       if (titolo.tipo === 'polizza') {
         return { price: titolo.prezzoAttuale || titolo.pmc || titolo.prezzoAcquisto, change: 0, changePct: 0, source: 'manuale' };
       }
-      // codeZB che terminano con .F o iniziano con 0P → ticker Yahoo Finance (fondi)
-      if (titolo.codeZB && (titolo.codeZB.endsWith('.F') || titolo.codeZB.startsWith('0P'))) {
-        return await fetchYahoo(titolo.codeZB);
-      }
       // codeZB vero (es. I10714, I10895) → ZoneBourse
       if (titolo.codeZB) {
         return await fetchZonebourse(titolo.codeZB);
       }
-      // ticker normale (azioni) → Yahoo Finance
+      // ticker (azioni e fondi .F) → Yahoo Finance
       if (titolo.ticker) {
         return await fetchYahoo(titolo.ticker);
       }
@@ -245,10 +241,7 @@ const Quotes = (() => {
    */
   async function fetchHistory(titolo, range = '1y') {
     try {
-      if (titolo.codeZB && isYahooFondo(titolo.codeZB)) {
-        const map = { '1M': '1mo', '3M': '3mo', '6M': '6mo', '1A': '1y' };
-        return await fetchYahooHistory(titolo.codeZB, map[range] || '1y');
-      } else if (titolo.codeZB) {
+      if (titolo.codeZB) {
         return await fetchZonebourseHistory(titolo.codeZB);
       } else if (titolo.ticker) {
         const map = { '1M': '1mo', '3M': '3mo', '6M': '6mo', '1A': '1y' };
@@ -264,9 +257,8 @@ const Quotes = (() => {
   // Storico intraday (intervalli 5 minuti, giornata corrente)
   async function fetchIntraday(titolo) {
     try {
-      const id = titolo.ticker || (isYahooFondo(titolo.codeZB) ? titolo.codeZB : null);
-      if (!id) return [];
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(id)}?interval=5m&range=1d`;
+      if (!titolo.ticker) return [];
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(titolo.ticker)}?interval=5m&range=1d`;
       const res  = await proxyFetch(url);
       const json = await res.json();
       const result = json?.chart?.result?.[0];
@@ -292,10 +284,7 @@ const Quotes = (() => {
       if (giorni > 365 * 2) range = '5y';
       else if (giorni > 365) range = '2y';
 
-      if (titolo.codeZB && isYahooFondo(titolo.codeZB)) {
-        const all = await fetchYahooHistory(titolo.codeZB, range, '1d');
-        return all.filter(p => p.date >= titolo.dataAcquisto);
-      } else if (titolo.codeZB) {
+      if (titolo.codeZB) {
         const all = await fetchZonebourseHistory(titolo.codeZB);
         return all.filter(p => p.date >= titolo.dataAcquisto);
       } else if (titolo.ticker) {
