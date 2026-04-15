@@ -35,6 +35,11 @@ const Quotes = (() => {
 
   function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  // Restituisce true se il codeZB è in realtà un ticker Yahoo (fondi con .F o 0P*)
+  function isYahooFondo(codeZB) {
+    return !!codeZB && (codeZB.endsWith('.F') || codeZB.startsWith('0P'));
+  }
+
   // =============================================
   // YAHOO FINANCE
   // =============================================
@@ -169,13 +174,20 @@ const Quotes = (() => {
    */
   async function fetchQuote(titolo) {
     try {
-      // Polizze e strumenti manuali: nessuna quotazione automatica
+      // Polizze: nessuna quotazione automatica
       if (titolo.tipo === 'polizza') {
         return { price: titolo.prezzoAttuale || titolo.pmc || titolo.prezzoAcquisto, change: 0, changePct: 0, source: 'manuale' };
       }
+      // codeZB che terminano con .F o iniziano con 0P → ticker Yahoo Finance (fondi)
+      if (titolo.codeZB && (titolo.codeZB.endsWith('.F') || titolo.codeZB.startsWith('0P'))) {
+        return await fetchYahoo(titolo.codeZB);
+      }
+      // codeZB vero (es. I10714, I10895) → ZoneBourse
       if (titolo.codeZB) {
         return await fetchZonebourse(titolo.codeZB);
-      } else if (titolo.ticker) {
+      }
+      // ticker normale (azioni) → Yahoo Finance
+      if (titolo.ticker) {
         return await fetchYahoo(titolo.ticker);
       }
       throw new Error('Nessun identificativo titolo');
@@ -233,7 +245,10 @@ const Quotes = (() => {
    */
   async function fetchHistory(titolo, range = '1y') {
     try {
-      if (titolo.codeZB) {
+      if (titolo.codeZB && isYahooFondo(titolo.codeZB)) {
+        const map = { '1M': '1mo', '3M': '3mo', '6M': '6mo', '1A': '1y' };
+        return await fetchYahooHistory(titolo.codeZB, map[range] || '1y');
+      } else if (titolo.codeZB) {
         return await fetchZonebourseHistory(titolo.codeZB);
       } else if (titolo.ticker) {
         const map = { '1M': '1mo', '3M': '3mo', '6M': '6mo', '1A': '1y' };
@@ -249,8 +264,9 @@ const Quotes = (() => {
   // Storico intraday (intervalli 5 minuti, giornata corrente)
   async function fetchIntraday(titolo) {
     try {
-      if (!titolo.ticker) return [];
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(titolo.ticker)}?interval=5m&range=1d`;
+      const id = titolo.ticker || (isYahooFondo(titolo.codeZB) ? titolo.codeZB : null);
+      if (!id) return [];
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(id)}?interval=5m&range=1d`;
       const res  = await proxyFetch(url);
       const json = await res.json();
       const result = json?.chart?.result?.[0];
@@ -270,17 +286,19 @@ const Quotes = (() => {
   // Storico dal carico: da dataAcquisto a oggi
   async function fetchSincePMC(titolo) {
     try {
-      if (titolo.codeZB) {
-        // ZoneBourse: restituisce tutto lo storico, filtriamo dalla data acquisto
+      const msDay = 86400000;
+      const giorni = Math.ceil((Date.now() - new Date(titolo.dataAcquisto).getTime()) / msDay);
+      let range = '1y';
+      if (giorni > 365 * 2) range = '5y';
+      else if (giorni > 365) range = '2y';
+
+      if (titolo.codeZB && isYahooFondo(titolo.codeZB)) {
+        const all = await fetchYahooHistory(titolo.codeZB, range, '1d');
+        return all.filter(p => p.date >= titolo.dataAcquisto);
+      } else if (titolo.codeZB) {
         const all = await fetchZonebourseHistory(titolo.codeZB);
         return all.filter(p => p.date >= titolo.dataAcquisto);
       } else if (titolo.ticker) {
-        // Calcola range in giorni dalla data di acquisto
-        const msDay = 86400000;
-        const giorni = Math.ceil((Date.now() - new Date(titolo.dataAcquisto).getTime()) / msDay);
-        let range = '1y';
-        if (giorni > 365 * 2) range = '5y';
-        else if (giorni > 365) range = '2y';
         const all = await fetchYahooHistory(titolo.ticker, range, '1d');
         return all.filter(p => p.date >= titolo.dataAcquisto);
       }
