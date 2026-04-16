@@ -440,7 +440,7 @@ const Portfolio = (() => {
     t.dayLow        = quote.dayLow    || 0;
     t.prevClose     = quote.prevClose || 0;
     t.currency      = quote.currency  || 'EUR';
-    t.lastUpdate    = Date.now();
+    t.lastUpdate    = quote.marketTime || Date.now();
   }
 
   function saveAndSync() { Drive.save(getData()); }
@@ -862,6 +862,7 @@ const Portfolio = (() => {
         '<div class="itc-stat">' +
           '<div class="itc-stat-lbl">Valore</div>' +
           '<div class="itc-stat-val">' + formatEur(valore) + '</div>' +
+          '<div class="itc-stat-sub">Carico ' + formatEur(pmc * t.quantita) + '</div>' +
         '</div>' +
         '<div class="itc-stat" style="text-align:right">' +
           '<div class="itc-stat-lbl">P&amp;L totale</div>' +
