@@ -77,7 +77,8 @@ const Quotes = (() => {
       dayLow:    round(meta.regularMarketDayLow  ?? price),
       prevClose: round(prevClose),
       currency,
-      timestamp: Date.now(),
+      timestamp:  Date.now(),
+      marketTime: meta.regularMarketTime ? meta.regularMarketTime * 1000 : Date.now(),
       source:    'yahoo',
     };
 
@@ -128,6 +129,15 @@ const Quotes = (() => {
     const change    = price - prevClose;
     const changePct = prevClose !== 0 ? (change / prevClose) * 100 : 0;
 
+    // Converti data ZoneBourse (YYYY-MM-DD o DD/MM/YYYY) in timestamp
+    let marketTime = Date.now();
+    if (last.date) {
+      const d = last.date.includes('-')
+        ? new Date(last.date + 'T00:00:00')
+        : (() => { const p = last.date.split('/'); return new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`); })();
+      if (!isNaN(d.getTime())) marketTime = d.getTime();
+    }
+
     const quote = {
       ticker:    `zb_${codeZB}`,
       codeZB,
@@ -135,7 +145,8 @@ const Quotes = (() => {
       change:    round(change),
       changePct: round(changePct),
       currency:  'EUR',
-      timestamp: Date.now(),
+      timestamp:  Date.now(),
+      marketTime: marketTime,
       source:    'zonebourse',
     };
 
