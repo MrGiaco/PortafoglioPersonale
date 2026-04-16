@@ -327,6 +327,11 @@ input, select, textarea { font-family: inherit; }
   flex: 1; background: rgba(255,255,255,.12);
   border-radius: 12px; padding: 10px 12px;
 }
+.patrimonio-pill--link {
+  cursor: pointer; transition: background .15s;
+}
+.patrimonio-pill--link:hover { background: rgba(255,255,255,.22); }
+.patrimonio-pill--link:active { background: rgba(255,255,255,.08); }
 .patrimonio-pill__label { font-size: 10px; color: rgba(255,255,255,.55); margin-bottom: 3px; }
 .patrimonio-pill__value { font-size: 13px; font-weight: 700; color: #fff; }
 
