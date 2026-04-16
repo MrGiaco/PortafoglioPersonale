@@ -1660,6 +1660,7 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 .itc-stat-val { font-size: 13px; font-weight: 800; color: var(--text-primary); }
 .itc-stat-val.pos { color: var(--success); }
 .itc-stat-val.neg { color: var(--danger); }
+.itc-stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 /* Subtotale sezione */
 .isez-subtotal {
