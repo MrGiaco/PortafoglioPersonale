@@ -98,7 +98,6 @@ const Charts = (() => {
   function renderPatrimonio(period = activePeriod) {
     const canvas = document.getElementById('chartPatrimonio');
     if (!canvas || !window.Chart) return;
-    if (typeof Portfolio === 'undefined') return;
     destroyChart('patrimonio');
 
     const data    = Portfolio.getData();
@@ -107,11 +106,11 @@ const Charts = (() => {
 
     // Raggruppa saldo cumulativo per data
     const byDate = {};
-    const saldoIniziale = data.conto.saldoIniziale || 0;
+    let saldo = data.conto.saldo;
 
     // Ricostruisce storico saldo dalla fine (approssimazione)
     const sorted = [...movimenti].sort((a, b) => new Date(a.data) - new Date(b.data));
-    let running = saldoIniziale;
+    let running = 0;
     const dateMap = {};
     sorted.forEach(m => {
       running += m.tipo === 'entrata' ? m.importo : -m.importo;
@@ -126,9 +125,13 @@ const Charts = (() => {
       return new Date(d) >= from;
     }).sort();
 
-    const saldoCorrente = saldoIniziale + (data.conto.saldo || 0);
-    const labels = dates.length > 0 ? dates.map(d => new Date(d + 'T00:00:00').toLocaleDateString('it-IT', { day:'numeric', month:'short' })) : ['Oggi'];
-    const values = dates.length > 0 ? dates.map(d => dateMap[d]) : [saldoCorrente];
+    const labels = dates.length > 0 ? dates.map(d => {
+      const dt = new Date(d + 'T00:00:00');
+      const dd = String(dt.getDate()).padStart(2,'0');
+      const mm = String(dt.getMonth()+1).padStart(2,'0');
+      return dd + '/' + mm;
+    }) : ['Oggi'];
+    const values = dates.length > 0 ? dates.map(d => dateMap[d]) : [data.conto.saldo];
 
     // Aggiungi valore investimenti al saldo per patrimonio totale
     const invTot = (data.investimenti.titoli || [])
@@ -173,7 +176,10 @@ const Charts = (() => {
           x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } },
           y: {
             grid: { color: '#F1F5F9' },
-            ticks: { callback: v => formatEur(v) },
+            ticks: { callback: v => {
+              if (Math.abs(v) >= 1000) return (v/1000).toLocaleString('it-IT', {maximumFractionDigits:0}) + ' K';
+              return v.toLocaleString('it-IT', {maximumFractionDigits:0});
+            }},
           },
         },
       },
@@ -187,7 +193,6 @@ const Charts = (() => {
   function renderAllocazione() {
     const canvas = document.getElementById('chartAllocazione');
     if (!canvas || !window.Chart) return;
-    if (typeof Portfolio === 'undefined') return;
     destroyChart('allocazione');
 
     const data   = Portfolio.getData();
@@ -202,8 +207,8 @@ const Charts = (() => {
       gruppi[key] = (gruppi[key] || 0) + val;
     });
 
-    // Aggiungi conto corrente
-    const saldoConto = (data.conto.saldoIniziale || 0) + (data.conto.saldo || 0);
+    // Aggiungi conto corrente (saldo calcolato dai movimenti)
+    const saldoConto = Portfolio.getSaldoConto();
     if (saldoConto > 0) gruppi['Conto Corrente'] = saldoConto;
 
     const labels = Object.keys(gruppi);
@@ -233,7 +238,21 @@ const Charts = (() => {
         plugins: {
           legend: {
             position: 'bottom',
-            labels: { padding: 12, font: { size: 11 } },
+            labels: {
+              padding: 12,
+              font: { size: 11 },
+              generateLabels: chart => {
+                const ds = chart.data.datasets[0];
+                const tot = ds.data.reduce((a,b) => a+b, 0);
+                return chart.data.labels.map((label, i) => ({
+                  text: label + ' ' + (tot > 0 ? ((ds.data[i]/tot)*100).toFixed(1) : '0') + '%',
+                  fillStyle: ds.backgroundColor[i],
+                  strokeStyle: '#fff',
+                  lineWidth: 2,
+                  index: i,
+                }));
+              },
+            },
           },
           tooltip: {
             callbacks: {
@@ -257,7 +276,6 @@ const Charts = (() => {
   function renderEntrateUscite(anno) {
     const canvas = document.getElementById('chartEntrateUscite');
     if (!canvas || !window.Chart) return;
-    if (typeof Portfolio === 'undefined') return;
     destroyChart('entrateUscite');
 
     const data      = Portfolio.getData();
@@ -317,7 +335,6 @@ const Charts = (() => {
   function renderCategorie(anno) {
     const canvas = document.getElementById('chartCategorie');
     if (!canvas || !window.Chart) return;
-    if (typeof Portfolio === 'undefined') return;
     destroyChart('categorie');
 
     const data = Portfolio.getData();
