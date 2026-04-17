@@ -565,6 +565,41 @@ const Portfolio = (() => {
     App.showToast('Movimento ' + movTipo + ' salvato','success');
   }
 
+  async function confirmDeleteMovimento(id) {
+    var mov = data.conto.movimenti.find(function(m){ return m.id === id; });
+    if (!mov) return;
+    var ok = await Dialog.confirmDanger(
+      '<i class="ti ti-trash" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Elimina movimento</strong><br>' +
+      '<span style="font-size:13px;color:var(--text-muted)">' + escHtml(mov.descrizione) + ' — ' + formatEur(mov.importo) + '</span>',
+      'Elimina', 'Annulla'
+    );
+    if (!ok) {
+      // Richiudi swipe
+      var row = document.getElementById('swipe-mov-' + id);
+      if (row) row.classList.remove('open');
+      return;
+    }
+    deleteMovimento(id);
+  }
+
+  async function confirmDeleteSpesaCarta(id) {
+    var spesa = data.carta.spese.find(function(s){ return s.id === id; });
+    if (!spesa) return;
+    var ok = await Dialog.confirmDanger(
+      '<i class="ti ti-trash" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
+      '<strong>Elimina spesa</strong><br>' +
+      '<span style="font-size:13px;color:var(--text-muted)">' + escHtml(spesa.descrizione) + ' — ' + formatEur(spesa.importo) + '</span>',
+      'Elimina', 'Annulla'
+    );
+    if (!ok) {
+      var row = document.getElementById('swipe-spesa-' + id);
+      if (row) row.classList.remove('open');
+      return;
+    }
+    deleteSpesaCarta(id);
+  }
+
   function deleteMovimento(id) {
     var idx = data.conto.movimenti.findIndex(function(m){ return m.id === id; });
     if (idx === -1) return;
@@ -1748,20 +1783,31 @@ const Portfolio = (() => {
     var color  = catColor(m.categoria);
     var amount = isPos ? '+'+formatEur(m.importo) : '-'+formatEur(m.importo);
     var cls    = isPos ? 'transaction-amount--positive' : 'transaction-amount--negative';
-    return '<div class="transaction-item' + (showActions ? ' clickable' : '') + '"' + (showActions ? ' onclick="Portfolio.editMovimento(\''+m.id+'\'})"' : '') + '>' +
-      '<div class="transaction-icon '+color+'"><i class="ti ti-'+icon+'"></i></div>' +
-      '<div class="transaction-body"><div class="transaction-desc">'+escHtml(m.descrizione)+'</div><div class="transaction-meta">'+formatDate(m.data)+' · '+catLabel(m.categoria)+'</div></div>' +
-      '<div class="transaction-amount '+cls+'">'+amount+'</div>' +
-      (showActions ? '<div class="transaction-actions"><button class="action-btn action-btn--delete" onclick="event.stopPropagation();Portfolio.deleteMovimento(\''+m.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' : '') +
+    if (!showActions) {
+      return '<div class="transaction-item">' +
+        '<div class="transaction-icon '+color+'"><i class="ti ti-'+icon+'"></i></div>' +
+        '<div class="transaction-body"><div class="transaction-desc">'+escHtml(m.descrizione)+'</div><div class="transaction-meta">'+formatDate(m.data)+' · '+catLabel(m.categoria)+'</div></div>' +
+        '<div class="transaction-amount '+cls+'">'+amount+'</div>' +
+      '</div>';
+    }
+    return '<div class="swipe-row" id="swipe-mov-'+m.id+'">' +
+      '<div class="swipe-row__content transaction-item" onclick="Portfolio.editMovimento(\''+m.id+'\')">' +
+        '<div class="transaction-icon '+color+'"><i class="ti ti-'+icon+'"></i></div>' +
+        '<div class="transaction-body"><div class="transaction-desc">'+escHtml(m.descrizione)+'</div><div class="transaction-meta">'+formatDate(m.data)+' · '+catLabel(m.categoria)+'</div></div>' +
+        '<div class="transaction-amount '+cls+'">'+amount+'</div>' +
+      '</div>' +
+      '<div class="swipe-row__delete" onclick="Portfolio.confirmDeleteMovimento(\''+m.id+'\')" title="Elimina"><i class="ti ti-trash"></i></div>' +
     '</div>';
   }
 
   function cartaSpesaHTML(s) {
-    return '<div class="transaction-item clickable" onclick="Portfolio.editSpesaCarta(\''+s.id+'\'})">' +
-      '<div class="transaction-icon '+catColor(s.categoria)+'"><i class="ti ti-'+catIcon(s.categoria)+'"></i></div>' +
-      '<div class="transaction-body"><div class="transaction-desc">'+escHtml(s.descrizione)+'</div><div class="transaction-meta">'+formatDate(s.data)+' · '+catLabel(s.categoria)+(s.addebitoData?' · Addebito: '+formatDate(s.addebitoData):'')+' </div></div>' +
-      '<div class="transaction-amount transaction-amount--negative">-'+formatEur(s.importo)+'</div>' +
-      '<div class="transaction-actions"><button class="action-btn action-btn--delete" onclick="event.stopPropagation();Portfolio.deleteSpesaCarta(\''+s.id+'\')" title="Elimina"><i class="ti ti-trash"></i></button></div>' +
+    return '<div class="swipe-row" id="swipe-spesa-'+s.id+'">' +
+      '<div class="swipe-row__content transaction-item" onclick="Portfolio.editSpesaCarta(\''+s.id+'\')">' +
+        '<div class="transaction-icon '+catColor(s.categoria)+'"><i class="ti ti-'+catIcon(s.categoria)+'"></i></div>' +
+        '<div class="transaction-body"><div class="transaction-desc">'+escHtml(s.descrizione)+'</div><div class="transaction-meta">'+formatDate(s.data)+' · '+catLabel(s.categoria)+(s.addebitoData?' · Addebito: '+formatDate(s.addebitoData):'')+' </div></div>' +
+        '<div class="transaction-amount transaction-amount--negative">-'+formatEur(s.importo)+'</div>' +
+      '</div>' +
+      '<div class="swipe-row__delete" onclick="Portfolio.confirmDeleteSpesaCarta(\''+s.id+'\')" title="Elimina"><i class="ti ti-trash"></i></div>' +
     '</div>';
   }
 
@@ -2067,6 +2113,7 @@ const Portfolio = (() => {
     setDetPeriod, getDettaglioId, deleteOperazione,
     getEditingTitolo, restoreEditingTitolo, resetNuovoAcquisto,
     cancellaMovimentiConto, cancellaSpeseCarta, cancellaTitoli,
+    confirmDeleteMovimento, confirmDeleteSpesaCarta,
     importTitoliDaCSV,
     restoreEditingMovimento, restoreEditingSpesaCarta,
     formatEur, formatDate,
