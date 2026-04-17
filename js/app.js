@@ -101,6 +101,7 @@ const App = (() => {
     });
 
     // Carica dati locali
+    initSwipe();
     Drive.loadLocal();
 
     // Tenta connessione automatica Drive (disabilitata, carica solo locale)
@@ -187,6 +188,9 @@ const App = (() => {
     if (section === 'report')        Report.render();
     if (section === 'impostazioni')  renderImpostazioni();
     if (section === 'investimenti')  Portfolio.renderInvestimenti();
+    if (section === 'conto')         Portfolio.renderConto();
+    if (section === 'carta')         Portfolio.renderCarta();
+    if (section === 'dashboard')     Portfolio.renderDashboard();
 
     // Aggiorna hash URL
     window.location.hash = section;
