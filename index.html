@@ -172,7 +172,7 @@
         <div class="charts-grid">
           <div class="chart-card">
             <div class="chart-card__header">
-              <h3>Andamento Patrimonio</h3>
+              <h3>Andamento Patrimonio €</h3>
               <div class="chart-period">
                 <button class="period-btn active" onclick="Charts.setPeriod('1M',this)">1M</button>
                 <button class="period-btn" onclick="Charts.setPeriod('3M',this)">3M</button>
@@ -201,6 +201,7 @@
       <!-- ===== CONTO CORRENTE ===== -->
       <section id="section-conto" class="section hidden">
 
+        <div class="section-sticky">
         <div class="account-hero">
           <div class="account-hero__label">SALDO DISPONIBILE</div>
           <div class="account-hero__value" id="contoSaldo">€ 0,00</div>
@@ -233,16 +234,20 @@
           <div class="filter-pill" onclick="Portfolio.setContoFilter('uscita',this)">Uscite</div>
           <div class="filter-pill" onclick="Portfolio.setContoFilterMonth(this)">Questo mese</div>
         </div>
+        </div><!-- /section-sticky -->
 
+        <div class="section-scroll">
         <div class="card">
           <div id="contoMovimenti" class="transaction-list"></div>
         </div>
+        </div><!-- /section-scroll -->
 
       </section>
 
       <!-- ===== CARTA DI CREDITO ===== -->
       <section id="section-carta" class="section hidden">
 
+        <div class="section-sticky">
         <div class="credit-card-visual">
           <div class="credit-card-bg">
             <div class="cc-top">
@@ -279,10 +284,13 @@
           <i class="ti ti-search"></i>
           <input type="text" id="cartaSearch" placeholder="Cerca spese..." oninput="Portfolio.filterSpese()" />
         </div>
+        </div><!-- /section-sticky -->
 
+        <div class="section-scroll">
         <div class="card">
           <div id="cartaMovimenti" class="transaction-list"></div>
         </div>
+        </div><!-- /section-scroll -->
 
       </section>
 
