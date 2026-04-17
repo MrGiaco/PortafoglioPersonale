@@ -94,6 +94,45 @@ const App = (() => {
   const $ = id => document.getElementById(id);
 
   // ---- Init (chiamato dopo unlock) ----
+  // =============================================
+  // SWIPE TO DELETE
+  // =============================================
+  function initSwipe() {
+    let startX = 0, startY = 0, currentRow = null;
+
+    document.addEventListener('touchstart', function(e) {
+      if (!e.target.closest('.swipe-row')) {
+        document.querySelectorAll('.swipe-row.open').forEach(function(r){ r.classList.remove('open'); });
+      }
+      var target = e.target.closest('.swipe-row');
+      if (!target) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      currentRow = target;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+      if (!currentRow) return;
+      var dy = Math.abs(e.touches[0].clientY - startY);
+      var dx = Math.abs(e.touches[0].clientX - startX);
+      if (dy > dx) { currentRow = null; }
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+      if (!currentRow) return;
+      var dx = e.changedTouches[0].clientX - startX;
+      if (dx < -50) {
+        document.querySelectorAll('.swipe-row.open').forEach(function(r){
+          if (r !== currentRow) r.classList.remove('open');
+        });
+        currentRow.classList.add('open');
+      } else if (dx > 30) {
+        currentRow.classList.remove('open');
+      }
+      currentRow = null;
+    }, { passive: true });
+  }
+
   async function init() {
     const el = $('dashDate');
     if (el) el.textContent = new Date().toLocaleDateString('it-IT', {
