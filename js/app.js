@@ -106,6 +106,8 @@ const App = (() => {
       }
       var target = e.target.closest('.swipe-row');
       if (!target) return;
+      // Ignora gesti dal bordo sinistro (back gesture Android)
+      if (e.touches[0].clientX < 20) return;
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       currentRow = target;
