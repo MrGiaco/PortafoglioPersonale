@@ -98,40 +98,105 @@ const App = (() => {
   // SWIPE TO DELETE
   // =============================================
   function initSwipe() {
-    let startX = 0, startY = 0, currentRow = null;
+    // Usa delegazione su document.body con gestione diretta trasform
+    // per massima reattività — niente classi CSS, animazione in JS
+    var EDGE_GUARD   = 25;   // px dal bordo sinistro ignorati (back gesture Android)
+    var DELETE_WIDTH = 72;   // px larghezza pulsante delete
+    var TRIGGER_PX   = 36;   // px swipe per aprire
+    var CLOSE_PX     = 20;   // px swipe destra per chiudere
 
-    document.addEventListener('touchstart', function(e) {
+    var state = null; // { row, inner, startX, startY, baseX, locked }
+
+    function getInner(row) { return row.querySelector('.swipe-row__content'); }
+
+    function openRow(row) {
+      var inner = getInner(row);
+      if (inner) inner.style.transform = 'translateX(-' + DELETE_WIDTH + 'px)';
+      row.classList.add('open');
+    }
+    function closeRow(row) {
+      var inner = getInner(row);
+      if (inner) inner.style.transform = '';
+      row.classList.remove('open');
+    }
+    function closeAll(except) {
+      document.querySelectorAll('.swipe-row.open').forEach(function(r) {
+        if (r !== except) closeRow(r);
+      });
+    }
+
+    document.body.addEventListener('touchstart', function(e) {
+      // Click fuori da swipe-row: chiudi tutto
       if (!e.target.closest('.swipe-row')) {
-        document.querySelectorAll('.swipe-row.open').forEach(function(r){ r.classList.remove('open'); });
+        closeAll(null);
+        return;
       }
-      var target = e.target.closest('.swipe-row');
-      if (!target) return;
-      // Ignora gesti dal bordo sinistro (back gesture Android)
-      if (e.touches[0].clientX < 20) return;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      currentRow = target;
+      var row = e.target.closest('.swipe-row');
+      var t   = e.touches[0];
+
+      // Bordo sinistro: lascia Android gestire il back gesture
+      if (t.clientX < EDGE_GUARD) {
+        closeAll(null);
+        return;
+      }
+
+      var inner  = getInner(row);
+      var isOpen = row.classList.contains('open');
+      var baseX  = isOpen ? -DELETE_WIDTH : 0;
+
+      state = {
+        row:    row,
+        inner:  inner,
+        startX: t.clientX,
+        startY: t.clientY,
+        baseX:  baseX,
+        locked: false,   // true = gesto verticale, ignora
+        decided: false,  // true = direzione stabilita
+      };
     }, { passive: true });
 
-    document.addEventListener('touchmove', function(e) {
-      if (!currentRow) return;
-      var dy = Math.abs(e.touches[0].clientY - startY);
-      var dx = Math.abs(e.touches[0].clientX - startX);
-      if (dy > dx) { currentRow = null; }
+    document.body.addEventListener('touchmove', function(e) {
+      if (!state || state.locked) return;
+      var t  = e.touches[0];
+      var dx = t.clientX - state.startX;
+      var dy = t.clientY - state.startY;
+
+      // Decidi direzione al primo movimento significativo
+      if (!state.decided && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        if (Math.abs(dy) > Math.abs(dx)) {
+          state.locked = true; // scorrimento verticale
+          return;
+        }
+        state.decided = true;
+        closeAll(state.row);
+      }
+      if (!state.decided) return;
+
+      // Trascinamento live (disabilita transition per risposta immediata)
+      state.row.classList.add('dragging');
+      var newX = Math.max(-DELETE_WIDTH, Math.min(0, state.baseX + dx));
+      if (state.inner) state.inner.style.transform = 'translateX(' + newX + 'px)';
     }, { passive: true });
 
-    document.addEventListener('touchend', function(e) {
-      if (!currentRow) return;
-      var dx = e.changedTouches[0].clientX - startX;
-      if (dx < -30) {
-        document.querySelectorAll('.swipe-row.open').forEach(function(r){
-          if (r !== currentRow) r.classList.remove('open');
-        });
-        currentRow.classList.add('open');
-      } else if (dx > 30) {
-        currentRow.classList.remove('open');
+    document.body.addEventListener('touchend', function(e) {
+      if (!state) return;
+      var s  = state;
+      state  = null;
+      s.row.classList.remove('dragging');
+      if (s.locked || !s.decided) return;
+
+      var dx    = e.changedTouches[0].clientX - s.startX;
+      var total = s.baseX + dx;
+
+      if (total < -TRIGGER_PX) {
+        openRow(s.row);
+      } else if (dx > CLOSE_PX) {
+        closeRow(s.row);
+      } else {
+        // Rimetti alla posizione precedente
+        if (s.row.classList.contains('open')) openRow(s.row);
+        else closeRow(s.row);
       }
-      currentRow = null;
     }, { passive: true });
   }
 
