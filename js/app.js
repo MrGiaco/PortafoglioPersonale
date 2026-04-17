@@ -121,7 +121,7 @@ const App = (() => {
     document.addEventListener('touchend', function(e) {
       if (!currentRow) return;
       var dx = e.changedTouches[0].clientX - startX;
-      if (dx < -50) {
+      if (dx < -30) {
         document.querySelectorAll('.swipe-row.open').forEach(function(r){
           if (r !== currentRow) r.classList.remove('open');
         });
