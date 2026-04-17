@@ -201,6 +201,9 @@ input, select, textarea { font-family: inherit; }
   background: var(--bg);
   z-index: 10;
 }
+#section-dashboard .section-sticky {
+  padding: 0;
+}
 .section-scroll {
   flex: 1;
   overflow-y: auto;
