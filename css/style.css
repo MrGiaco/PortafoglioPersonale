@@ -1938,10 +1938,14 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   align-items: center;
   background: var(--bg-card);
   transform: translateX(0);
-  transition: transform .25s ease;
+  transition: transform .2s ease;
   cursor: pointer;
   position: relative;
   z-index: 1;
+  will-change: transform;
+}
+.swipe-row.dragging .swipe-row__content {
+  transition: none;  /* nessuna transizione durante il drag */
 }
 .swipe-row__content:active { background: var(--bg); }
 .swipe-row__delete {
