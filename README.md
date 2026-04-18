@@ -92,7 +92,7 @@ Il Worker fa da proxy per le chiamate a Yahoo Finance e Zonebourse, aggirando le
 1. Carica tutti i file nel repository
 2. Vai su **Settings → Pages**
 3. Source: branch `main`, cartella `/ (root)`
-4. L'app sarà disponibile su `https://MrGiaco.github.io/PortafoglioPersonale`
+4. L'app sarà disponibile su `https://tuonome.github.io/PortafoglioPersonale`
 
 ---
 
