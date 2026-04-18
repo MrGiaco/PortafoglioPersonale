@@ -273,18 +273,19 @@ const App = (() => {
     };
     if (titleEl) titleEl.textContent = titles[section] || '';
 
-    // FAB icona contestuale (nascosto nel dettaglio)
+    // FAB icona contestuale (nascosto nel dettaglio e impostazioni)
     const fabIcons = {
       dashboard:    'plus',
       conto:        'plus',
       carta:        'plus',
       investimenti: 'plus',
       report:       'download',
-      impostazioni: '',
+      impostazioni: 'plus',
     };
     const fab = $('fabBtn');
     if (fab) {
-      fab.classList.toggle('hidden', section === 'impostazioni' || section === 'dettaglio');
+      const hideFab = section === 'impostazioni' || section === 'dettaglio' || section === 'report';
+      fab.style.display = hideFab ? 'none' : '';
       fab.innerHTML = `<i class="ti ti-${fabIcons[section] || 'plus'}"></i>`;
     }
 
@@ -305,7 +306,8 @@ const App = (() => {
 
   function handleHash() {
     const hash = window.location.hash.replace('#', '');
-    if (SECTIONS.includes(hash)) navigate(hash);
+    // Non ripristinare 'dettaglio' da hash: richiederebbe un titolo selezionato
+    if (SECTIONS.includes(hash) && hash !== 'dettaglio') navigate(hash);
     else navigate('dashboard');
   }
 
