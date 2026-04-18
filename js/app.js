@@ -15,6 +15,7 @@ const Dialog = (() => {
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'dialogOverlay';
+      overlay.className = 'dialog-overlay';
       document.body.appendChild(overlay);
     }
     overlay.innerHTML = html;
