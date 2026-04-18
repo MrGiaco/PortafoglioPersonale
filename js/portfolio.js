@@ -1057,8 +1057,17 @@ const Portfolio = (() => {
     var valoreAttuale = formatEur(t.prezzoAttuale || t.pmc, 2);
     var hasCodice = !!t.codeZB;
 
+    // FIX: usa Dialog._render() invece di accedere direttamente a #dialogOverlay
+    // (che potrebbe non esistere ancora al primo utilizzo).
+    // Usiamo il meccanismo interno di Dialog che crea l'overlay se mancante.
     var overlay = document.getElementById('dialogOverlay');
-    if (!overlay) return;
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'dialogOverlay';
+      overlay.className = 'dialog-overlay';
+      document.body.appendChild(overlay);
+    }
+
     overlay.innerHTML =
       '<div class="dialog-box">' +
         '<div class="dialog-body">' +
@@ -1770,14 +1779,118 @@ const Portfolio = (() => {
     if (!dettaglioId) return;
     var t = data.investimenti.titoli.find(function(x){ return x.id===dettaglioId; });
     if (!t) return;
-    var prezzoVendita = t.prezzoAttuale || t.prezzoAcquisto;
-    var importoTot    = prezzoVendita * t.quantita;
-    t.operazioni.push({ data:new Date().toISOString().slice(0,10), tipo:'vendita', quantita:t.quantita, prezzo:prezzoVendita, costoTot:importoTot });
-    t.venduto = true;
-    var mov = { id:uid(), data:new Date().toISOString().slice(0,10), tipo:'entrata', descrizione:'Vendita '+t.nome, importo:importoTot, categoria:'investimento', note:t.quantita+' × '+formatEur(prezzoVendita,4) };
-    data.conto.movimenti.push(mov);
-    Modals.close(); renderAll(); Charts.updateAll(); saveAndSync();
-    App.showToast(t.nome+' venduto: '+formatEur(importoTot)+' accreditati sul conto','success');
+
+    // FIX: mostra dialog con prezzo e quantità prima di procedere
+    var prezzoSuggerito = t.prezzoAttuale || t.prezzoAcquisto;
+    var qtaDisponibile  = t.quantita;
+    var qtyLabel        = t.tipo === 'azione' ? 'azioni' : 'quote';
+    var qtyFmt          = qtaDisponibile % 1 === 0 ? String(Math.round(qtaDisponibile)) : qtaDisponibile.toFixed(3);
+
+    var overlay = document.getElementById('dialogOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'dialogOverlay';
+      overlay.className = 'dialog-overlay';
+      document.body.appendChild(overlay);
+    }
+
+    overlay.innerHTML =
+      '<div class="dialog-box" style="max-width:360px">' +
+        '<div class="dialog-body" style="text-align:left">' +
+          '<i class="ti ti-cash" style="color:var(--success);font-size:24px;display:block;margin-bottom:10px;text-align:center"></i>' +
+          '<strong style="display:block;text-align:center;margin-bottom:14px">Vendi ' + escHtml(t.nome) + '</strong>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
+            '<div>' +
+              '<label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">Quantità (' + qtyLabel + ')</label>' +
+              '<input id="vendQty" type="number" step="any" min="0.001" max="' + qtaDisponibile + '" ' +
+                'value="' + qtyFmt + '" ' +
+                'style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box" ' +
+                'oninput="var q=parseFloat(this.value)||0,p=parseFloat(document.getElementById(\'vendPrice\').value)||0;var tot=document.getElementById(\'vendTot\');if(tot)tot.textContent=(q*p).toFixed(2)+\' €\'" />' +
+              '<div style="font-size:10px;color:var(--text-muted);margin-top:3px">Max: ' + qtyFmt + '</div>' +
+            '</div>' +
+            '<div>' +
+              '<label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">Prezzo vendita (€)</label>' +
+              '<input id="vendPrice" type="number" step="any" min="0" ' +
+                'value="' + prezzoSuggerito.toFixed(4) + '" ' +
+                'style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box" ' +
+                'oninput="var q=parseFloat(document.getElementById(\'vendQty\').value)||0,p=parseFloat(this.value)||0;var tot=document.getElementById(\'vendTot\');if(tot)tot.textContent=(q*p).toFixed(2)+\' €\'" />' +
+            '</div>' +
+          '</div>' +
+          '<div style="background:var(--success-light);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">' +
+            '<span style="font-size:12px;font-weight:600;color:var(--success)">Incasso lordo</span>' +
+            '<span id="vendTot" style="font-size:15px;font-weight:800;color:var(--success)">' + (prezzoSuggerito * qtaDisponibile).toFixed(2) + ' €</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dialog-footer">' +
+          '<button class="btn btn--ghost dialog-cancel" style="flex:1">Annulla</button>' +
+          '<button class="btn btn--primary dialog-ok" style="flex:2;background:var(--success);border-color:var(--success)"><i class="ti ti-check"></i> Conferma vendita</button>' +
+        '</div>' +
+      '</div>';
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(function() {
+      var inpQ = document.getElementById('vendQty');
+      if (inpQ) { inpQ.focus(); inpQ.select(); }
+    }, 100);
+
+    overlay.querySelector('.dialog-cancel').onclick = function() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    };
+    overlay.querySelector('.dialog-ok').onclick = function() {
+      var inpQ = document.getElementById('vendQty');
+      var inpP = document.getElementById('vendPrice');
+      var qta  = parseFloat(inpQ ? inpQ.value : '');
+      var prez = parseFloat(inpP ? inpP.value : '');
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+
+      if (isNaN(qta) || qta <= 0) { App.showToast('Quantità non valida', 'warning'); return; }
+      if (isNaN(prez) || prez <= 0) { App.showToast('Prezzo non valido', 'warning'); return; }
+      if (qta > qtaDisponibile + 0.0001) { App.showToast('Quantità superiore alla posizione (' + qtyFmt + ')', 'warning'); return; }
+
+      var importoTot = Math.round(prez * qta * 100) / 100;
+      var oggi = new Date().toISOString().slice(0, 10);
+
+      t.operazioni.push({ data: oggi, tipo: 'vendita', quantita: qta, prezzo: prez, costoTot: importoTot });
+
+      // Ricalcola quantità residua e PMC
+      var nuovaQta = Math.max(0, t.quantita - qta);
+      if (nuovaQta <= 0.0001) {
+        t.quantita = 0;
+        t.venduto  = true;
+      } else {
+        t.quantita = nuovaQta;
+      }
+
+      // Movimento conto (entrata)
+      var mov = {
+        id: uid(), data: oggi, tipo: 'entrata',
+        descrizione: 'Vendita ' + t.nome,
+        importo: importoTot, categoria: 'investimento',
+        note: qta + ' × ' + formatEur(prez, 4),
+      };
+      data.conto.movimenti.push(mov);
+
+      renderAll(); Charts.updateAll(); saveAndSync();
+
+      var msg = t.nome + ': venduti ' + qta + ' ' + qtyLabel + ' -> ' + formatEur(importoTot) + ' accreditati';
+      if (t.venduto) msg += ' (posizione chiusa)';
+      App.showToast(msg, 'success');
+
+      // Se la posizione e' chiusa, torna alla lista investimenti
+      // Se vendita parziale, riapri il dettaglio per aggiornare quantita'/P&L
+      if (t.venduto) {
+        setTimeout(function(){ App.navigate('investimenti'); }, 400);
+      } else {
+        // Cattura dettaglioId nel closure per evitare race condition
+        var idDaAggiornare = dettaglioId;
+        setTimeout(function(){
+          if (dettaglioId === idDaAggiornare) apriDettaglio(idDaAggiornare);
+        }, 100);
+      }
+    };
   }
 
   // =============================================
