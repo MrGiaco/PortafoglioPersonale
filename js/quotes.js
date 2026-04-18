@@ -237,10 +237,11 @@ const Quotes = (() => {
     // Salva su Drive
     await Drive.save(Portfolio.getData());
 
-    // Aggiorna timestamp
-    const now = new Date().toLocaleString('it-IT');
-    const el  = document.getElementById('lastQuoteUpdate');
-    if (el) el.textContent = `Ultimo aggiornamento: ${now}`;
+    // Aggiorna timestamp — salva in localStorage cosi renderImpostazioni() lo legge correttamente
+    const tsNow = Date.now();
+    localStorage.setItem('pp_last_quote_ts', tsNow);
+    const el = document.getElementById('lastQuoteUpdate');
+    if (el) el.textContent = 'Ultimo aggiornamento: ' + new Date(tsNow).toLocaleString('it-IT');
 
     App.showToast(`${updated}/${titoli.length} quotazioni aggiornate`, updated > 0 ? 'success' : 'warning');
   }
