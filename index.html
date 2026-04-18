@@ -13,7 +13,7 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <!-- Bootstrap Icons — caricato prima di tutto il resto -->
+  <!-- Tabler Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
   <!-- Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -86,7 +86,7 @@
 <div id="app" class="hidden">
 
   <!-- Sidebar (solo desktop) -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-logo-icon"><i class="ti ti-chart-bar"></i></div>
       <div class="sidebar-logo-text">Portafoglio</div>
@@ -116,7 +116,8 @@
       <div class="topbar-actions">
         <button class="topbar-btn" onclick="Quotes.refreshAll()" title="Aggiorna quotazioni"><i class="ti ti-refresh"></i></button>
         <button class="topbar-btn" onclick="Drive.sync()" title="Sincronizza Drive"><i class="ti ti-cloud-upload"></i></button>
-        <button class="topbar-btn" onclick="App.fabAction()" title="Aggiungi"
+        <!-- FIX: aggiunto id="fabBtn" necessario per App.navigate() -->
+        <button class="topbar-btn" id="fabBtn" onclick="App.fabAction()" title="Aggiungi"
           style="background:var(--primary);border-color:var(--primary);color:#fff">
           <i class="ti ti-plus"></i>
         </button>
@@ -131,6 +132,8 @@
       <section id="section-dashboard" class="section active">
 
         <div class="section-sticky">
+          <!-- Data odierna — id richiesto da app.js e portfolio.js -->
+          <div id="dashDate" style="font-size:12px;color:rgba(255,255,255,0);height:0;overflow:hidden"></div>
           <div class="patrimonio-card">
             <div class="patrimonio-label">PATRIMONIO TOTALE</div>
             <div class="patrimonio-value" id="patrimonioTotale">€ 0,00</div>
@@ -150,7 +153,7 @@
               </div>
             </div>
           </div>
-        </div><!-- /section-sticky -->
+        </div>
 
         <div class="section-scroll">
         <div class="quick-actions">
@@ -301,7 +304,6 @@
       <!-- ===== INVESTIMENTI ===== -->
       <section id="section-investimenti" class="section hidden">
 
-        <!-- HERO STICKY -->
         <div class="inv-sticky">
           <div class="inv-hero-card">
             <div class="patrimonio-label">PORTAFOGLIO INVESTIMENTI</div>
@@ -342,7 +344,6 @@
           </div>
         </div>
 
-        <!-- SCROLL SEZIONI -->
         <div class="inv-scroll-body">
           <div id="invSezioni"></div>
         </div>
@@ -351,7 +352,6 @@
 
       <!-- ===== DETTAGLIO TITOLO ===== -->
       <section id="section-dettaglio" class="section hidden" style="padding:0;display:flex;flex-direction:column;overflow:hidden;">
-        <!-- STICKY HERO -->
         <div class="det-sticky">
           <div class="det-topbar">
             <button class="det-back" onclick="App.navigate('investimenti')"><i class="ti ti-chevron-left"></i></button>
@@ -386,9 +386,7 @@
             </div>
           </div>
         </div>
-        <!-- SCROLL -->
         <div class="det-scroll" id="detScroll">
-          <!-- Card posizione -->
           <div class="det-card">
             <div class="det-card-title">Posizione</div>
             <div class="det-row2">
@@ -414,7 +412,6 @@
               </div>
             </div>
           </div>
-          <!-- Card andamento -->
           <div class="det-card">
             <div class="det-card-title">Andamento oggi</div>
             <div id="detRangeWrap" style="display:none" class="det-range-wrap">
@@ -448,7 +445,6 @@
               </div>
             </div>
           </div>
-          <!-- Card dati titolo -->
           <div class="det-card">
             <div class="det-card-title">Dati titolo</div>
             <div class="det-info-grid">
@@ -460,12 +456,10 @@
               <div class="det-inf"><div class="det-inf-lbl">Tasse/Bolli</div><div class="det-inf-val" id="detTasse">—</div></div>
             </div>
           </div>
-          <!-- Card operazioni -->
           <div class="det-card">
             <div class="det-card-title">Operazioni</div>
             <div id="detOperazioni"></div>
           </div>
-          <!-- Azioni -->
           <div class="det-actions" id="detActionBar">
             <button class="det-act-buy" id="detBtnBuy" onclick="Portfolio.detNuovoAcquisto()">
               <i class="ti ti-circle-plus"></i> Nuovo acquisto
@@ -510,7 +504,6 @@
 
       <!-- ===== IMPOSTAZIONI ===== -->
       <section id="section-impostazioni" class="section hidden">
-
         <div class="section-scroll" style="padding-top:16px">
         <div class="settings-grid">
 
@@ -581,7 +574,7 @@
           </div>
 
         </div>
-        </div><!-- /section-scroll -->
+        </div>
       </section>
 
     </main>
@@ -617,6 +610,411 @@
 
   </div><!-- /main-wrapper -->
 
+  <!-- =================================================================
+       MODAL OVERLAY — contenitore unico di tutti i modal
+       FIX CRITICO: era completamente assente dall'HTML originale.
+       Senza questo elemento, Modals.open() non trovava nulla e
+       nessun form dell'app funzionava (movimenti, titoli, carta...).
+       ================================================================= -->
+  <div id="modalOverlay" class="modal-overlay hidden" onclick="Modals.closeOnOverlay(event)">
+
+    <!-- ===== MODAL: Nuovo Movimento Conto ===== -->
+    <div id="modal-nuovoMovimento" class="modal hidden">
+      <div class="modal-hero">
+        <span class="modal-handle"></span>
+        <div class="modal-hero-top">
+          <div class="modal-hero-left">
+            <div class="modal-hero-icon" id="movHeroIcon"><i class="ti ti-circle-arrow-down"></i></div>
+            <div>
+              <div class="modal-hero-title" id="movHeroTitle">Nuova Entrata</div>
+              <div class="modal-hero-sub">Conto corrente</div>
+            </div>
+          </div>
+          <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="toggle-group" style="margin-top:14px;position:relative;z-index:1">
+          <button class="toggle-btn active" id="movTipoEntrata" onclick="Portfolio.setMovTipo('entrata')">
+            <i class="ti ti-circle-arrow-down"></i> Entrata
+          </button>
+          <button class="toggle-btn" id="movTipoUscita" onclick="Portfolio.setMovTipo('uscita')">
+            <i class="ti ti-circle-arrow-up"></i> Uscita
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row modal-r2">
+          <div class="form-group">
+            <label>Data *</label>
+            <input type="date" id="movData" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Importo (€) *</label>
+            <input type="number" id="movImporto" class="form-control" placeholder="0,00" min="0" step="0.01" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Descrizione *</label>
+          <input type="text" id="movDescrizione" class="form-control" placeholder="Es. Stipendio, Affitto..." />
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Categoria</label>
+          <select id="movCategoria" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label>Note <span class="label-hint">(opzionale)</span></label>
+          <input type="text" id="movNote" class="form-control" placeholder="Note aggiuntive..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--ghost" onclick="Modals.close()" style="flex:1">Annulla</button>
+        <button class="btn btn--primary" onclick="Portfolio.saveMovimento()" style="flex:2">
+          <i class="ti ti-check"></i> Salva
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: Nuova Spesa Carta ===== -->
+    <div id="modal-nuovaSpesaCarta" class="modal hidden">
+      <div class="modal-hero">
+        <span class="modal-handle"></span>
+        <div class="modal-hero-top">
+          <div class="modal-hero-left">
+            <div class="modal-hero-icon"><i class="ti ti-credit-card"></i></div>
+            <div>
+              <div class="modal-hero-title">Nuova Spesa</div>
+              <div class="modal-hero-sub">Carta di credito</div>
+            </div>
+          </div>
+          <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row modal-r2">
+          <div class="form-group">
+            <label>Data *</label>
+            <input type="date" id="cartaData" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Importo (€) *</label>
+            <input type="number" id="cartaImporto" class="form-control" placeholder="0,00" min="0" step="0.01" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Descrizione *</label>
+          <input type="text" id="cartaDescrizione" class="form-control" placeholder="Es. Amazon, Ristorante..." />
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Categoria</label>
+          <select id="cartaCategoria" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label>Data addebito <span class="label-hint">(opzionale)</span></label>
+          <input type="date" id="cartaAddebito" class="form-control" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--ghost" onclick="Modals.close()" style="flex:1">Annulla</button>
+        <button class="btn btn--primary" onclick="Portfolio.saveSpesaCarta()" style="flex:2">
+          <i class="ti ti-check"></i> Salva
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: Nuovo Titolo (Wizard 3 step) ===== -->
+    <div id="modal-nuovoTitolo" class="modal hidden">
+      <div class="modal-hero">
+        <span class="modal-handle"></span>
+        <div class="modal-hero-top">
+          <div class="modal-hero-left">
+            <div class="modal-hero-icon"><i class="ti ti-trending-up"></i></div>
+            <div>
+              <div class="modal-hero-title">Nuovo Titolo</div>
+              <div class="modal-hero-sub" id="wizardSub">Seleziona il tipo di strumento</div>
+            </div>
+          </div>
+          <button class="modal-hero-close" onclick="Modals.close()"><i class="ti ti-x"></i></button>
+        </div>
+        <div style="display:flex;align-items:center;margin-top:14px;position:relative;z-index:1">
+          <div class="wizard-step" id="ws1">
+            <div class="wizard-circle">1</div>
+            <div class="wizard-label">Tipo</div>
+          </div>
+          <div class="wizard-line" id="wl1"></div>
+          <div class="wizard-step" id="ws2">
+            <div class="wizard-circle">2</div>
+            <div class="wizard-label">Dati</div>
+          </div>
+          <div class="wizard-line" id="wl2"></div>
+          <div class="wizard-step" id="ws3">
+            <div class="wizard-circle">3</div>
+            <div class="wizard-label">Acquisto</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:6px;font-size:10px;color:rgba(255,255,255,.4);position:relative;z-index:1" id="wizardCounter">Passo 1 di 3</div>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Step 1: Tipo -->
+        <div class="wizard-content active" id="wstep1">
+          <div class="tipo-grid">
+            <div class="tipo-card active" data-tipo="azione" onclick="Portfolio.setTipoCard(this)">
+              <i class="ti ti-trending-up"></i>
+              <div class="tipo-label">Azione</div>
+            </div>
+            <div class="tipo-card" data-tipo="fondo" onclick="Portfolio.setTipoCard(this)">
+              <i class="ti ti-chart-pie"></i>
+              <div class="tipo-label">Fondo</div>
+            </div>
+            <div class="tipo-card" data-tipo="certificate" onclick="Portfolio.setTipoCard(this)">
+              <i class="ti ti-award"></i>
+              <div class="tipo-label">Certificate</div>
+            </div>
+            <div class="tipo-card" data-tipo="pir" onclick="Portfolio.setTipoCard(this)">
+              <i class="ti ti-shield-check"></i>
+              <div class="tipo-label">PIR</div>
+            </div>
+            <div class="tipo-card" data-tipo="polizza" onclick="Portfolio.setTipoCard(this)">
+              <i class="ti ti-umbrella"></i>
+              <div class="tipo-label">Polizza</div>
+            </div>
+          </div>
+          <div class="wizard-hint" id="tipoHint">
+            <i class="ti ti-info-circle"></i>
+            <span>Le azioni quotate su Borsa Italiana usano il suffisso .MI nel ticker (es. ENI.MI).</span>
+          </div>
+        </div>
+
+        <!-- Step 2: Dati identificativi -->
+        <div class="wizard-content hidden" id="wstep2">
+          <div class="form-group" style="margin-bottom:8px">
+            <label>Nome titolo *</label>
+            <input type="text" id="titoloNome" class="form-control" placeholder="Es. Eni S.p.A." />
+          </div>
+          <div class="modal-row modal-r2" id="titoloYahooGroup">
+            <div class="form-group">
+              <label>Ticker Yahoo Finance</label>
+              <input type="text" id="titoloTicker" class="form-control mono" placeholder="Es. ENI.MI" />
+            </div>
+            <div class="form-group">
+              <label>Mercato</label>
+              <select id="titoloMercato" class="form-control">
+                <option value="MIL">Milano (MIL)</option>
+                <option value="PAR">Parigi (PAR)</option>
+                <option value="FRA">Francoforte (FRA)</option>
+                <option value="NYSE">NYSE</option>
+                <option value="NASDAQ">NASDAQ</option>
+                <option value="INT">Internazionale</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-row modal-r2" id="titoloZBGroup">
+            <div class="form-group">
+              <label id="titoloZBLabel">Codice Zonebourse <span class="label-hint">(opzionale)</span></label>
+              <input type="text" id="titoloCodeZB" class="form-control mono" placeholder="Es. 184320628" />
+            </div>
+            <div class="form-group">
+              <label>Valuta</label>
+              <select id="titoloValuta" class="form-control">
+                <option value="EUR">EUR €</option>
+                <option value="USD">USD $</option>
+                <option value="GBP">GBP £</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-row modal-r2">
+            <div class="form-group">
+              <label>ISIN <span class="label-hint">(opzionale)</span></label>
+              <input type="text" id="titoloIsin" class="form-control mono" placeholder="Es. IT0003132476" />
+            </div>
+            <div class="form-group">
+              <label>WKN <span class="label-hint">(opzionale)</span></label>
+              <input type="text" id="titoloWkn" class="form-control mono" placeholder="Es. A14XB9" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Note <span class="label-hint">(opzionale)</span></label>
+            <input type="text" id="titoloNote" class="form-control" placeholder="Note libere..." />
+          </div>
+        </div>
+
+        <!-- Step 3: Acquisto e costo di carico -->
+        <div class="wizard-content hidden" id="wstep3">
+          <div class="modal-row modal-r2">
+            <div class="form-group">
+              <label>Data acquisto *</label>
+              <input type="date" id="titoloDataAcquisto" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Quantità *</label>
+              <input type="number" id="titoloQuantita" class="form-control" placeholder="Es. 100"
+                min="0" step="any" oninput="Portfolio.calcCostoCarico()" />
+            </div>
+          </div>
+          <div class="modal-row modal-r2">
+            <div class="form-group">
+              <label>Prezzo acquisto *</label>
+              <input type="number" id="titoloPrezzoAcquisto" class="form-control" placeholder="Es. 14.52"
+                min="0" step="any" oninput="Portfolio.calcCostoCarico()" />
+            </div>
+            <div class="form-group">
+              <label>Cambio <span class="label-hint">(se non EUR)</span></label>
+              <input type="number" id="titoloCambio" class="form-control" value="1"
+                min="0" step="any" oninput="Portfolio.calcCostoCarico()" />
+            </div>
+          </div>
+          <details style="margin-bottom:8px">
+            <summary style="font-size:11px;font-weight:700;color:var(--text-secondary);cursor:pointer;padding:6px 0;user-select:none">
+              Commissioni e oneri <span style="font-weight:400;color:var(--text-muted)">(opzionale)</span>
+            </summary>
+            <div class="modal-row modal-r3" style="margin-top:8px">
+              <div class="form-group">
+                <label>Commissioni (€)</label>
+                <input type="number" id="titoloCommissioni" class="form-control" value="0"
+                  min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+              </div>
+              <div class="form-group">
+                <label>Tasse/Bolli (€)</label>
+                <input type="number" id="titoloTasse" class="form-control" value="0"
+                  min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+              </div>
+              <div class="form-group">
+                <label>Rateo (€)</label>
+                <input type="number" id="titoloRateo" class="form-control" value="0"
+                  min="0" step="0.01" oninput="Portfolio.calcCostoCarico()" />
+              </div>
+            </div>
+          </details>
+          <div class="costo-card">
+            <div class="costo-top">
+              <div class="costo-item">
+                <div class="costo-item__label">Quantità</div>
+                <div class="costo-item__val" id="costoQty">—</div>
+              </div>
+              <div class="costo-item">
+                <div class="costo-item__label">Controvalore</div>
+                <div class="costo-item__val" id="costoControvalore">—</div>
+              </div>
+              <div class="costo-item">
+                <div class="costo-item__label">Oneri</div>
+                <div class="costo-item__val" id="costoOneri">—</div>
+              </div>
+            </div>
+            <div class="costo-bottom">
+              <div class="costo-bottom__left">
+                <div class="costo-bottom__label">Costo totale carico</div>
+                <div class="costo-total" id="costoTotale">—</div>
+              </div>
+              <div class="costo-pmc">
+                <div class="costo-pmc__label">PMC unitario</div>
+                <div class="costo-pmc__val" id="costoPmc">—</div>
+              </div>
+            </div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;padding:4px 0">
+            <input type="checkbox" id="titoloAddebitoConto" checked style="width:16px;height:16px;accent-color:var(--primary)" />
+            Registra addebito sul conto corrente
+          </label>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <div class="modal-footer">
+        <button class="btn btn--ghost" id="wizardBack" onclick="Portfolio.wizardPrev()" style="display:none">
+          <i class="ti ti-chevron-left"></i> Indietro
+        </button>
+        <button class="btn btn--primary" id="wizardNext" onclick="Portfolio.wizardNext()" style="flex:1">
+          Avanti <i class="ti ti-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: Impostazioni Conto ===== -->
+    <div id="modal-impostazioniConto" class="modal hidden">
+      <div class="modal-header">
+        <h3><i class="ti ti-building-bank"></i> Configura Conto</h3>
+        <button onclick="Modals.close()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Saldo iniziale (€)</label>
+          <input type="number" id="contoSaldoIniziale" class="form-control" placeholder="Es. 5000" step="0.01" />
+          <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block">
+            Il saldo reale del conto prima di qualsiasi movimento registrato nell'app.
+          </span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--ghost" onclick="Modals.close()" style="flex:1">Annulla</button>
+        <button class="btn btn--primary"
+          onclick="Portfolio.saveSaldoIniziale(parseFloat(document.getElementById('contoSaldoIniziale').value)||0)"
+          style="flex:2">
+          <i class="ti ti-check"></i> Salva
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: Impostazioni Carta ===== -->
+    <div id="modal-impostazioniCarta" class="modal hidden">
+      <div class="modal-header">
+        <h3><i class="ti ti-credit-card"></i> Configura Carta</h3>
+        <button onclick="Modals.close()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Titolare</label>
+          <input type="text" id="ccHolderInput" class="form-control" placeholder="Es. MARIO ROSSI" />
+        </div>
+        <div class="modal-row modal-r2">
+          <div class="form-group">
+            <label>Ultime 4 cifre</label>
+            <input type="text" id="ccLastInput" class="form-control mono" placeholder="0000" maxlength="4" />
+          </div>
+          <div class="form-group">
+            <label>Scadenza</label>
+            <input type="text" id="ccExpiryInput" class="form-control mono" placeholder="MM/AA" maxlength="5" />
+          </div>
+        </div>
+        <div class="modal-row modal-r2">
+          <div class="form-group">
+            <label>Plafond (€)</label>
+            <input type="number" id="ccPlafondInput" class="form-control" placeholder="5000" min="0" step="100" />
+          </div>
+          <div class="form-group">
+            <label>Giorno addebito</label>
+            <input type="number" id="ccGiornoAddebito" class="form-control" placeholder="15" min="1" max="31" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--ghost" onclick="Modals.close()" style="flex:1">Annulla</button>
+        <button class="btn btn--primary" onclick="Portfolio.saveImpostazioniCarta()" style="flex:2">
+          <i class="ti ti-check"></i> Salva
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /modalOverlay -->
+
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sidebarOverlay" class="hidden" onclick="App.closeSidebar()"
+    style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:299"></div>
+
+  <!-- Toast, Loading, Modals già presenti sopra -->
+
+  <!-- =========================================================
+       TOAST CONTAINER — era completamente assente dall'HTML
+       ========================================================= -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- =========================================================
+       LOADING SPINNER — era completamente assente dall'HTML
+       ========================================================= -->
+  <div id="loadingSpinner" class="loading-spinner hidden">
+    <div class="spinner"></div>
+  </div>
+
   <!-- JS locali -->
   <script src="js/auth.js"></script>
   <script src="js/drive.js"></script>
@@ -624,6 +1022,8 @@
   <script src="js/quotes.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/app.js"></script>
+
+</div><!-- /app -->
 
 </body>
 </html>
