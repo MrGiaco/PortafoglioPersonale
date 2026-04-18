@@ -317,7 +317,14 @@ const Portfolio = (() => {
         return;
       }
 
+      // Usa operazione come descrizione principale;
+      // se i dettagli aggiungono info utili (es. codice fondo), li appende
       var desc = operazione || dettagli || 'Movimento';
+      if (dettagli && operazione && dettagli !== operazione) {
+        // Tronca dettagli a 60 char per non appesantire la descrizione
+        var detShort = dettagli.length > 60 ? dettagli.slice(0, 60) + '…' : dettagli;
+        desc = operazione + ' — ' + detShort;
+      }
 
       // Mappa categoria banca → chiave app
       var catKey = MAPPING_BANCA[catBanca] || null;
