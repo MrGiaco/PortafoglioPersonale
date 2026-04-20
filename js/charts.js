@@ -102,15 +102,12 @@ const Charts = (() => {
 
     const data    = Portfolio.getData();
     const movimenti = data.conto.movimenti || [];
-    const filtered  = filterByPeriod(movimenti, period);
 
-    // Raggruppa saldo cumulativo per data
-    const byDate = {};
-    let saldo = data.conto.saldo;
-
-    // Ricostruisce storico saldo dalla fine (approssimazione)
+    // Ricostruisce storico saldo cumulativo per data
+    // FIX: parte dal saldoIniziale (non da 0 o dal campo legacy data.conto.saldo)
+    const saldoIniziale = data.conto.saldoIniziale || 0;
     const sorted = [...movimenti].sort((a, b) => new Date(a.data) - new Date(b.data));
-    let running = 0;
+    let running = saldoIniziale;
     const dateMap = {};
     sorted.forEach(m => {
       running += m.tipo === 'entrata' ? m.importo : -m.importo;
@@ -131,7 +128,9 @@ const Charts = (() => {
       const mm = String(dt.getMonth()+1).padStart(2,'0');
       return dd + '/' + mm;
     }) : ['Oggi'];
-    const values = dates.length > 0 ? dates.map(d => dateMap[d]) : [data.conto.saldo];
+    // Fallback: saldo corrente reale (saldoIniziale + delta movimenti)
+    const saldoCorrente = Portfolio.getSaldoConto();
+    const values = dates.length > 0 ? dates.map(d => dateMap[d]) : [saldoCorrente];
 
     // Aggiungi valore investimenti al saldo per patrimonio totale
     const invTot = (data.investimenti.titoli || [])
