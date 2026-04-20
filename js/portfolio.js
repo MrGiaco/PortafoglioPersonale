@@ -216,14 +216,23 @@ const Portfolio = (() => {
       var input = document.createElement('input');
       input.type = 'file';
       input.accept = '.xlsx,.xls';
+      input.multiple = true; // selezione multipla: file conto + file carte insieme
       input.onchange = async function(e) {
-        var file = e.target.files[0];
-        if (!file) { reject('Nessun file'); return; }
+        var files = Array.from(e.target.files || []);
+        if (!files.length) { reject('Nessun file'); return; }
         try {
-          var result = await _parseBancaFile(file);
-          resolve(result);
+          var totale = { importatiConto: 0, importatiCarta: 0, duplicati: 0, catNuove: [], scartate: [] };
+          for (var i = 0; i < files.length; i++) {
+            var result = await _parseQualsiasiBancaFile(files[i]);
+            totale.importatiConto += result.importatiConto || 0;
+            totale.importatiCarta += result.importatiCarta || 0;
+            totale.duplicati      += result.duplicati      || 0;
+            result.catNuove.forEach(function(c){ if (totale.catNuove.indexOf(c) === -1) totale.catNuove.push(c); });
+            totale.scartate = totale.scartate.concat(result.scartate || []);
+          }
+          resolve(totale);
         } catch(err) {
-          App.showToast('Errore lettura file banca: ' + err.message, 'error');
+          App.showToast('Errore lettura file: ' + err.message, 'error');
           reject(err);
         }
       };
@@ -231,36 +240,34 @@ const Portfolio = (() => {
     });
   }
 
-  async function _parseBancaFile(file) {
-    // Legge il file XLSX con SheetJS (CDN già disponibile se incluso, altrimenti fallback CSV)
+  // Riconosce il formato del file (conto o carte) e delega al parser corretto
+  async function _parseQualsiasiBancaFile(file) {
     var buffer = await file.arrayBuffer();
-
-    if (typeof XLSX === 'undefined') {
-      throw new Error('Libreria XLSX non caricata. Aggiungila nell\'index.html.');
-    }
-
-    var wb   = XLSX.read(buffer, { type:'array', cellDates:true });
-    var ws   = wb.Sheets[wb.SheetNames[0]];
-
-    // Forza lettura di tutto il foglio ignorando il range definito dal file
-    // (alcuni export bancari limitano !ref alle prime righe visibili)
+    if (typeof XLSX === 'undefined') throw new Error('Libreria XLSX non caricata.');
+    var wb = XLSX.read(buffer, { type:'array', cellDates:true });
+    var ws = wb.Sheets[wb.SheetNames[0]];
     var fullRange = XLSX.utils.decode_range(ws['!ref'] || 'A1:J400');
     fullRange.e.r = Math.max(fullRange.e.r, 5000);
     ws['!ref'] = XLSX.utils.encode_range(fullRange);
-
     var rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
 
-    // Trova la riga header (contiene "Data" e "Operazione")
-    var headerIdx = -1;
-    for (var i = 0; i < rows.length; i++) {
+    for (var i = 0; i < Math.min(rows.length, 20); i++) {
       var r = rows[i];
-      if (r && r[0] && String(r[0]).trim() === 'Data' && r[1] && String(r[1]).trim() === 'Operazione') {
-        headerIdx = i;
-        break;
+      if (!r) continue;
+      var c0 = String(r[0] || '').trim();
+      var c1 = String(r[1] || '').trim();
+      if (c0 === 'Data' && c1 === 'Operazione') {
+        return _parseBancaRows(rows, i);
+      }
+      if (c0 === 'Data contabile' && c1 === 'Data valuta') {
+        return _parseCarteRows(rows, i);
       }
     }
-    if (headerIdx === -1) throw new Error('Formato file non riconosciuto (header non trovato)');
+    throw new Error('Formato non riconosciuto. Usa il file conto corrente o movimenti carta Intesa.');
+  }
 
+  // Parser file conto corrente Intesa Sanpaolo
+  function _parseBancaRows(rows, headerIdx) {
     var dataRows = rows.slice(headerIdx + 1).filter(function(r) {
       return r && r[0] && r[0] !== 'Data'; // escludi righe vuote e header ripetuto
     });
@@ -353,7 +360,15 @@ const Portfolio = (() => {
         if (aggiunta) catNuove.push(catLabelNuova);
       }
 
-      var isCartaDiCredito = contoOCarta.indexOf('carta') !== -1;
+      // Logica Intesa Sanpaolo: la colonna "Contabilizzazione" (r[4]) discrimina
+      // con certezza tra spese carta in sospeso e movimenti già addebitati sul conto.
+      //
+      // Contabilizzazione = NO → spesa carta di credito non ancora addebitata
+      //   (verrà pagata con il prossimo "Addebito Saldo E/c Carta")
+      // Contabilizzazione = SI → movimento già addebitato sul conto corrente
+      //   (stipendi, bonifici, POS diretti, prelievi, addebito mensile carta, ecc.)
+      var contabilizzazione = String(r[4] || '').trim().toUpperCase();
+      var isCartaDiCredito  = contabilizzazione === 'NO';
 
       if (isCartaDiCredito) {
         var importoCarta = Math.abs(importo);
@@ -398,6 +413,145 @@ const Portfolio = (() => {
     return { importatiConto, importatiCarta, duplicati, catNuove, scartate };
   }
 
+  // =============================================
+  // PARSER FILE MOVIMENTI CARTA DI CREDITO INTESA
+  // Colonne: Data contabile | Data valuta | Descrizione | Accrediti in valuta | Accrediti | Addebiti in valuta | Addebiti
+  // =============================================
+  function _parseCarteRows(rows, headerIdx) {
+    var dataRows = rows.slice(headerIdx + 1).filter(function(r) {
+      return r && (r[0] || r[1]) && r[2]; // almeno una data e una descrizione
+    });
+
+    var importatiCarta = 0, duplicati = 0, catNuove = [];
+    var scartate = [];
+
+    // Mapping descrizione → categoria (case-insensitive, cerca sottostringa)
+    var MAPPING_CARTE = [
+      { keys: ['iperstaroil','eni','agip','tamoil','q8','shell','esso','totalerg','ip ',
+               'bc longare','b c longare','castegnero','costantin','geff srl','autolovisetto',
+               'desideri carburanti'], cat: 'carburante' },
+      { keys: ['iliad','tim ','wind','vodafone','fastweb'], cat: 'cellulare' },
+      { keys: ['amazon','amzn','pay.amazon'], cat: 'svago' },
+      { keys: ['anthropic','claude.ai','openai','chatgp','msdeals'], cat: 'hi_tech' },
+      { keys: ['google ','google one','google play'], cat: 'hi_tech' },
+      { keys: ['paypal *openai','paypal *use ai'], cat: 'hi_tech' },
+      { keys: ['camst','bierstube','ristoran','trattoria','pizzeria','osteria',
+               'vecia botte','monterosso','ristorazione','tavola'], cat: 'ristoranti' },
+      { keys: ['hotel','resort','guadalupe','alloggio'], cat: 'viaggi' },
+      { keys: ['farmacia','freato'], cat: 'salute' },
+      { keys: ['unipol','prima assicurazioni','allianz','generali','axa'], cat: 'polizze' },
+      { keys: ['pendin gomme','manutenzione','autolovisetto','jolly joker'], cat: 'manutenzione_veicoli' },
+      { keys: ['paypal *ticketone','ticketone','spazio roma'], cat: 'svago' },
+      { keys: ['paypal *paga in 3','paypal *alipay','paypal *etsy'], cat: 'svago' },
+      { keys: ['aliexpress'], cat: 'spesa' },
+      { keys: ['famila','supermercato','coop','esselunga','eurospin'], cat: 'spesa' },
+      { keys: ['pittarello','zanuso','carrera','cosmo spa','pagliarusco',
+               'porcarola','abbigliamento'], cat: 'abbigliamento' },
+      { keys: ['autosalmaso','baciliero','studio scortegagna','sede provinciale'], cat: 'altro' },
+    ];
+
+    function _catDaDesc(desc) {
+      var d = desc.toLowerCase();
+      for (var i = 0; i < MAPPING_CARTE.length; i++) {
+        var entry = MAPPING_CARTE[i];
+        for (var j = 0; j < entry.keys.length; j++) {
+          if (d.indexOf(entry.keys[j]) !== -1) return entry.cat;
+        }
+      }
+      return 'altro';
+    }
+
+    function _excelDateToStr(val) {
+      if (!val) return null;
+      if (val instanceof Date) return val.toISOString().slice(0, 10);
+      var n = parseInt(val, 10);
+      if (!isNaN(n) && n > 40000) {
+        // Serial Excel: giorni dal 30/12/1899
+        var d = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+        return d.toISOString().slice(0, 10);
+      }
+      // Stringa già in formato leggibile
+      var d2 = new Date(String(val));
+      if (!isNaN(d2.getTime())) return d2.toISOString().slice(0, 10);
+      return null;
+    }
+
+    dataRows.forEach(function(r, rowIdx) {
+      // r[0]=Data contabile, r[1]=Data valuta, r[2]=Descrizione
+      // r[3]=Accrediti in valuta (vuoto), r[4]=Accrediti, r[5]=Addebiti in valuta (vuoto), r[6]=Addebiti
+      var dataValuta    = _excelDateToStr(r[1]) || _excelDateToStr(r[0]);
+      var desc          = String(r[2] || '').trim();
+      var accreditoRaw  = r[4];
+      var addebitoRaw   = r[6];
+
+      if (!dataValuta) {
+        scartate.push({ riga: rowIdx+1, desc: desc, motivo: 'Data non valida' });
+        return;
+      }
+      if (!desc) {
+        scartate.push({ riga: rowIdx+1, desc: '—', data: dataValuta, motivo: 'Descrizione mancante' });
+        return;
+      }
+
+      // Determina importo: addebito (spesa) o accredito (rimborso)
+      var importo = null;
+      var isRimborso = false;
+      if (addebitoRaw != null && addebitoRaw !== '') {
+        var v = parseFloat(String(addebitoRaw).replace(',', '.'));
+        if (!isNaN(v) && v > 0) importo = v;
+      }
+      if (importo === null && accreditoRaw != null && accreditoRaw !== '') {
+        var v2 = parseFloat(String(accreditoRaw).replace(',', '.'));
+        if (!isNaN(v2) && v2 > 0) { importo = v2; isRimborso = true; }
+      }
+      if (importo === null) {
+        scartate.push({ riga: rowIdx+1, desc: desc, data: dataValuta, motivo: 'Importo non leggibile' });
+        return;
+      }
+
+      var catKey = _catDaDesc(desc);
+
+      // Dedup case-insensitive: confronta con spese carta già presenti
+      var descUpper = desc.toUpperCase();
+      var isDup = data.carta.spese.some(function(s) {
+        return s.data === dataValuta &&
+               s.descrizione.toUpperCase() === descUpper &&
+               Math.abs(s.importo - importo) < 0.01;
+      });
+      if (isDup) {
+        duplicati++;
+        return; // non aggiunge a scartate — è normale per le spese recenti già nel file conto
+      }
+
+      if (isRimborso) {
+        // Rimborso carta: va nel conto come entrata (storni, rimborsi Amazon ecc.)
+        // Lo ignoriamo nella sezione carta — è già un movimento del conto
+        // oppure lo tracciamo come spesa negativa nella carta
+        // Scelta: lo aggiungiamo comunque come spesa carta con importo negativo indicativo
+        // ma lo marchiamo nella nota
+        data.carta.spese.push({
+          id: uid(), data: dataValuta,
+          descrizione: desc,
+          importo: importo,
+          categoria: 'rimborsi',
+          addebitoData: '',
+          note: 'Rimborso / accredito carta',
+        });
+      } else {
+        data.carta.spese.push({
+          id: uid(), data: dataValuta,
+          descrizione: desc,
+          importo: importo,
+          categoria: catKey,
+          addebitoData: '',
+          note: '',
+        });
+      }
+      importatiCarta++;
+    });
+
+    return { importatiConto: 0, importatiCarta, duplicati, catNuove, scartate };
+  }
 
 
   function emptyState(icon, msg) {
@@ -1737,7 +1891,7 @@ const Portfolio = (() => {
       var totOp = op.costoTot || (op.quantita * op.prezzo);
       var realIdx = ops.length - 1 - idx;
       return '<div class="det-op">' +
-        '<div class="det-op-ico ' + (isAcq?'g':'r') + '"><i class="ti ti-shopping-cart' + (isAcq?'plus':'dash') + '"></i></div>' +
+        '<div class="det-op-ico ' + (isAcq?'g':'r') + '"><i class="ti ti-shopping-cart' + (isAcq?'-plus':'-x') + '"></i></div>' +
         '<div class="det-op-info">' +
           '<div class="det-op-type">' + (isAcq?'Acquisto':'Vendita') + '</div>' +
           '<div class="det-op-date">' + formatDate(op.data) + ' · ' + formatNum(op.quantita) + ' × ' + formatEur(op.prezzo,4) + (op.comm?' · Comm. '+formatEur(op.comm):'') + '</div>' +
