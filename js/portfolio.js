@@ -511,11 +511,17 @@ const Portfolio = (() => {
 
       var catKey = _catDaDesc(desc);
 
-      // Dedup case-insensitive: confronta con spese carta già presenti
+      // Dedup case-insensitive: confronta con spese carta già presenti.
+      // Il file conto costruisce la descrizione come "Operazione — Dettagli",
+      // il file carte ha solo "Operazione" breve in maiuscolo.
+      // Tronchiamo la descrizione esistente prima del " — " per confrontare
+      // solo la parte operazione (es. "ANTICA TRATTORIA DUE S" matcha
+      // "Antica Trattoria Due S — Antica Trattoria Due S Sandrigo").
       var descUpper = desc.toUpperCase();
       var isDup = data.carta.spese.some(function(s) {
+        var sBase = s.descrizione.toUpperCase().split(' — ')[0].trim();
         return s.data === dataValuta &&
-               s.descrizione.toUpperCase() === descUpper &&
+               (sBase === descUpper || s.descrizione.toUpperCase() === descUpper) &&
                Math.abs(s.importo - importo) < 0.01;
       });
       if (isDup) {
@@ -2125,8 +2131,20 @@ const Portfolio = (() => {
         var file = e.target.files[0];
         if (!file) { reject('Nessun file'); return; }
         try {
-          var text = await file.text();
-          var result = _parseTitoliCSV(text);
+          // Prova windows-1252 (necessario per Dati_Master con simbolo euro)
+          var buf  = await file.arrayBuffer();
+          var text = new TextDecoder('windows-1252').decode(buf);
+
+          // Auto-rilevamento formato dall'header:
+          // Dati_Master:          prima colonna = "Note", seconda = "ISIN"
+          // Formato movimenti:    ha colonne "Data", "Tipo", "Valore"
+          var firstLine = text.split('\n')[0].split(';').map(function(h){ return h.trim(); });
+          var result;
+          if (firstLine[0] === 'Note' && firstLine[1] === 'ISIN') {
+            result = _parseDatiMaster(text);
+          } else {
+            result = _parseTitoliCSV(text);
+          }
           resolve(result);
         } catch(err) {
           App.showToast('Errore lettura file: ' + err.message, 'error');
@@ -2135,6 +2153,117 @@ const Portfolio = (() => {
       };
       input.click();
     });
+  }
+
+  // =============================================
+  // PARSER FORMATO DATI_MASTER
+  // Colonne: Note;ISIN;codeZB;Simbolo Titolo;Nome Titolo;Valuta;Numero Quote;Valore quota di carico
+  // Importa la posizione attuale senza storico movimenti.
+  // =============================================
+  function _parseDatiMaster(text) {
+    var lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+                    .filter(function(l){ return l.trim(); });
+    if (lines.length < 2) throw new Error('File vuoto o non valido');
+
+    var TIPO_MAP = {
+      'azioni':       'azione',
+      'certificates': 'certificate',
+      'fondi':        'fondo',
+      'pir':          'pir',
+      'polizze vita': 'polizza',
+      'polizze':      'polizza',
+    };
+
+    function parseNum(s) {
+      if (s == null || String(s).trim() === '') return null;
+      s = String(s).trim().replace(/[\u20ac]/g, '').trim();
+      if (/^-?[\d.]+,\d+$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+      else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+      else s = s.replace(',', '.');
+      var n = parseFloat(s);
+      return isNaN(n) ? null : n;
+    }
+
+    var oggi = new Date().toISOString().slice(0, 10);
+    var importati = [], scartati = [], duplicati = [];
+
+    lines.slice(1).forEach(function(line) {
+      var r = line.split(';').map(function(f){ return f.trim(); });
+      if (r.length < 7) return;
+
+      var noteRaw = (r[0] || '').trim();
+      var isin    = (r[1] || '').trim();
+      var codeZB  = (r[2] || '').trim();
+      var simbolo = (r[3] || '').trim();
+      var nome    = (r[4] || '').trim();
+      var valuta  = (r[5] || 'EUR').trim();
+      var qty     = parseNum(r[6]);
+      var pmc     = parseNum(r[7]);
+
+      if (!nome) return;
+
+      var tipoApp = TIPO_MAP[noteRaw.toLowerCase()] || 'azione';
+
+      // Polizza vita: nessuna quota, il valore e' il totale
+      if (tipoApp === 'polizza') {
+        qty = 1;
+      }
+
+      if (qty === null || qty <= 0) {
+        scartati.push({ nome: nome, motivo: 'Numero quote mancante o zero' });
+        return;
+      }
+      if (pmc === null || pmc <= 0) {
+        scartati.push({ nome: nome, motivo: 'Valore quota di carico mancante' });
+        return;
+      }
+
+      var dup = data.investimenti.titoli.find(function(t) {
+        return (isin   && t.isin   === isin)    ||
+               (codeZB && t.codeZB === codeZB)  ||
+               (simbolo && t.ticker === simbolo) ||
+               t.nome === nome;
+      });
+      if (dup) {
+        duplicati.push({ nome: nome, motivo: 'Gia\u2019 presente in portafoglio' });
+        return;
+      }
+
+      var ticker = null;
+      if (simbolo && !simbolo.match(/^[A-Z]{2}\d/)) {
+        ticker = simbolo; // azione o fondo (.F / 0P*), non certificate con ISIN come simbolo
+      }
+
+      var mercato = 'INT';
+      if (ticker) {
+        if (ticker.endsWith('.MI')) mercato = 'MIL';
+        else if (ticker.endsWith('.PA')) mercato = 'PAR';
+      }
+
+      var costoTotale = qty * pmc;
+
+      data.investimenti.titoli.push({
+        id: uid(), tipo: tipoApp, nome: nome,
+        ticker: ticker, codeZB: codeZB || null,
+        isin: isin || '', wkn: '',
+        mercato: mercato, valuta: valuta,
+        dataAcquisto: oggi,
+        quantita: qty, prezzoAcquisto: pmc,
+        cambio: 1, commissioni: 0, tasse: 0,
+        costoTotale: costoTotale, pmc: pmc,
+        prezzoAttuale: pmc, change: 0, changePct: 0,
+        currency: valuta, venduto: false,
+        note: 'Importato da Dati_Master (senza storico movimenti)',
+        operazioni: [{
+          data: oggi, tipo: 'acquisto', quantita: qty, prezzo: pmc,
+          cambio: 1, comm: 0, tasse: 0, costoTot: costoTotale,
+        }],
+      });
+
+      importati.push({ nome: nome, tipo: tipoApp, quantita: qty, pmc: pmc });
+    });
+
+    return { importati: importati, scartati: scartati, duplicati: duplicati };
   }
 
   function _parseTitoliCSV(text) {
