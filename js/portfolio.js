@@ -2131,16 +2131,25 @@ const Portfolio = (() => {
         var file = e.target.files[0];
         if (!file) { reject('Nessun file'); return; }
         try {
-          // Prova windows-1252 (necessario per Dati_Master con simbolo euro)
-          var buf  = await file.arrayBuffer();
-          var text = new TextDecoder('windows-1252').decode(buf);
+          // Decodifica robusta: prova latin-1 (iso-8859-1, sempre disponibile),
+          // che gestisce correttamente il byte 0x80 (€ windows-1252) senza errori.
+          // In caso di fallback usa file.text() (UTF-8 con replace).
+          var buf = await file.arrayBuffer();
+          var text;
+          try {
+            text = new TextDecoder('iso-8859-1').decode(buf);
+          } catch(_) {
+            text = await file.text();
+          }
 
-          // Auto-rilevamento formato dall'header:
-          // Dati_Master:          prima colonna = "Note", seconda = "ISIN"
-          // Formato movimenti:    ha colonne "Data", "Tipo", "Valore"
-          var firstLine = text.split('\n')[0].split(';').map(function(h){ return h.trim(); });
+          // Auto-rilevamento formato dall'header.
+          // Confrontiamo i byte ASCII puri delle prime colonne —
+          // funziona indipendentemente dall'encoding perché i nomi
+          // delle colonne sono ASCII puro.
+          var firstLine = text.replace(/\r/g, '').split('\n')[0];
+          var cols = firstLine.split(';').map(function(h){ return h.trim(); });
           var result;
-          if (firstLine[0] === 'Note' && firstLine[1] === 'ISIN') {
+          if (cols[0] === 'Note' && cols[1] === 'ISIN') {
             result = _parseDatiMaster(text);
           } else {
             result = _parseTitoliCSV(text);
@@ -2176,7 +2185,7 @@ const Portfolio = (() => {
 
     function parseNum(s) {
       if (s == null || String(s).trim() === '') return null;
-      s = String(s).trim().replace(/[\u20ac]/g, '').trim();
+      s = String(s).trim().replace(/[\u0080\u20ac]/g, '').trim(); // rimuovi € (unicode e iso-8859-1)
       if (/^-?[\d.]+,\d+$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
       else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
       else s = s.replace(',', '.');
