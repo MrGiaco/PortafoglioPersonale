@@ -112,37 +112,43 @@ const Quotes = (() => {
     const cached = cache[`zb_${codeZB}`];
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) return cached;
 
-    const url = `https://www.zonebourse.com/charting/atDataFeed.php?codeZB=${codeZB}&type=chart&fields=Date,Close&nbdays=10`;
+    const url = `https://www.zonebourse.com/charting/atDataFeed.php?codeZB=${codeZB}&type=chart&fields=Date,Close`;
     const res  = await proxyFetch(url);
     const text = await res.text();
 
-    // Parse CSV: Date,Close — ordina per data crescente per sicurezza
-    const lines  = text.trim().split('\n')
-      .filter(l => l && !l.startsWith('Date'))
-      .sort((a, b) => {
-        const da = a.split(',')[0]?.trim() ?? '';
-        const db = b.split(',')[0]?.trim() ?? '';
-        return da.localeCompare(db);
-      });
-    if (lines.length === 0) throw new Error(`Nessun dato Zonebourse per ${codeZB}`);
+    // ZoneBourse restituisce due possibili formati:
+    // 1. JSON array: [[timestamp_ms, price], ...]  (formato attuale del proxy)
+    // 2. CSV:        Date,Close\n2024-01-15,980.50\n...
+    let price, prevClose, marketTime = Date.now();
 
-    // Prendi ultima e penultima riga (le più recenti)
-    const last   = parseLine(lines[lines.length - 1]);
-    const prev   = lines.length > 1 ? parseLine(lines[lines.length - 2]) : last;
+    const trimmed = text.trim();
+    if (trimmed.startsWith('[')) {
+      // Formato JSON array [[timestamp_ms, price], ...]
+      const data = JSON.parse(trimmed);
+      if (!data || data.length === 0) throw new Error(`Nessun dato Zonebourse per ${codeZB}`);
+      const last = data[data.length - 1];
+      const prev = data.length > 1 ? data[data.length - 2] : last;
+      price      = last[1];
+      prevClose  = prev[1];
+      marketTime = last[0]; // già in ms
+    } else {
+      // Formato CSV: Date,Close
+      const lines = trimmed.split('\n').filter(l => l && !l.startsWith('Date'));
+      if (lines.length === 0) throw new Error(`Nessun dato Zonebourse per ${codeZB}`);
+      const last = parseLine(lines[lines.length - 1]);
+      const prev = lines.length > 1 ? parseLine(lines[lines.length - 2]) : last;
+      price     = last.close;
+      prevClose = prev.close;
+      if (last.date) {
+        const d = last.date.includes('-')
+          ? new Date(last.date + 'T00:00:00')
+          : (() => { const p = last.date.split('/'); return new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`); })();
+        if (!isNaN(d.getTime())) marketTime = d.getTime();
+      }
+    }
 
-    const price     = last.close;
-    const prevClose = prev.close;
     const change    = price - prevClose;
     const changePct = prevClose !== 0 ? (change / prevClose) * 100 : 0;
-
-    // Converti data ZoneBourse (YYYY-MM-DD o DD/MM/YYYY) in timestamp
-    let marketTime = Date.now();
-    if (last.date) {
-      const d = last.date.includes('-')
-        ? new Date(last.date + 'T00:00:00')
-        : (() => { const p = last.date.split('/'); return new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`); })();
-      if (!isNaN(d.getTime())) marketTime = d.getTime();
-    }
 
     const quote = {
       ticker:    `zb_${codeZB}`,
@@ -168,16 +174,29 @@ const Quotes = (() => {
     };
   }
 
-  // Storico Zonebourse (per grafici)
+  // Storico Zonebourse (per grafici) — gestisce JSON array e CSV
   async function fetchZonebourseHistory(codeZB) {
-    const url = `https://www.zonebourse.com/charting/atDataFeed.php?codeZB=${codeZB}&type=chart&fields=Date,Close&nbdays=10`;
+    const url = `https://www.zonebourse.com/charting/atDataFeed.php?codeZB=${codeZB}&type=chart&fields=Date,Close`;
     const res  = await proxyFetch(url);
     const text = await res.text();
 
-    return text.trim().split('\n')
-      .filter(l => l && !l.startsWith('Date'))
-      .map(parseLine)
-      .filter(p => p.close > 0);
+    const trimmed = text.trim();
+    if (trimmed.startsWith('[')) {
+      // Formato JSON array [[timestamp_ms, price], ...]
+      const data = JSON.parse(trimmed);
+      return data
+        .filter(r => r[1] > 0)
+        .map(r => ({
+          date:  new Date(r[0]).toISOString().slice(0, 10),
+          close: r[1],
+        }));
+    } else {
+      // Formato CSV
+      return trimmed.split('\n')
+        .filter(l => l && !l.startsWith('Date'))
+        .map(parseLine)
+        .filter(p => p.close > 0);
+    }
   }
 
   // =============================================
@@ -243,10 +262,11 @@ const Quotes = (() => {
     // Salva su Drive
     await Drive.save(Portfolio.getData());
 
-    // Aggiorna timestamp
-    const now = new Date().toLocaleString('it-IT');
-    const el  = document.getElementById('lastQuoteUpdate');
-    if (el) el.textContent = `Ultimo aggiornamento: ${now}`;
+    // Aggiorna timestamp — salva in localStorage cosi renderImpostazioni() lo legge correttamente
+    const tsNow = Date.now();
+    localStorage.setItem('pp_last_quote_ts', tsNow);
+    const el = document.getElementById('lastQuoteUpdate');
+    if (el) el.textContent = 'Ultimo aggiornamento: ' + new Date(tsNow).toLocaleString('it-IT');
 
     App.showToast(`${updated}/${titoli.length} quotazioni aggiornate`, updated > 0 ? 'success' : 'warning');
   }
