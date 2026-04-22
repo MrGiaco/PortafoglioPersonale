@@ -112,15 +112,21 @@ const Quotes = (() => {
     const cached = cache[`zb_${codeZB}`];
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) return cached;
 
-    const url = `https://www.zonebourse.com/charting/atDataFeed.php?codeZB=${codeZB}&type=chart&fields=Date,Close`;
+    const url = `https://www.zonebourse.com/charting/atDataFeed.php?codeZB=${codeZB}&type=chart&fields=Date,Close&nbdays=10`;
     const res  = await proxyFetch(url);
     const text = await res.text();
 
-    // Parse CSV: Date,Close
-    const lines  = text.trim().split('\n').filter(l => l && !l.startsWith('Date'));
+    // Parse CSV: Date,Close — ordina per data crescente per sicurezza
+    const lines  = text.trim().split('\n')
+      .filter(l => l && !l.startsWith('Date'))
+      .sort((a, b) => {
+        const da = a.split(',')[0]?.trim() ?? '';
+        const db = b.split(',')[0]?.trim() ?? '';
+        return da.localeCompare(db);
+      });
     if (lines.length === 0) throw new Error(`Nessun dato Zonebourse per ${codeZB}`);
 
-    // Prendi ultima e penultima riga
+    // Prendi ultima e penultima riga (le più recenti)
     const last   = parseLine(lines[lines.length - 1]);
     const prev   = lines.length > 1 ? parseLine(lines[lines.length - 2]) : last;
 
@@ -164,7 +170,7 @@ const Quotes = (() => {
 
   // Storico Zonebourse (per grafici)
   async function fetchZonebourseHistory(codeZB) {
-    const url = `https://www.zonebourse.com/charting/atDataFeed.php?codeZB=${codeZB}&type=chart&fields=Date,Close`;
+    const url = `https://www.zonebourse.com/charting/atDataFeed.php?codeZB=${codeZB}&type=chart&fields=Date,Close&nbdays=10`;
     const res  = await proxyFetch(url);
     const text = await res.text();
 
@@ -237,11 +243,10 @@ const Quotes = (() => {
     // Salva su Drive
     await Drive.save(Portfolio.getData());
 
-    // Aggiorna timestamp — salva in localStorage cosi renderImpostazioni() lo legge correttamente
-    const tsNow = Date.now();
-    localStorage.setItem('pp_last_quote_ts', tsNow);
-    const el = document.getElementById('lastQuoteUpdate');
-    if (el) el.textContent = 'Ultimo aggiornamento: ' + new Date(tsNow).toLocaleString('it-IT');
+    // Aggiorna timestamp
+    const now = new Date().toLocaleString('it-IT');
+    const el  = document.getElementById('lastQuoteUpdate');
+    if (el) el.textContent = `Ultimo aggiornamento: ${now}`;
 
     App.showToast(`${updated}/${titoli.length} quotazioni aggiornate`, updated > 0 ? 'success' : 'warning');
   }
