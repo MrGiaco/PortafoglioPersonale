@@ -200,6 +200,59 @@ const Quotes = (() => {
   }
 
   // =============================================
+  // BORSA ITALIANA (fondi senza ticker Yahoo/ZoneBourse)
+  // Parser HTML della pagina fondo su borsaitaliana.it
+  // =============================================
+
+  async function fetchBorsaItaliana(codeBIT) {
+    const cached = cache[`bit_${codeBIT}`];
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) return cached;
+
+    const url = `https://www.borsaitaliana.it/borsa/fondi/dettaglio/${codeBIT}.html`;
+    const res  = await proxyFetch(url);
+    const html = await res.text();
+
+    // La tabella Andamento ha la struttura:
+    // <th>Ultima</th><th>Precedente</th><th>Valuta</th><th>Data</th><th>Variazione</th>
+    // <td>126,64</td><td>126,21</td><td>EUR</td><td>01/04/26</td><td>+0,34</td>
+    const rowMatch = html.match(
+      /Ultima[\s\S]{0,800}?<tr[^>]*>\s*<td[^>]*>([\d,]+)<\/td>\s*<td[^>]*>([\d,]+)<\/td>\s*<td[^>]*>[A-Z]+<\/td>\s*<td[^>]*>(\d{2}\/\d{2}\/\d{2})<\/td>\s*<td[^>]*>([+-]?[\d,]+)<\/td>/
+    );
+
+    if (!rowMatch) throw new Error(`Dati Borsa Italiana non trovati per ${codeBIT}`);
+
+    const price     = parseFloat(rowMatch[1].replace(',', '.'));
+    const prevClose = parseFloat(rowMatch[2].replace(',', '.'));
+    const dateStr   = rowMatch[3]; // DD/MM/YY
+    const change    = price - prevClose;
+    const changePct = prevClose !== 0 ? (change / prevClose) * 100 : 0;
+
+    // Converti DD/MM/YY in timestamp
+    let marketTime = Date.now();
+    if (dateStr) {
+      const p = dateStr.split('/');
+      const d = new Date(`20${p[2]}-${p[1]}-${p[0]}T00:00:00`);
+      if (!isNaN(d.getTime())) marketTime = d.getTime();
+    }
+
+    const quote = {
+      ticker:     `bit_${codeBIT}`,
+      codeBIT,
+      price:      round(price),
+      change:     round(change),
+      changePct:  round(changePct),
+      prevClose:  round(prevClose),
+      currency:   'EUR',
+      timestamp:  Date.now(),
+      marketTime: marketTime,
+      source:     'borsaitaliana',
+    };
+
+    cache[`bit_${codeBIT}`] = quote;
+    return quote;
+  }
+
+  // =============================================
   // API UNIFICATA
   // =============================================
 
@@ -214,17 +267,21 @@ const Quotes = (() => {
       if (titolo.tipo === 'polizza') {
         return { price: titolo.prezzoAttuale || titolo.pmc || titolo.prezzoAcquisto, change: 0, changePct: 0, source: 'manuale' };
       }
-      // codeZB vero (es. I10714, I10895) → ZoneBourse
+      // codeBIT → Borsa Italiana (fondi senza ticker Yahoo né codeZB)
+      if (titolo.codeBIT) {
+        return await fetchBorsaItaliana(titolo.codeBIT);
+      }
+      // codeZB → ZoneBourse (certificates)
       if (titolo.codeZB) {
         return await fetchZonebourse(titolo.codeZB);
       }
-      // ticker (azioni e fondi .F) → Yahoo Finance
+      // ticker → Yahoo Finance (azioni e fondi .F)
       if (titolo.ticker) {
         return await fetchYahoo(titolo.ticker);
       }
       throw new Error('Nessun identificativo titolo');
     } catch (err) {
-      console.warn(`Quote error per ${titolo.ticker || titolo.codeZB}:`, err.message);
+      console.warn(`Quote error per ${titolo.ticker || titolo.codeZB || titolo.codeBIT}:`, err.message);
       return null;
     }
   }
