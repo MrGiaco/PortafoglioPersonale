@@ -101,11 +101,12 @@ const Charts = (() => {
     destroyChart('patrimonio');
 
     const data    = Portfolio.getData();
-    const movimenti = data.conto.movimenti || [];
+    // Aggrega movimenti di tutti i conti per il grafico patrimonio
+    const movimenti = data.conti.reduce(function(acc,c){return acc.concat(c.movimenti||[]);}, []);
 
     // Ricostruisce storico saldo cumulativo per data
     // FIX: parte dal saldoIniziale (non da 0 o dal campo legacy data.conto.saldo)
-    const saldoIniziale = data.conto.saldoIniziale || 0;
+    const saldoIniziale = data.conti.reduce(function(s,c){return s+(c.saldoIniziale||0);},0);
     const sorted = [...movimenti].sort((a, b) => new Date(a.data) - new Date(b.data));
     let running = saldoIniziale;
     const dateMap = {};
@@ -278,7 +279,8 @@ const Charts = (() => {
     destroyChart('entrateUscite');
 
     const data      = Portfolio.getData();
-    const movimenti = (data.conto.movimenti || []).filter(m => {
+    const allMov2 = data.conti.reduce(function(acc,c){return acc.concat(c.movimenti||[]);}, []);
+    const movimenti = allMov2.filter(m => {
       if (!anno) return true;
       return m.data?.startsWith(String(anno));
     });
@@ -338,8 +340,8 @@ const Charts = (() => {
 
     const data = Portfolio.getData();
     const spese = [
-      ...(data.conto.movimenti || []).filter(m => m.tipo === 'uscita'),
-      ...(data.carta.spese || []),
+      ...allMov2.filter(m => m.tipo === 'uscita'),
+      ...data.carte.reduce(function(acc,c){return acc.concat(c.spese||[]);}, []),
     ].filter(s => !anno || s.data?.startsWith(String(anno)));
 
     const gruppi = {};
