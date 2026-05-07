@@ -574,7 +574,7 @@ const App = (() => {
 
   async function cancellaMovimentiConto() {
     const data = Portfolio.getData();
-    const n = (data.conto.movimenti || []).length;
+    const n = data.conti.reduce((s,c) => s + (c.movimenti||[]).length, 0);
     if (n === 0) { showToast('Nessun movimento da cancellare', 'info'); return; }
     const ok = await Dialog.confirmDanger(
       '<i class="ti ti-building-bank" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
@@ -589,7 +589,7 @@ const App = (() => {
 
   async function cancellaSpeseCarta() {
     const data = Portfolio.getData();
-    const n = (data.carta.spese || []).length;
+    const n = data.carte.reduce((s,c) => s + (c.spese||[]).length, 0);
     if (n === 0) { showToast('Nessuna spesa da cancellare', 'info'); return; }
     const ok = await Dialog.confirmDanger(
       '<i class="ti ti-credit-card" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
@@ -776,8 +776,8 @@ const Report = (() => {
     if (!container) return;
 
     const data      = Portfolio.getData();
-    const movimenti = (data.conto.movimenti || []).filter(m => m.data?.startsWith(String(anno)));
-    const spese     = (data.carta.spese     || []).filter(s => s.data?.startsWith(String(anno)));
+    const movimenti = data.conti.reduce((acc,c) => acc.concat((c.movimenti||[]).filter(m => m.data?.startsWith(String(anno)))), []);
+    const spese     = data.carte.reduce((acc,c) => acc.concat((c.spese||[]).filter(s => s.data?.startsWith(String(anno)))), []);
 
     const mesi = Array.from({ length: 12 }, (_, i) => {
       const d = new Date(anno, i, 1);
@@ -820,12 +820,12 @@ const Report = (() => {
     const data = Portfolio.getData();
     const rows = [['Data','Tipo','Descrizione','Categoria','Importo','Note']];
 
-    (data.conto.movimenti || [])
+    data.conti.reduce((acc,c)=>acc.concat(c.movimenti||[]),[])
       .filter(m => m.data?.startsWith(String(anno)))
       .sort((a, b) => new Date(a.data) - new Date(b.data))
       .forEach(m => rows.push([m.data, m.tipo, m.descrizione, m.categoria, m.importo, m.note || '']));
 
-    (data.carta.spese || [])
+    data.carte.reduce((acc,c)=>acc.concat(c.spese||[]),[])
       .filter(s => s.data?.startsWith(String(anno)))
       .sort((a, b) => new Date(a.data) - new Date(b.data))
       .forEach(s => rows.push([s.data, 'spesa-carta', s.descrizione, s.categoria, -s.importo, s.addebitoData || '']));
