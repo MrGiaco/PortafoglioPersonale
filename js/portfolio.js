@@ -9,12 +9,42 @@ const Portfolio = (() => {
   // STRUTTURA DATI
   // =============================================
 
+  // Struttura dati v2 — multi-conto
+  // conti[]: ogni conto ha id, nome, banca, iban, colore, saldoIniziale, movimenti
+  // carte[]: ogni carta ha id, contoId (conto di addebito), holder, ecc.
   let data = {
-    conto: { saldoIniziale: 0, saldo: 0, movimenti: [] },
-    carta: { holder:'', lastDigits:'0000', expiry:'', plafond:5000, giornoAddebito:15, spese:[] },
+    conti: [
+      { id:'conto_1', nome:'Conto Principale', banca:'Banca', iban:'',
+        colore:'#2563EB', saldoIniziale:0, movimenti:[] }
+    ],
+    carte: [
+      { id:'carta_1', contoId:'conto_1', holder:'', lastDigits:'0000',
+        expiry:'', plafond:5000, giornoAddebito:15, spese:[] }
+    ],
     investimenti: { titoli:[] },
     impostazioni: { ultimoAggiornamento: null },
   };
+
+  // ID del conto e della carta attualmente selezionati nella UI
+  var _contoAttivoId = null;  // null = usa il primo
+  var _cartaAttivaId = null;  // null = usa la prima
+
+  // Accessor helpers — restituiscono sempre il conto/carta attivo
+  function getContoAttivo() {
+    var id = _contoAttivoId;
+    var c  = id ? data.conti.find(function(c){ return c.id === id; }) : null;
+    return c || data.conti[0];
+  }
+  function getCartaAttiva() {
+    var id = _cartaAttivaId;
+    var c  = id ? data.carte.find(function(c){ return c.id === id; }) : null;
+    return c || data.carte[0];
+  }
+  function setContoAttivoId(id) {
+    _contoAttivoId = id;
+    renderConto();
+    renderDashboard();
+  }
 
   let movTipo     = 'entrata';
   let activeTab   = 'azioni';
@@ -373,7 +403,7 @@ const Portfolio = (() => {
       if (isCartaDiCredito) {
         var importoCarta = Math.abs(importo);
         // Dedup: data + descrizione + importo
-        var isDup = data.carta.spese.some(function(s) {
+        var isDup = getCartaAttiva().spese.some(function(s) {
           return s.data === dataStr && s.descrizione === desc && s.importo === importoCarta;
         });
         if (isDup) {
@@ -381,7 +411,7 @@ const Portfolio = (() => {
           scartate.push({ riga: rowIdx+1, desc: desc, data: dataStr, importo: importoCarta, motivo: 'Duplicato (già presente)' });
           return;
         }
-        data.carta.spese.push({
+        getCartaAttiva().spese.push({
           id: uid(), data: dataStr, descrizione: desc,
           importo: importoCarta, categoria: catKey,
           addebitoData: '', note: dettagli !== desc ? dettagli : '',
@@ -392,7 +422,7 @@ const Portfolio = (() => {
         var tipo = importo >= 0 ? 'entrata' : 'uscita';
         var importoConto = Math.abs(importo);
         // Dedup: data + descrizione + importo
-        var isDupC = data.conto.movimenti.some(function(m) {
+        var isDupC = getContoAttivo().movimenti.some(function(m) {
           return m.data === dataStr && m.descrizione === desc && m.importo === importoConto;
         });
         if (isDupC) {
@@ -405,7 +435,7 @@ const Portfolio = (() => {
           importo: importoConto, categoria: catKey,
           note: dettagli !== desc ? dettagli.slice(0, 120) : '',
         };
-        data.conto.movimenti.push(mov);
+        getContoAttivo().movimenti.push(mov);
         importatiConto++;
       }
     });
@@ -518,7 +548,7 @@ const Portfolio = (() => {
       // solo la parte operazione (es. "ANTICA TRATTORIA DUE S" matcha
       // "Antica Trattoria Due S — Antica Trattoria Due S Sandrigo").
       var descUpper = desc.toUpperCase();
-      var isDup = data.carta.spese.some(function(s) {
+      var isDup = getCartaAttiva().spese.some(function(s) {
         var sBase = s.descrizione.toUpperCase().split(' — ')[0].trim();
         return s.data === dataValuta &&
                (sBase === descUpper || s.descrizione.toUpperCase() === descUpper) &&
@@ -535,7 +565,7 @@ const Portfolio = (() => {
         // oppure lo tracciamo come spesa negativa nella carta
         // Scelta: lo aggiungiamo comunque come spesa carta con importo negativo indicativo
         // ma lo marchiamo nella nota
-        data.carta.spese.push({
+        getCartaAttiva().spese.push({
           id: uid(), data: dataValuta,
           descrizione: desc,
           importo: importo,
@@ -544,7 +574,7 @@ const Portfolio = (() => {
           note: 'Rimborso / accredito carta',
         });
       } else {
-        data.carta.spese.push({
+        getCartaAttiva().spese.push({
           id: uid(), data: dataValuta,
           descrizione: desc,
           importo: importo,
@@ -570,31 +600,148 @@ const Portfolio = (() => {
 
   function loadData(incoming) {
     if (!incoming) return;
-    if (incoming.conto) {
-      data.conto = Object.assign({ saldoIniziale: 0 }, data.conto, incoming.conto);
-      data.conto.saldo = 0; // campo legacy — il saldo si ricalcola dai movimenti
+
+    // ---- Migrazione v1 → v2 ----
+    // Se i dati salvati hanno ancora 'conto' e 'carta' singoli (formato vecchio),
+    // li convertiamo automaticamente nel nuovo formato multi-conto.
+    if (incoming.conto && !incoming.conti) {
+      var vecchioConto = Object.assign({ saldoIniziale: 0 }, incoming.conto);
+      vecchioConto.saldo = 0; // campo legacy
+      incoming = Object.assign({}, incoming, {
+        conti: [{
+          id:           'conto_1',
+          nome:         'Conto Principale',
+          banca:        'Banca',
+          iban:         '',
+          colore:       '#2563EB',
+          saldoIniziale: vecchioConto.saldoIniziale || 0,
+          movimenti:    vecchioConto.movimenti || [],
+        }],
+        carte: incoming.carta ? [{
+          id:            'carta_1',
+          contoId:       'conto_1',
+          holder:        incoming.carta.holder        || '',
+          lastDigits:    incoming.carta.lastDigits    || '0000',
+          expiry:        incoming.carta.expiry        || '',
+          plafond:       incoming.carta.plafond       || 5000,
+          giornoAddebito: incoming.carta.giornoAddebito || 15,
+          spese:         incoming.carta.spese         || [],
+        }] : data.carte,
+      });
+      delete incoming.conto;
+      delete incoming.carta;
     }
-    if (incoming.carta)        data.carta        = Object.assign({}, data.carta,        incoming.carta);
+
+    // ---- Caricamento v2 ----
+    if (incoming.conti && incoming.conti.length > 0) {
+      data.conti = incoming.conti;
+    }
+    if (incoming.carte && incoming.carte.length > 0) {
+      data.carte = incoming.carte;
+    }
     if (incoming.investimenti) data.investimenti = Object.assign({}, data.investimenti, incoming.investimenti);
     if (incoming.impostazioni) data.impostazioni = Object.assign({}, data.impostazioni, incoming.impostazioni);
+
+    // Assicura che il conto/carta attivo sia valido
+    if (!data.conti.find(function(c){ return c.id === _contoAttivoId; })) _contoAttivoId = null;
+    if (!data.carte.find(function(c){ return c.id === _cartaAttivaId; })) _cartaAttivoId = null;
+
     renderAll();
   }
 
   function getData() { return JSON.parse(JSON.stringify(data)); }
 
-  // Saldo reale = saldo iniziale + movimenti
-  function getSaldoConto() {
-    var delta = data.conto.movimenti.reduce(function(s, m) {
+  // Saldo reale di un conto = saldoIniziale + somma movimenti
+  function getSaldoConto(contoId) {
+    var c = contoId
+      ? data.conti.find(function(c){ return c.id === contoId; })
+      : getContoAttivo();
+    if (!c) return 0;
+    var delta = (c.movimenti || []).reduce(function(s, m) {
       return m.tipo === 'entrata' ? s + m.importo : s - m.importo;
     }, 0);
-    return (data.conto.saldoIniziale || 0) + delta;
+    return (c.saldoIniziale || 0) + delta;
+  }
+
+  // Saldo totale aggregato di tutti i conti
+  function getSaldoTotaleConti() {
+    return data.conti.reduce(function(tot, c) {
+      return tot + getSaldoConto(c.id);
+    }, 0);
   }
 
   function saveSaldoIniziale(valore) {
-    data.conto.saldoIniziale = valore;
+    getContoAttivo().saldoIniziale = valore;
     renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
     App.showToast('Saldo iniziale salvato', 'success');
   }
+  // Aggiorna il <select> dei conti nell'UI
+  function setCartaAttivaId(id) {
+    _cartaAttivaId = id;
+    renderCarta();
+  }
+
+  function _aggiornaSelettoreCarte() {
+    var sel  = $('cartaSelector');
+    var wrap = $('cartaSelectorWrap');
+    if (!sel) return;
+    if (wrap) wrap.style.display = data.carte.length > 1 ? 'block' : 'none';
+    var attiva = getCartaAttiva();
+    sel.innerHTML = data.carte.map(function(c) {
+      var conto = data.conti.find(function(cc){ return cc.id === c.contoId; });
+      var contoLabel = conto ? ' · ' + escHtml(conto.nome) : '';
+      var label = escHtml(c.holder || ('•••• ' + (c.lastDigits || '0000'))) + contoLabel;
+      return '<option value="' + c.id + '"' + (c.id === attiva.id ? ' selected' : '') + '>' + label + '</option>';
+    }).join('');
+  }
+
+  function _aggiornaSelettoreConti() {
+    var sel = $('contoSelector');
+    var wrap = $('contoSelectorWrap');
+    if (!sel) return;
+    // Mostra il selettore solo se ci sono più conti
+    if (wrap) wrap.style.display = data.conti.length > 1 ? 'block' : 'none';
+    var attivo = getContoAttivo();
+    sel.innerHTML = data.conti.map(function(c) {
+      return '<option value="' + c.id + '"' + (c.id === attivo.id ? ' selected' : '') + '>' +
+             escHtml(c.nome) + ' — ' + formatEur(getSaldoConto(c.id)) + '</option>';
+    }).join('');
+  }
+
+  // Salva un nuovo conto o modifica quello in editing
+  function salvaConto() {
+    var nome  = $('nuovoContoNome')  ? $('nuovoContoNome').value.trim()  : '';
+    var banca = $('nuovoContoBanca') ? $('nuovoContoBanca').value.trim() : '';
+    var iban  = $('nuovoContoIban')  ? $('nuovoContoIban').value.trim().replace(/\s/g,'') : '';
+    var saldo = parseFloat($('nuovoContoSaldo')  ? $('nuovoContoSaldo').value  : '0') || 0;
+    var col   = $('nuovoContoColore')? $('nuovoContoColore').value : '#2563EB';
+    if (!nome) { App.showToast('Inserisci il nome del conto', 'warning'); return; }
+
+    var editId = $('nuovoContoNome') && $('nuovoContoNome').dataset.editId;
+    if (editId) {
+      // Modifica conto esistente
+      var c = data.conti.find(function(c){ return c.id === editId; });
+      if (c) { c.nome = nome; c.banca = banca; c.iban = iban; c.colore = col; c.saldoIniziale = saldo; }
+    } else {
+      // Nuovo conto
+      var newId = 'conto_' + uid();
+      data.conti.push({
+        id: newId, nome: nome, banca: banca, iban: iban,
+        colore: col, saldoIniziale: saldo, movimenti: []
+      });
+      // Crea carta associata
+      data.carte.push({
+        id: 'carta_' + uid(), contoId: newId,
+        holder:'', lastDigits:'0000', expiry:'', plafond:5000, giornoAddebito:15, spese:[]
+      });
+      _contoAttivoId = newId; // seleziona automaticamente il nuovo conto
+    }
+    Modals.close();
+    _aggiornaSelettoreConti();
+    renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
+    App.showToast((editId ? 'Conto aggiornato' : 'Conto aggiunto'), 'success');
+  }
+
   function getTitoli() { return data.investimenti.titoli.filter(function(t){ return !t.venduto; }); }
 
   function updateQuote(id, quote) {
@@ -631,7 +778,7 @@ const Portfolio = (() => {
     var el = $('dashDate');
     if (el) el.textContent = new Date().toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
-    var saldoConto  = getSaldoConto();
+    var saldoConto  = getSaldoTotaleConti(); // somma di tutti i conti
     var totInv      = getTotaleInvestimenti();
     var debitoCarta = getDebitoCarta();
     var totale      = saldoConto + totInv - debitoCarta;
@@ -647,7 +794,12 @@ const Portfolio = (() => {
   function renderUltimeTransazioni() {
     var container = $('lastTransazioni');
     if (!container) return;
-    var all = data.conto.movimenti.slice().sort(function(a,b){ return new Date(b.data)-new Date(a.data); }).slice(0,5);
+    // Aggrega ultime transazioni da tutti i conti
+    var all = data.conti.reduce(function(acc, c) {
+      return acc.concat((c.movimenti || []).map(function(m) {
+        return Object.assign({}, m, { _contoNome: c.nome, _contoColore: c.colore });
+      }));
+    }, []).sort(function(a,b){ return new Date(b.data)-new Date(a.data); }).slice(0,5);
     container.innerHTML = all.length ? all.map(function(m){ return transactionHTML(m, false); }).join('') : emptyState('inbox','Nessuna transazione');
   }
 
@@ -663,9 +815,14 @@ const Portfolio = (() => {
   var _contoFilterMese = '';
 
   function renderConto() {
-    setEl('contoSaldo', formatEur(getSaldoConto()));
+    _aggiornaSelettoreConti();
+    var conto = getContoAttivo();
+    setEl('contoSaldo', formatEur(getSaldoConto(conto.id)));
+    // Aggiorna selettore conto se presente
+    var sel = $('contoSelector');
+    if (sel && sel.value !== conto.id) sel.value = conto.id;
     var now = new Date();
-    var meseMov = data.conto.movimenti.filter(function(m){
+    var meseMov = (conto.movimenti || []).filter(function(m){
       var d = new Date(m.data);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
@@ -697,7 +854,7 @@ const Portfolio = (() => {
     var search = ($('contoSearch') ? $('contoSearch').value : '').toLowerCase();
     var tipo   = _contoFilterTipo;
     var mese   = _contoFilterMese;
-    var list   = data.conto.movimenti.slice();
+    var list   = (getContoAttivo().movimenti || []).slice();
     if (search) list = list.filter(function(m){ return m.descrizione.toLowerCase().includes(search) || (m.note||'').toLowerCase().includes(search); });
     if (tipo)   list = list.filter(function(m){ return m.tipo === tipo; });
     if (mese)   list = list.filter(function(m){ return m.data.startsWith(mese); });
@@ -725,7 +882,7 @@ const Portfolio = (() => {
     var note    = $('movNote')        ? $('movNote').value.trim() : '';
     if (!data_m || !desc || isNaN(importo) || importo <= 0) { App.showToast('Compila tutti i campi obbligatori','warning'); return; }
     var mov = { id:uid(), data:data_m, tipo:movTipo, descrizione:desc, importo:importo, categoria:cat, note:note };
-    data.conto.movimenti.push(mov);
+    getContoAttivo().movimenti.push(mov);
     _editingMovimento = null; // salvataggio riuscito, niente rollback
     Modals.close();
     renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
@@ -733,7 +890,7 @@ const Portfolio = (() => {
   }
 
   async function confirmDeleteMovimento(id) {
-    var mov = data.conto.movimenti.find(function(m){ return m.id === id; });
+    var mov = getContoAttivo().movimenti.find(function(m){ return m.id === id; });
     if (!mov) return;
     var ok = await Dialog.confirmDanger(
       '<i class="ti ti-trash" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
@@ -751,7 +908,7 @@ const Portfolio = (() => {
   }
 
   async function confirmDeleteSpesaCarta(id) {
-    var spesa = data.carta.spese.find(function(s){ return s.id === id; });
+    var spesa = getCartaAttiva().spese.find(function(s){ return s.id === id; });
     if (!spesa) return;
     var ok = await Dialog.confirmDanger(
       '<i class="ti ti-trash" style="color:var(--danger);font-size:22px;display:block;margin-bottom:10px"></i>' +
@@ -768,18 +925,20 @@ const Portfolio = (() => {
   }
 
   function deleteMovimento(id) {
-    var idx = data.conto.movimenti.findIndex(function(m){ return m.id === id; });
+    var conto = getContoAttivo();
+    var idx = conto.movimenti.findIndex(function(m){ return m.id === id; });
     if (idx === -1) return;
-    data.conto.movimenti.splice(idx, 1);
+    conto.movimenti.splice(idx, 1);
     renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
     App.showToast('Movimento eliminato','info');
   }
 
   function editMovimento(id) {
-    var mov = data.conto.movimenti.find(function(m){ return m.id === id; });
+    var conto = getContoAttivo();
+    var mov = conto.movimenti.find(function(m){ return m.id === id; });
     if (!mov) return;
     _editingMovimento = JSON.parse(JSON.stringify(mov)); // salva copia per rollback
-    data.conto.movimenti = data.conto.movimenti.filter(function(m){ return m.id !== id; });
+    conto.movimenti = conto.movimenti.filter(function(m){ return m.id !== id; });
     Modals.open('nuovoMovimento');
     setTimeout(function(){
       if ($('movData'))        $('movData').value        = mov.data;
@@ -795,7 +954,7 @@ const Portfolio = (() => {
   function restoreEditingMovimento() {
     if (!_editingMovimento) return;
     var m = _editingMovimento;
-    data.conto.movimenti.push(m);
+    getContoAttivo().movimenti.push(m);
     _editingMovimento = null;
     renderConto(); renderDashboard();
   }
@@ -805,21 +964,23 @@ const Portfolio = (() => {
   // =============================================
 
   function renderCarta() {
-    setEl('ccLastDigits', data.carta.lastDigits || '0000');
-    setEl('ccHolder',     data.carta.holder     || '—');
-    setEl('ccExpiry',     (data.carta.expiry && data.carta.expiry.trim()) ? data.carta.expiry.trim() : '—');
+    _aggiornaSelettoreCarte();
+    var carta = getCartaAttiva();
+    setEl('ccLastDigits', carta.lastDigits || '0000');
+    setEl('ccHolder',     carta.holder     || '—');
+    setEl('ccExpiry',     (carta.expiry && carta.expiry.trim()) ? carta.expiry.trim() : '—');
     var now  = new Date();
-    var mese = data.carta.spese.filter(function(s){
+    var mese = carta.spese.filter(function(s){
       var d = new Date(s.data);
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
     var totMese = mese.reduce(function(s,sp){ return s+sp.importo; }, 0);
     setEl('cartaSpeseMese', formatEur(totMese));
-    var giorno   = data.carta.giornoAddebito || 15;
+    var giorno   = carta.giornoAddebito || 15;
     var prossima = new Date(now.getFullYear(), now.getMonth(), giorno);
     if (prossima <= now) prossima = new Date(now.getFullYear(), now.getMonth()+1, giorno);
     setEl('cartaScadenza', prossima.toLocaleDateString('it-IT'));
-    var pct = data.carta.plafond > 0 ? Math.min(100, (totMese / data.carta.plafond) * 100) : 0;
+    var pct = carta.plafond > 0 ? Math.min(100, (totMese / carta.plafond) * 100) : 0;
     setEl('cartaPlafond', pct.toFixed(1) + '%');
     filterSpese();
   }
@@ -827,7 +988,7 @@ const Portfolio = (() => {
   function filterSpese() {
     var search = ($('cartaSearch') ? $('cartaSearch').value : '').toLowerCase();
     var mese   = $('cartaFilterMonth') ? $('cartaFilterMonth').value : '';
-    var list   = data.carta.spese.slice();
+    var list   = getCartaAttiva().spese.slice();
     if (search) list = list.filter(function(s){ return s.descrizione.toLowerCase().includes(search); });
     if (mese)   list = list.filter(function(s){ return s.data.startsWith(mese); });
     list.sort(function(a,b){ return new Date(b.data)-new Date(a.data); });
@@ -843,23 +1004,24 @@ const Portfolio = (() => {
     var cat     = $('cartaCategoria')   ? $('cartaCategoria').value   : 'altro';
     var addebito= $('cartaAddebito')    ? $('cartaAddebito').value    : '';
     if (!data_s || !desc || isNaN(importo) || importo <= 0) { App.showToast('Compila tutti i campi obbligatori','warning'); return; }
-    data.carta.spese.push({ id:uid(), data:data_s, descrizione:desc, importo:importo, categoria:cat, addebitoData:addebito });
+    getCartaAttiva().spese.push({ id:uid(), data:data_s, descrizione:desc, importo:importo, categoria:cat, addebitoData:addebito });
     _editingSpesaCarta = null; // salvataggio riuscito, niente rollback
     Modals.close(); renderCarta(); saveAndSync();
     App.showToast('Spesa carta salvata','success');
   }
 
   function deleteSpesaCarta(id) {
-    data.carta.spese = data.carta.spese.filter(function(s){ return s.id !== id; });
+    getCartaAttiva().spese = getCartaAttiva().spese.filter(function(s){ return s.id !== id; });
     renderCarta(); saveAndSync();
     App.showToast('Spesa eliminata','info');
   }
 
   function editSpesaCarta(id) {
-    var spesa = data.carta.spese.find(function(s){ return s.id === id; });
+    var carta = getCartaAttiva();
+    var spesa = carta.spese.find(function(s){ return s.id === id; });
     if (!spesa) return;
     _editingSpesaCarta = JSON.parse(JSON.stringify(spesa)); // salva copia per rollback
-    data.carta.spese = data.carta.spese.filter(function(s){ return s.id !== id; });
+    carta.spese = carta.spese.filter(function(s){ return s.id !== id; });
     Modals.open('nuovaSpesaCarta');
     setTimeout(function(){
       if ($('cartaData'))        $('cartaData').value        = spesa.data;
@@ -873,24 +1035,74 @@ const Portfolio = (() => {
 
   function restoreEditingSpesaCarta() {
     if (!_editingSpesaCarta) return;
-    data.carta.spese.push(_editingSpesaCarta);
+    getCartaAttiva().spese.push(_editingSpesaCarta);
     _editingSpesaCarta = null;
     renderCarta();
   }
 
   function saveImpostazioniCarta() {
-    data.carta.holder         = $('ccHolderInput')    ? $('ccHolderInput').value.trim()  : '';
-    data.carta.lastDigits     = $('ccLastInput')      ? $('ccLastInput').value.trim()    : '0000';
-    data.carta.expiry         = $('ccExpiryInput')    ? $('ccExpiryInput').value.trim()  : '';
-    data.carta.plafond        = parseFloat($('ccPlafondInput')    ? $('ccPlafondInput').value    : '5000') || 5000;
-    data.carta.giornoAddebito = parseInt($('ccGiornoAddebito')    ? $('ccGiornoAddebito').value  : '15')   || 15;
+    var carta2 = getCartaAttiva();
+    carta2.holder         = $('ccHolderInput')    ? $('ccHolderInput').value.trim()  : '';
+    carta2.lastDigits     = $('ccLastInput')      ? $('ccLastInput').value.trim()    : '0000';
+    carta2.expiry         = $('ccExpiryInput')    ? $('ccExpiryInput').value.trim()  : '';
+    carta2.plafond        = parseFloat($('ccPlafondInput')    ? $('ccPlafondInput').value    : '5000') || 5000;
+    carta2.giornoAddebito = parseInt($('ccGiornoAddebito')    ? $('ccGiornoAddebito').value  : '15')   || 15;
     Modals.close(); renderCarta(); saveAndSync();
     App.showToast('Impostazioni carta salvate','success');
   }
 
+  // Apri modal configurazione carta precompilando i dati della carta attiva
+  function apriConfigurazioneCarta() {
+    var c = getCartaAttiva();
+    Modals.open('impostazioniCarta');
+    setTimeout(function(){
+      if ($('ccHolderInput'))    $('ccHolderInput').value    = c.holder     || '';
+      if ($('ccLastInput'))      $('ccLastInput').value      = c.lastDigits || '0000';
+      if ($('ccExpiryInput'))    $('ccExpiryInput').value    = c.expiry     || '';
+      if ($('ccPlafondInput'))   $('ccPlafondInput').value   = c.plafond    || 5000;
+      if ($('ccGiornoAddebito')) $('ccGiornoAddebito').value = c.giornoAddebito || 15;
+    }, 50);
+  }
+
+  // Popola il <select> dei conti nel modal nuovaCarta prima di aprirlo
+  function _popolaContiSelectNuovaCarta() {
+    var sel = $('nuovaCartaContoId');
+    if (!sel) return;
+    sel.innerHTML = data.conti.map(function(c) {
+      return '<option value="' + c.id + '">' + escHtml(c.nome) + '</option>';
+    }).join('');
+  }
+
+  // Salva una nuova carta collegata a un conto
+  function salvaCarta() {
+    var contoId = $('nuovaCartaContoId') ? $('nuovaCartaContoId').value : '';
+    var holder  = $('nuovaCartaHolder') ? $('nuovaCartaHolder').value.trim() : '';
+    var last    = $('nuovaCartaLast')   ? $('nuovaCartaLast').value.trim()   : '0000';
+    var expiry  = $('nuovaCartaExpiry') ? $('nuovaCartaExpiry').value.trim() : '';
+    var plafond = parseFloat($('nuovaCartaPlafond') ? $('nuovaCartaPlafond').value : '5000') || 5000;
+    var giorno  = parseInt($('nuovaCartaGiorno') ? $('nuovaCartaGiorno').value : '15') || 15;
+    if (!contoId) { App.showToast('Seleziona il conto di addebito', 'warning'); return; }
+    var editId = $('nuovaCartaHolder') && $('nuovaCartaHolder').dataset.editId;
+    if (editId) {
+      var c = data.carte.find(function(c){ return c.id === editId; });
+      if (c) { c.contoId = contoId; c.holder = holder; c.lastDigits = last; c.expiry = expiry; c.plafond = plafond; c.giornoAddebito = giorno; }
+    } else {
+      var newId = 'carta_' + uid();
+      data.carte.push({ id:newId, contoId:contoId, holder:holder, lastDigits:last,
+                        expiry:expiry, plafond:plafond, giornoAddebito:giorno, spese:[] });
+      _cartaAttivaId = newId;
+    }
+    Modals.close();
+    renderCarta(); renderDashboard(); saveAndSync();
+    App.showToast((editId ? 'Carta aggiornata' : 'Carta aggiunta'), 'success');
+  }
+
   function getDebitoCarta() {
     var oggi = new Date().toISOString().slice(0,10);
-    return data.carta.spese.filter(function(s){ return !s.addebitoData || s.addebitoData > oggi; }).reduce(function(s,sp){ return s+sp.importo; }, 0);
+    return data.carte.reduce(function(tot, c) {
+      return tot + c.spese.filter(function(s){ return !s.addebitoData || s.addebitoData > oggi; })
+                          .reduce(function(s,sp){ return s+sp.importo; }, 0);
+    }, 0);
   }
 
   // =============================================
@@ -1387,6 +1599,7 @@ const Portfolio = (() => {
     var nome    = $('titoloNome')          ? $('titoloNome').value.trim()          : '';
     var ticker  = $('titoloTicker')        ? $('titoloTicker').value.trim().toUpperCase() : '';
     var codeZB  = $('titoloCodeZB')        ? $('titoloCodeZB').value.trim()        : '';
+    var codeBIT = $('titoloCodeBIT')        ? $('titoloCodeBIT').value.trim()       : '';
     var isin    = $('titoloIsin')          ? $('titoloIsin').value.trim().toUpperCase() : '';
     var wkn     = $('titoloWkn')           ? $('titoloWkn').value.trim()           : '';
     var mercato = $('titoloMercato')       ? $('titoloMercato').value              : 'MIL';
@@ -1412,7 +1625,8 @@ const Portfolio = (() => {
     var titolo = {
       id: uid(), tipo: tipo, nome: nome,
       ticker: tipo !== 'certificate' ? ticker : null,
-      codeZB: tipo === 'certificate' ? codeZB : null,
+      codeZB:  tipo === 'certificate' ? codeZB  : null,
+      codeBIT: codeBIT || null,
       isin: isin, wkn: wkn, mercato: mercato, valuta: valuta,
       dataAcquisto: dataAcq, quantita: quantita,
       prezzoAcquisto: prezzo, cambio: cambio,
@@ -1438,7 +1652,7 @@ const Portfolio = (() => {
         existing.operazioni.push({ data:dataAcq, tipo:'acquisto', quantita:quantita, prezzo:prezzo, cambio:cambio, comm:comm, tasse:tasse, rateo:rateo, costoTot:costoTot });
         if (addebito) {
           var movAcq = { id:uid(), data:dataAcq, tipo:'uscita', descrizione:'Acquisto '+nome, importo:costoTot, categoria:'investimento', note:quantita+' × '+formatEur(prezzo,4)+' | Comm: '+formatEur(comm)+' | PMC: '+formatEur(existing.pmc,4) };
-          data.conto.movimenti.push(movAcq);
+          getContoAttivo().movimenti.push(movAcq);
         }
         _nuovoAcquistoId = null;
         Modals.close(); renderAll(); Charts.updateAll(); saveAndSync();
@@ -1452,7 +1666,7 @@ const Portfolio = (() => {
     if (_editingTitolo) {
       data.investimenti.titoli = data.investimenti.titoli.filter(function(x){ return x.id !== _editingTitolo.id; });
       if (_editingTitolo.costoTotale) {
-        data.conto.movimenti = data.conto.movimenti.filter(function(m){
+        getContoAttivo().movimenti = getContoAttivo().movimenti.filter(function(m){
           return !(m.descrizione === 'Acquisto ' + _editingTitolo.nome && m.data === _editingTitolo.dataAcquisto);
         });
       }
@@ -1466,7 +1680,7 @@ const Portfolio = (() => {
 
     if (addebito) {
       var mov = { id:uid(), data:dataAcq, tipo:'uscita', descrizione:'Acquisto '+nome, importo:costoTot, categoria:'investimento', note:quantita+' × '+formatEur(prezzo,4)+' | Comm: '+formatEur(comm)+' | PMC: '+formatEur(pmc,4) };
-      data.conto.movimenti.push(mov);
+      getContoAttivo().movimenti.push(mov);
     }
     Modals.close(); renderAll(); Charts.updateAll(); saveAndSync();
     App.showToast(nome + ' aggiunto al portafoglio','success');
@@ -1512,6 +1726,7 @@ const Portfolio = (() => {
       if($('titoloNome'))    $('titoloNome').value    = t.nome;
       if($('titoloTicker'))  $('titoloTicker').value  = t.ticker||'';
       if($('titoloCodeZB'))  $('titoloCodeZB').value  = t.codeZB||'';
+      if($('titoloCodeBIT')) $('titoloCodeBIT').value = t.codeBIT||'';
       if($('titoloIsin'))    $('titoloIsin').value     = t.isin||'';
       if($('titoloWkn'))     $('titoloWkn').value      = t.wkn||'';
       if($('titoloMercato')) $('titoloMercato').value  = t.mercato||'MIL';
@@ -2031,7 +2246,7 @@ const Portfolio = (() => {
         importo: importoTot, categoria: 'investimento',
         note: qta + ' × ' + formatEur(prez, 4),
       };
-      data.conto.movimenti.push(mov);
+      getContoAttivo().movimenti.push(mov);
 
       renderAll(); Charts.updateAll(); saveAndSync();
 
@@ -2102,12 +2317,12 @@ const Portfolio = (() => {
   }
 
   function cancellaMovimentiConto() {
-    data.conto.movimenti = [];
+    data.conti.forEach(function(c){ c.movimenti = []; });
     renderConto(); renderDashboard(); Charts.updateAll(); saveAndSync();
   }
 
   function cancellaSpeseCarta() {
-    data.carta.spese = [];
+    data.carte.forEach(function(c){ c.spese = []; });
     renderCarta(); renderDashboard(); saveAndSync();
   }
 
@@ -2431,7 +2646,7 @@ const Portfolio = (() => {
         var importoMov = Math.round(Math.abs(op.valore + (isAcquisto ? op.comm + op.tasse : -(op.comm + op.tasse))) * 100) / 100;
         if (importoMov <= 0) return;
 
-        var isDup = data.conto.movimenti.some(function(m) {
+        var isDup = getContoAttivo().movimenti.some(function(m) {
           return m.data === op.data && m.descrizione === descMov &&
                  Math.round(m.importo * 100) / 100 === importoMov;
         });
@@ -2442,7 +2657,7 @@ const Portfolio = (() => {
         if (op.comm  > 0) noteParts.push('Comm. '  + op.comm.toFixed(2)  + ' €');
         if (op.tasse > 0) noteParts.push('Tasse ' + op.tasse.toFixed(2) + ' €');
 
-        data.conto.movimenti.push({
+        getContoAttivo().movimenti.push({
           id: uid(), data: op.data, tipo: tipoMov,
           descrizione: descMov, importo: importoMov,
           categoria: 'investimento', note: noteParts.join(' | '),
@@ -2512,7 +2727,15 @@ const Portfolio = (() => {
 
     // ---- API pubblica ----
   return {
-    loadData, getData, getTitoli, updateQuote, getSaldoConto, saveSaldoIniziale,
+    loadData, getData, getTitoli, updateQuote,
+    getSaldoConto, getSaldoTotaleConti, saveSaldoIniziale,
+    getContoAttivo, getCartaAttiva, setContoAttivoId,
+    getConti: function(){ return data.conti; },
+    getCarte: function(){ return data.carte; },
+    salvaConto, salvaCartaImpostazioni: saveImpostazioniCarta,
+    setContoAttivoId, setCartaAttivaId, salvaCarta,
+    apriConfigurazioneCarta,
+    apriNuovaCarta: function(){ _popolaContiSelectNuovaCarta(); Modals.open('nuovaCarta'); },
     renderAll, renderDashboard, renderConto, renderCarta, renderInvestimenti,
     filterMovimenti, filterSpese, setContoFilter, setContoFilterMonth,
     setMovTipo, saveMovimento, deleteMovimento, editMovimento,
