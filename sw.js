@@ -1,5 +1,5 @@
 // Portafoglio Personale — Service Worker
-const CACHE_NAME = 'portafoglio-v57';
+const CACHE_NAME = 'portafoglio-v60';
 const CACHE_URLS = [
   '/PortafoglioPersonale/',
   '/PortafoglioPersonale/index.html',
