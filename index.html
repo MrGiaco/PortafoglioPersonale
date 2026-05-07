@@ -209,6 +209,15 @@
       <section id="section-conto" class="section hidden">
 
         <div class="section-sticky">
+
+        <!-- Selettore conto (visibile solo se ci sono più conti) -->
+        <div id="contoSelectorWrap" style="display:none;padding:10px 16px 0">
+          <select id="contoSelector" class="form-control"
+                  onchange="Portfolio.setContoAttivoId(this.value)"
+                  style="font-weight:600;font-size:13px">
+          </select>
+        </div>
+
         <div class="account-hero">
           <div class="account-hero__label">SALDO DISPONIBILE</div>
           <div class="account-hero__value" id="contoSaldo">€ 0,00</div>
@@ -255,6 +264,14 @@
       <section id="section-carta" class="section hidden">
 
         <div class="section-sticky">
+        <!-- Selettore carta (visibile solo se ci sono più carte) -->
+        <div id="cartaSelectorWrap" style="display:none;padding:10px 16px 0">
+          <select id="cartaSelector" class="form-control"
+                  onchange="Portfolio.setCartaAttivaId(this.value)"
+                  style="font-weight:600;font-size:13px">
+          </select>
+        </div>
+
         <div class="credit-card-visual">
           <div class="credit-card-bg">
             <div class="cc-top">
@@ -525,12 +542,14 @@
             <h3><i class="ti ti-building-bank"></i> Conto Corrente</h3>
             <p>Imposta il saldo iniziale del conto, ovvero il saldo reale prima di qualsiasi movimento registrato nell'app.</p>
             <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('impostazioniConto')"><i class="ti ti-pencil"></i> Configura Conto</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('nuovoConto')"><i class="ti ti-plus"></i> Aggiungi Conto</button>
           </div>
 
           <div class="settings-card">
             <h3><i class="ti ti-credit-card"></i> Carta di Credito</h3>
             <p>Configura i dati della tua carta di credito.</p>
-            <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('impostazioniCarta')"><i class="ti ti-pencil"></i> Configura Carta</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Portfolio.apriConfigurazioneCarta()"><i class="ti ti-pencil"></i> Configura Carta</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Portfolio.apriNuovaCarta()"><i class="ti ti-plus"></i> Aggiungi Carta</button>
           </div>
 
           <div class="settings-card">
@@ -814,6 +833,12 @@
               <input type="text" id="titoloCodeZB" class="form-control mono" placeholder="Es. 184320628" />
             </div>
             <div class="form-group">
+              <label>Codice Borsa Italiana <span class="label-hint">(opzionale)</span></label>
+              <input type="text" id="titoloCodeBIT" class="form-control mono" placeholder="Es. 2FADB869246" />
+            </div>
+          </div>
+          <div class="modal-row modal-r2">
+            <div class="form-group" style="flex:1">
               <label>Valuta</label>
               <select id="titoloValuta" class="form-control">
                 <option value="EUR">EUR €</option>
@@ -931,6 +956,44 @@
     </div>
 
     <!-- ===== MODAL: Impostazioni Conto ===== -->
+    <!-- ===== MODAL: Nuovo / Modifica Conto ===== -->
+    <div id="modal-nuovoConto" class="modal hidden">
+      <div class="modal-header">
+        <h3 id="nuovoContoTitle"><i class="ti ti-building-bank"></i> Aggiungi Conto</h3>
+        <button onclick="Modals.close()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nome conto *</label>
+          <input type="text" id="nuovoContoNome" class="form-control" placeholder="Es. Conto Fineco" />
+        </div>
+        <div class="form-group">
+          <label>Banca</label>
+          <input type="text" id="nuovoContoBanca" class="form-control" placeholder="Es. Fineco" />
+        </div>
+        <div class="form-group">
+          <label>IBAN <span class="label-hint">(opzionale)</span></label>
+          <input type="text" id="nuovoContoIban" class="form-control mono" placeholder="Es. IT60 X054 2811..." />
+        </div>
+        <div class="modal-row modal-r2">
+          <div class="form-group">
+            <label>Saldo iniziale (€)</label>
+            <input type="number" id="nuovoContoSaldo" class="form-control" placeholder="0" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label>Colore</label>
+            <input type="color" id="nuovoContoColore" class="form-control" value="#2563EB" style="height:40px;padding:4px" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--ghost" onclick="Modals.close()" style="flex:1">Annulla</button>
+        <button class="btn btn--primary" onclick="Portfolio.salvaConto()" style="flex:2">
+          <i class="ti ti-check"></i> Salva
+        </button>
+      </div>
+    </div>
+
     <div id="modal-impostazioniConto" class="modal hidden">
       <div class="modal-header">
         <h3><i class="ti ti-building-bank"></i> Configura Conto</h3>
@@ -956,6 +1019,50 @@
     </div>
 
     <!-- ===== MODAL: Impostazioni Carta ===== -->
+    <!-- ===== MODAL: Nuova Carta ===== -->
+    <div id="modal-nuovaCarta" class="modal hidden">
+      <div class="modal-header">
+        <h3 id="nuovaCartaTitle"><i class="ti ti-credit-card"></i> Aggiungi Carta</h3>
+        <button onclick="Modals.close()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Conto di addebito *</label>
+          <select id="nuovaCartaContoId" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label>Titolare</label>
+          <input type="text" id="nuovaCartaHolder" class="form-control" placeholder="Es. MARIO ROSSI" />
+        </div>
+        <div class="modal-row modal-r2">
+          <div class="form-group">
+            <label>Ultime 4 cifre</label>
+            <input type="text" id="nuovaCartaLast" class="form-control mono" placeholder="0000" maxlength="4" />
+          </div>
+          <div class="form-group">
+            <label>Scadenza</label>
+            <input type="text" id="nuovaCartaExpiry" class="form-control mono" placeholder="MM/AA" maxlength="5" />
+          </div>
+        </div>
+        <div class="modal-row modal-r2">
+          <div class="form-group">
+            <label>Plafond (€)</label>
+            <input type="number" id="nuovaCartaPlafond" class="form-control" placeholder="5000" min="0" step="100" />
+          </div>
+          <div class="form-group">
+            <label>Giorno addebito</label>
+            <input type="number" id="nuovaCartaGiorno" class="form-control" placeholder="15" min="1" max="31" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn--ghost" onclick="Modals.close()" style="flex:1">Annulla</button>
+        <button class="btn btn--primary" onclick="Portfolio.salvaCarta()" style="flex:2">
+          <i class="ti ti-check"></i> Salva
+        </button>
+      </div>
+    </div>
+
     <div id="modal-impostazioniCarta" class="modal hidden">
       <div class="modal-header">
         <h3><i class="ti ti-credit-card"></i> Configura Carta</h3>
