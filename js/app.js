@@ -350,8 +350,11 @@ const App = (() => {
     if (bioLabel) bioLabel.textContent = bioEnabled ? 'Disabilita Biometria' : 'Abilita Biometria';
 
     const last = $('lastQuoteUpdate');
+    const lastInv = $('lastQuoteUpdateInv');
     const ts   = localStorage.getItem('pp_last_quote_ts');
-    if (last && ts) last.textContent = `Ultimo aggiornamento: ${new Date(parseInt(ts)).toLocaleString('it-IT')}`;
+    const tsStr = ts ? `Ultimo aggiornamento: ${new Date(parseInt(ts)).toLocaleString('it-IT')}` : null;
+    if (last && tsStr) last.textContent = tsStr;
+    if (lastInv && tsStr) lastInv.textContent = tsStr;
 
     const d = Portfolio.getData().carta;
     const fields = {
