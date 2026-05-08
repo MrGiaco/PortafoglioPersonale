@@ -288,7 +288,6 @@ input, select, textarea { font-family: inherit; }
   .main-wrapper { margin-left: 240px; }
   .content { padding: 24px 28px 48px; }
   .topbar { padding: 0 24px; }
-  .topbar-menu-btn { display: none; }
 }
 
 /* =============================================
@@ -468,15 +467,7 @@ input, select, textarea { font-family: inherit; }
 .transaction-amount--positive { color: var(--success); }
 .transaction-amount--negative { color: var(--danger); }
 
-.transaction-actions { display: flex; gap: 4px; }
 
-.action-btn {
-  width: 32px; height: 32px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; color: var(--text-muted);
-  transition: var(--transition); flex-shrink: 0;
-}
-.action-btn--delete:hover { background: var(--danger-light); color: var(--danger); }
 .transaction-item.clickable { cursor: pointer; }
 .transaction-item.clickable:active { background: var(--bg); }
 
@@ -499,10 +490,6 @@ input, select, textarea { font-family: inherit; }
   position: absolute; top: -30px; right: -30px;
   width: 120px; height: 120px; border-radius: 50%;
   background: rgba(255,255,255,.07);
-}
-.account-hero__iban {
-  font-size: 11px; letter-spacing: .06em;
-  color: rgba(255,255,255,.45); margin-bottom: 8px; font-weight: 500;
 }
 .account-hero__label {
   font-size: 11px; font-weight: 600; letter-spacing: .07em;
@@ -626,46 +613,10 @@ input, select, textarea { font-family: inherit; }
 
 
 /* Tabs investimenti */
-.inv-tabs {
-  display: flex; gap: 6px; margin-bottom: 12px;
-  overflow-x: auto; padding-bottom: 2px;
-  scrollbar-width: none;
-}
-.inv-tabs::-webkit-scrollbar { display: none; }
-.inv-tab {
-  flex-shrink: 0; padding: 7px 16px; border-radius: var(--radius-pill);
-  font-size: 12px; font-weight: 600;
-  border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary);
-  transition: var(--transition); cursor: pointer;
-  display: flex; align-items: center; gap: 5px;
-}
-.inv-tab i { font-size: 13px; }
-.inv-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-.inv-tab:active { transform: scale(.96); }
 
 /* Card titolo */
-.titolo-card {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px 16px;
-  margin-bottom: 8px; cursor: pointer; transition: var(--transition);
-}
-.titolo-card:hover { border-color: var(--primary-mid); }
-.titolo-card:active { transform: scale(.99); }
 
-.titolo-row1 { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.titolo-left {}
-.titolo-nome { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.titolo-ticker { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.titolo-right { text-align: right; }
-.titolo-price { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.titolo-chg { font-size: 11px; font-weight: 600; margin-top: 2px; }
-.titolo-chg--pos { color: var(--success); }
-.titolo-chg--neg { color: var(--danger); }
 
-.mini-bar { height: 3px; background: var(--border); border-radius: 2px; margin: 8px 0; position: relative; overflow: hidden; }
-.mini-bar-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px; }
-
-.titolo-stats { display: flex; justify-content: space-between; }
 .t-stat {}
 .t-stat__label { font-size: 10px; color: var(--text-muted); margin-bottom: 2px; }
 .t-stat__val { font-size: 12px; font-weight: 700; color: var(--text-primary); }
@@ -675,20 +626,6 @@ input, select, textarea { font-family: inherit; }
 /* =============================================
    TITOLO CARD — nuova versione
    ============================================= */
-.titolo-card-new {
-  background: var(--bg-card);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: var(--transition);
-}
-.titolo-card-new:hover {
-  border-color: var(--primary-border);
-  box-shadow: 0 4px 16px rgba(30,58,138,.08);
-}
-.titolo-card-new:active { transform: scale(.99); }
 
 .tc-top {
   display: flex; align-items: center; gap: 12px;
@@ -730,8 +667,6 @@ input, select, textarea { font-family: inherit; }
 }
 .tc-stat-val.pos { color: var(--success); }
 .tc-stat-val.neg { color: var(--danger); }
-.inv-pl-pos { color: var(--success) !important; }
-.inv-pl-neg { color: var(--danger)  !important; }
 
 /* =============================================
    BOTTOM SHEET
@@ -986,20 +921,11 @@ input, select, textarea { font-family: inherit; }
 }
 
 /* ---- Sezioni interne modale ---- */
-.modal-sec {
-  font-size: 10px; font-weight: 800; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: .09em;
-  margin: 16px 0 8px;
-  display: flex; align-items: center; gap: 8px;
-}
-.modal-sec:first-child { margin-top: 0; }
-.modal-sec::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
 /* ---- Grid campi ---- */
 .modal-row { display: grid; gap: 8px; margin-bottom: 8px; }
 .modal-r2 { grid-template-columns: 1fr 1fr; }
 .modal-r3 { grid-template-columns: 1fr 1fr 1fr; }
-.modal-r4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
 
 /* ---- Campo form ---- */
 .form-group { display: flex; flex-direction: column; gap: 4px; }
@@ -1131,10 +1057,6 @@ textarea.form-control { resize: vertical; min-height: 64px; }
   font-size: 11px; color: rgba(255,255,255,.6); font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 2px;
 }
-.costo-bottom__sub {
-  font-size: 10px; color: rgba(255,255,255,.4); font-weight: 500;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
 .costo-pmc {
   background: rgba(255,255,255,.12); border-radius: 8px;
   padding: 6px 10px; text-align: center;
@@ -1153,29 +1075,8 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 }
 
 /* ---- Checkbox ---- */
-.check-row {
-  display: flex; align-items: center; gap: 9px;
-  padding: 10px 0 0; border-top: 1px solid var(--border); margin-top: 8px;
-}
-.check-row input[type=checkbox] {
-  width: 16px; height: 16px; accent-color: var(--primary);
-  cursor: pointer; flex-shrink: 0;
-}
-.checkbox-label {
-  font-size: 12px; color: var(--text-secondary); font-weight: 500;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
 
 /* Dettaglio titolo */
-.detail-grid { display: flex; flex-direction: column; }
-.detail-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
-}
-.detail-row:last-child { border-bottom: none; }
-.detail-row span { color: var(--text-secondary); }
-.text-success { color: var(--success) !important; }
-.text-danger  { color: var(--danger)  !important; }
 
 /* =============================================
    TOAST
@@ -1290,80 +1191,10 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 /* =============================================
    SEZIONI COLLASSABILI INVESTIMENTI
    ============================================= */
-.inv-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 10px;
-  overflow: hidden;
-}
-.inv-section__header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px; cursor: pointer;
-  background: #E2E8F0;
-  transition: background .15s;
-}
-.inv-section__header:hover { background: #D4DCE8; }
-.inv-section__header-left { display: flex; align-items: center; gap: 12px; }
-.inv-section__icon {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; flex-shrink: 0;
-}
-.inv-section__title { font-size: 14px; font-weight: 700; color: #1e293b; }
-.inv-section__sub { font-size: 11px; color: #475569; margin-top: 2px; }
-.inv-section__header-right { display: flex; align-items: center; gap: 10px; }
-.inv-section__pl { font-size: 13px; font-weight: 700; }
-.inv-section__pl.pos { color: var(--success); }
-.inv-section__pl.neg { color: var(--danger); }
-.inv-section__chevron {
-  font-size: 13px; color: #64748b;
-  transition: transform .2s ease;
-}
-.inv-section__body { background: var(--bg-card); }
-.inv-section__body.collapsed { display: none; }
 
 /* Subtotale sezione */
-.inv-section__subtotal {
-  border-top: 1px solid var(--border);
-  padding: 12px 16px;
-  background: #E2E8F0;
-}
-.inv-st-row {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 13px; margin-bottom: 4px;
-}
-.inv-st-row:last-child { margin-bottom: 0; }
-.inv-st-label { color: #475569; font-weight: 500; }
-.inv-st-val { font-weight: 700; color: var(--text-primary); }
-.inv-st-val.pos { color: var(--success); }
-.inv-st-val.neg { color: var(--danger); }
 
 /* Totale complessivo */
-.inv-totale-card {
-  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-top: 4px;
-  margin-bottom: 24px;
-}
-.inv-tot-label {
-  font-size: 10px; font-weight: 700; letter-spacing: .08em;
-  color: rgba(255,255,255,.45); text-transform: uppercase; margin-bottom: 6px;
-}
-.inv-tot-valore {
-  font-size: 28px; font-weight: 800; color: #fff;
-  letter-spacing: -.02em; margin-bottom: 14px;
-}
-.inv-tot-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
-.inv-tot-item {
-  background: rgba(255,255,255,.07);
-  border-radius: 10px; padding: 10px 12px;
-}
-.inv-tot-item-label { font-size: 10px; color: rgba(255,255,255,.45); margin-bottom: 4px; font-weight: 500; }
-.inv-tot-item-val { font-size: 13px; font-weight: 700; color: #fff; }
-.inv-tot-item-val.pos { color: #86efac; }
-.inv-tot-item-val.neg { color: #fca5a5; }
 
 /* =============================================
    NUOVA CARD TITOLO (tc2)
@@ -1377,63 +1208,6 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 }
 .tc2:last-of-type { border-bottom: none; }
 .tc2:hover { background: var(--bg-secondary); }
-.tc2-stripe {
-  width: 4px; flex-shrink: 0;
-  border-radius: 0;
-}
-.tc2-inner {
-  flex: 1; padding: 14px 16px;
-}
-.tc2-header {
-  display: flex; align-items: flex-start; gap: 12px;
-  margin-bottom: 12px;
-}
-.tc2-avatar {
-  width: 42px; height: 42px; border-radius: 11px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 800;
-  flex-shrink: 0; position: relative; overflow: hidden;
-}
-.tc2-title-wrap { flex: 1; min-width: 0; }
-.tc2-nome {
-  font-size: 14px; font-weight: 700; color: var(--text-primary);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  margin-bottom: 3px;
-}
-.tc2-meta { font-size: 11px; color: var(--text-muted); font-weight: 500; }
-.tc2-price-col { text-align: right; flex-shrink: 0; }
-.tc2-price {
-  font-size: 15px; font-weight: 800; color: var(--text-primary);
-  letter-spacing: -.01em; margin-bottom: 4px;
-}
-.tc2-day {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 11px; font-weight: 700;
-  padding: 2px 7px; border-radius: 20px;
-}
-.tc2-day.pos { background: var(--success-light, #f0fdf4); color: var(--success); }
-.tc2-day.neg { background: #fef2f2; color: var(--danger); }
-.tc2-day-label {
-  font-size: 9px; font-weight: 500; opacity: .7; margin-left: 2px;
-}
-.tc2-stats {
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  background: var(--bg-secondary);
-  border-radius: 10px; padding: 10px 12px;
-}
-.tc2-stat {}
-.tc2-stat--wide {}
-.tc2-stat-label {
-  font-size: 9px; font-weight: 600; letter-spacing: .04em;
-  text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;
-}
-.tc2-stat-val {
-  font-size: 13px; font-weight: 700; color: var(--text-primary);
-}
-.tc2-stat-val.pos { color: var(--success); }
-.tc2-stat-val.neg { color: var(--danger); }
-.tc2-stat-pct { font-size: 11px; font-weight: 500; opacity: .8; }
 
 /* =============================================
    NUOVA CARD TITOLO v2 (tc2)
@@ -1448,115 +1222,16 @@ textarea.form-control { resize: vertical; min-height: 64px; }
 }
 .tc2:first-child { margin-top: 10px; }
 .tc2:hover { background: var(--bg-secondary); }
-.tc2-body { padding: 14px 16px; }
 
 /* Meta: logo + ticker + badge */
-.tc2-meta {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 10px;
-}
-.tc2-logo {
-  width: 40px; height: 40px; border-radius: 11px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800;
-  flex-shrink: 0; position: relative; overflow: hidden;
-  border: 0.5px solid rgba(0,0,0,.06);
-}
-.tc2-logo img {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%; object-fit: contain;
-  border-radius: 10px;
-}
-.tc2-logo span { position: relative; z-index: 1; }
-.tc2-meta-info { flex: 1; min-width: 0; }
-.tc2-ticker { font-size: 12px; font-weight: 700; color: var(--text-primary); }
-.tc2-qty    { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-.tc2-badge  {
-  font-size: 10px; font-weight: 700;
-  padding: 3px 9px; border-radius: 20px;
-  flex-shrink: 0;
-}
 
 /* Riga nome + prezzo */
-.tc2-row2 {
-  display: flex; align-items: flex-start;
-  justify-content: space-between; gap: 12px;
-  margin-bottom: 12px;
-}
-.tc2-nome {
-  font-size: 14px; font-weight: 700;
-  color: var(--text-primary); line-height: 1.35; flex: 1;
-}
-.tc2-price-col { text-align: right; flex-shrink: 0; }
-.tc2-price {
-  font-size: 17px; font-weight: 800;
-  color: var(--text-primary); letter-spacing: -.02em;
-  margin-bottom: 4px;
-}
-.tc2-daypill {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 11px; font-weight: 700;
-  padding: 2px 8px; border-radius: 20px;
-}
-.tc2-daypill.pos { background: #dcfce7; color: #15803d; }
-.tc2-daypill.neg { background: #fee2e2; color: #b91c1c; }
-.tc2-day-lbl { font-size: 9px; font-weight: 400; opacity: .7; margin-left: 2px; }
 
 /* Griglia stat */
-.tc2-stats {
-  display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 7px; margin-bottom: 10px;
-}
-.tc2-st { background: var(--bg-secondary); border-radius: 10px; padding: 9px 10px; }
-.tc2-st-lbl {
-  font-size: 9px; font-weight: 700; letter-spacing: .05em;
-  text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;
-}
-.tc2-st-val { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-.tc2-st-val.pos { color: var(--success); }
-.tc2-st-val.neg { color: var(--danger); }
-.tc2-st-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
 
 /* P&L totale */
-.tc2-pl {
-  background: var(--bg-secondary); border-radius: 10px;
-  padding: 10px 12px; margin-bottom: 10px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.tc2-pl-lbl {
-  font-size: 9px; font-weight: 700; letter-spacing: .05em;
-  text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;
-}
-.tc2-pl-val { font-size: 16px; font-weight: 800; }
-.tc2-pl-val.pos { color: var(--success); }
-.tc2-pl-val.neg { color: var(--danger); }
-.tc2-pl-pct { font-size: 12px; font-weight: 600; opacity: .8; }
-.tc2-pl-costo { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 
 /* Due grafici affiancati */
-.tc2-charts {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-}
-.tc2-chart-box {
-  background: var(--bg-secondary); border-radius: 10px; overflow: hidden;
-}
-.tc2-chart-hdr {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: 7px 10px 0;
-}
-.tc2-chart-lbl {
-  font-size: 9px; font-weight: 700; letter-spacing: .05em;
-  text-transform: uppercase; color: var(--text-muted);
-}
-.tc2-chart-pct { font-size: 11px; font-weight: 700; }
-.tc2-chart-pct.pos { color: var(--success); }
-.tc2-chart-pct.neg { color: var(--danger); }
-.tc2-canvas { display: block; width: 100%; height: 64px; }
-.tc2-chart-ftr {
-  display: flex; justify-content: space-between;
-  padding: 2px 10px 6px;
-  font-size: 9px; color: var(--text-muted);
-}
 
 /* =============================================
    INVESTIMENTI — HERO STICKY + SCROLL
