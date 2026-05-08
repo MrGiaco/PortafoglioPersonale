@@ -19,8 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -326,6 +325,7 @@
             <div class="patrimonio-label">PORTAFOGLIO INVESTIMENTI</div>
             <div class="inv-hero-value" id="invValoreAttuale">€ 0</div>
             <div class="inv-hero-badge" id="invRendimentoBadge">+0.00% rendimento</div>
+            <div style="font-size:10px;opacity:.55;margin-top:4px" id="lastQuoteUpdateInv">Quotazioni mai aggiornate</div>
             <div class="patrimonio-pills">
               <div class="patrimonio-pill">
                 <div class="patrimonio-pill__label">Investito</div>
@@ -541,7 +541,7 @@
           <div class="settings-card">
             <h3><i class="ti ti-building-bank"></i> Conto Corrente</h3>
             <p>Imposta il saldo iniziale del conto, ovvero il saldo reale prima di qualsiasi movimento registrato nell'app.</p>
-            <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('impostazioniConto')"><i class="ti ti-pencil"></i> Configura Conto</button>
+            <button class="btn btn--ghost btn--block mt-2" onclick="Portfolio.apriConfigurazioneConto()"><i class="ti ti-pencil"></i> Configura Conto</button>
             <button class="btn btn--ghost btn--block mt-2" onclick="Modals.open('nuovoConto')"><i class="ti ti-plus"></i> Aggiungi Conto</button>
           </div>
 
