@@ -29,6 +29,18 @@ const Charts = (() => {
   // DEFAULTS GLOBALI CHART.JS
   // =============================================
 
+  // Lazy loader — carica Chart.js solo quando serve (primo render grafico)
+  function _loadChartJS() {
+    return new Promise(function(resolve, reject) {
+      if (window.Chart) { resolve(); return; }
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+      s.onload  = () => resolve();
+      s.onerror = () => reject(new Error('Impossibile caricare Chart.js'));
+      document.head.appendChild(s);
+    });
+  }
+
   function applyDefaults() {
     if (!window.Chart) return;
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
@@ -53,10 +65,19 @@ const Charts = (() => {
   }
 
   function formatEur(n) {
-    return new Intl.NumberFormat('it-IT', {
-      style: 'currency', currency: 'EUR',
-      minimumFractionDigits: 2, maximumFractionDigits: 2,
-    }).format(n || 0);
+    try {
+      const formatted = new Intl.NumberFormat('it-IT', {
+        style: 'currency', currency: 'EUR',
+        minimumFractionDigits: 2, maximumFractionDigits: 2,
+      }).format(n || 0);
+      if (formatted.indexOf(',') === -1 && formatted.indexOf('.') !== -1) throw new Error('locale');
+      return formatted;
+    } catch(e) {
+      const abs = Math.abs(n || 0).toFixed(2);
+      const parts = abs.split('.');
+      const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return '\u20AC\u00a0' + ((n || 0) < 0 ? '-' : '') + intPart + ',' + (parts[1] || '00');
+    }
   }
 
   function filterByPeriod(movimenti, period) {
@@ -339,8 +360,9 @@ const Charts = (() => {
     destroyChart('categorie');
 
     const data = Portfolio.getData();
+    const allMovCat = data.conti.reduce(function(acc,c){return acc.concat(c.movimenti||[]);}, []);
     const spese = [
-      ...allMov2.filter(m => m.tipo === 'uscita'),
+      ...allMovCat.filter(m => m.tipo === 'uscita'),
       ...data.carte.reduce(function(acc,c){return acc.concat(c.spese||[]);}, []),
     ].filter(s => !anno || s.data?.startsWith(String(anno)));
 
@@ -470,7 +492,13 @@ const Charts = (() => {
     renderCategorie(anno);
   }
 
-  function init() {
+  async function init() {
+    try {
+      await _loadChartJS();
+    } catch(e) {
+      console.warn('Chart.js non disponibile:', e.message);
+      return;
+    }
     applyDefaults();
     updateAll();
   }
