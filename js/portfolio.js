@@ -47,7 +47,6 @@ const Portfolio = (() => {
   }
 
   let movTipo     = 'entrata';
-  let activeTab   = 'azioni';
   let dettaglioId = null;
   let _detChart   = null;
   let _detPeriod  = '1M';
@@ -66,11 +65,25 @@ const Portfolio = (() => {
 
   function formatEur(n, decimals) {
     var dec = (decimals === undefined) ? 2 : decimals;
-    return new Intl.NumberFormat('it-IT', {
-      style: 'currency', currency: 'EUR',
-      minimumFractionDigits: dec, maximumFractionDigits: dec,
-      useGrouping: true,
-    }).format(n || 0);
+    try {
+      var formatted = new Intl.NumberFormat('it-IT', {
+        style: 'currency', currency: 'EUR',
+        minimumFractionDigits: dec, maximumFractionDigits: dec,
+        useGrouping: true,
+      }).format(n || 0);
+      // Verifica che il separatore decimale sia virgola (Android fix)
+      if (dec > 0 && formatted.indexOf(',') === -1 && formatted.indexOf('.') !== -1) {
+        throw new Error('Intl locale errato');
+      }
+      return formatted;
+    } catch (e) {
+      // Fallback manuale: migliaia=punto, decimale=virgola
+      var abs = Math.abs(n || 0).toFixed(dec);
+      var parts = abs.split('.');
+      var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      var result = '\u20AC\u00a0' + ((n || 0) < 0 ? '-' : '') + intPart + (dec > 0 ? ',' + (parts[1] || '00') : '');
+      return result;
+    }
   }
 
   function formatEurSigned(n) {
@@ -89,7 +102,19 @@ const Portfolio = (() => {
   }
 
   function formatNum(n) {
-    return new Intl.NumberFormat('it-IT', { useGrouping: true }).format(n || 0);
+    try {
+      var f = new Intl.NumberFormat('it-IT', { useGrouping: true }).format(n || 0);
+      // Se il locale it-IT non è disponibile correttamente, il separatore migliaia
+      // potrebbe non essere il punto — verifica e usa fallback regex
+      var str = String(Math.abs(n || 0));
+      if (str.length > 3 && f.indexOf('.') === -1 && f.indexOf(',') === -1) throw new Error('locale');
+      return f;
+    } catch(e) {
+      var abs = Math.abs(n || 0);
+      var intStr = Math.floor(abs).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      var dec = abs % 1;
+      return ((n || 0) < 0 ? '-' : '') + (dec > 0 ? intStr + ',' + dec.toFixed(2).slice(2) : intStr);
+    }
   }
 
   // =============================================
@@ -657,7 +682,7 @@ const Portfolio = (() => {
 
     // Assicura che il conto/carta attivo sia valido
     if (!data.conti.find(function(c){ return c.id === _contoAttivoId; })) _contoAttivoId = null;
-    if (!data.carte.find(function(c){ return c.id === _cartaAttivaId; })) _cartaAttivoId = null;
+    if (!data.carte.find(function(c){ return c.id === _cartaAttivaId; })) _cartaAttivaId = null;
 
     renderAll();
   }
@@ -781,6 +806,7 @@ const Portfolio = (() => {
     renderConto();
     renderCarta();
     renderInvestimenti();
+    if (typeof Charts !== 'undefined') Charts.updateAll();
   }
 
   // =============================================
@@ -1606,7 +1632,17 @@ const Portfolio = (() => {
     var r = parseFloat($('titoloRateo')         ? $('titoloRateo').value         : '') || 0;
     var val = $('titoloValuta') ? $('titoloValuta').value : 'EUR';
     var cv = q*p*k, oneri = c+t+r, tot = cv+oneri, pmc = q>0 ? tot/q : 0;
-    function fmtV(n){ return new Intl.NumberFormat('it-IT',{style:'currency',currency:val,minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:true}).format(n||0); }
+    function fmtV(n) {
+      try {
+        var f = new Intl.NumberFormat('it-IT',{style:'currency',currency:val,minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:true}).format(n||0);
+        if (f.indexOf(',') === -1 && f.indexOf('.') !== -1) throw new Error('locale');
+        return f;
+      } catch(e) {
+        var abs = Math.abs(n||0).toFixed(2), parts = abs.split('.');
+        var intP = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return (val||'EUR') + '\u00a0' + ((n||0)<0?'-':'') + intP + ',' + (parts[1]||'00');
+      }
+    }
     setEl('costoControvalore', fmtV(cv));
     setEl('costoOneri',        fmtV(oneri));
     setEl('costoQty',          q%1===0 ? String(q) : q.toFixed(3));
@@ -1971,8 +2007,10 @@ const Portfolio = (() => {
     if (period === '1G') {
       fetchFn = Quotes.fetchIntraday(t);
     } else {
-      var map = { '1S':'5d', '1M':'1mo', '1A':'1y', '5A':'5y', 'Max':'max' };
-      fetchFn = Quotes.fetchHistory(t, map[period] || '1mo');
+      // Passa i range direttamente nel formato Yahoo Finance,
+      // bypassando la map italiana di fetchHistory (che è per i pulsanti dashboard)
+      var rangeMap = { '1S':'5d', '1M':'1mo', '3M':'3mo', '6M':'6mo', '1A':'1y', '5A':'5y', 'Max':'max' };
+      fetchFn = Quotes.fetchHistoryRaw(t, rangeMap[period] || '1mo');
     }
 
     fetchFn.then(function(history) {
@@ -2753,7 +2791,7 @@ const Portfolio = (() => {
     getContoAttivo, getCartaAttiva, setContoAttivoId,
     getConti: function(){ return data.conti; },
     getCarte: function(){ return data.carte; },
-    salvaConto, salvaCartaImpostazioni: saveImpostazioniCarta,
+    salvaConto,
     setContoAttivoId, setCartaAttivaId, salvaCarta,
     apriConfigurazioneConto, apriConfigurazioneCarta,
     apriNuovaCarta: function(){ _popolaContiSelectNuovaCarta(); Modals.open('nuovaCarta'); },
