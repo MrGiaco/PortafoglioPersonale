@@ -270,8 +270,21 @@ const Portfolio = (() => {
     });
   }
 
+  // Carica XLSX dinamicamente se non ancora presente
+  function _loadXLSX() {
+    return new Promise(function(resolve, reject) {
+      if (typeof XLSX !== 'undefined') { resolve(); return; }
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload  = function() { resolve(); };
+      s.onerror = function() { reject(new Error('Impossibile caricare la libreria XLSX. Verifica la connessione.')); };
+      document.head.appendChild(s);
+    });
+  }
+
   // Riconosce il formato del file (conto o carte) e delega al parser corretto
   async function _parseQualsiasiBancaFile(file) {
+    await _loadXLSX(); // carica XLSX on-demand se non ancora presente
     var buffer = await file.arrayBuffer();
     if (typeof XLSX === 'undefined') throw new Error('Libreria XLSX non caricata.');
     var wb = XLSX.read(buffer, { type:'array', cellDates:true });
@@ -1052,6 +1065,14 @@ const Portfolio = (() => {
   }
 
   // Apri modal configurazione carta precompilando i dati della carta attiva
+  function apriConfigurazioneConto() {
+    var c = getContoAttivo();
+    Modals.open('impostazioniConto');
+    setTimeout(function(){
+      if ($('contoSaldoIniziale')) $('contoSaldoIniziale').value = c.saldoIniziale || 0;
+    }, 50);
+  }
+
   function apriConfigurazioneCarta() {
     var c = getCartaAttiva();
     Modals.open('impostazioniCarta');
@@ -2734,7 +2755,7 @@ const Portfolio = (() => {
     getCarte: function(){ return data.carte; },
     salvaConto, salvaCartaImpostazioni: saveImpostazioniCarta,
     setContoAttivoId, setCartaAttivaId, salvaCarta,
-    apriConfigurazioneCarta,
+    apriConfigurazioneConto, apriConfigurazioneCarta,
     apriNuovaCarta: function(){ _popolaContiSelectNuovaCarta(); Modals.open('nuovaCarta'); },
     renderAll, renderDashboard, renderConto, renderCarta, renderInvestimenti,
     filterMovimenti, filterSpese, setContoFilter, setContoFilterMonth,
