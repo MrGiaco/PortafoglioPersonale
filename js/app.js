@@ -91,6 +91,8 @@ const App = (() => {
 
   const SECTIONS = ['dashboard', 'conto', 'carta', 'investimenti', 'dettaglio', 'report', 'impostazioni'];
   let currentSection = 'dashboard';
+  let _swipeInitialized = false;   // guard: initSwipe eseguita solo una volta
+  let _refreshTimer     = null;    // handle setInterval — cancellato prima di ricreare
 
   const $ = id => document.getElementById(id);
 
@@ -208,7 +210,7 @@ const App = (() => {
     });
 
     // Carica dati locali
-    initSwipe();
+    if (!_swipeInitialized) { initSwipe(); _swipeInitialized = true; }
     Drive.loadLocal();
 
     // Tenta connessione automatica Drive (disabilitata, carica solo locale)
@@ -226,8 +228,9 @@ const App = (() => {
     // Hash navigation
     handleHash();
 
-    // Aggiornamento periodico ogni 5 minuti
-    setInterval(() => {
+    // Aggiornamento periodico ogni 5 minuti (cancella il precedente per evitare duplicati)
+    if (_refreshTimer) clearInterval(_refreshTimer);
+    _refreshTimer = setInterval(() => {
       if (!Auth.isLocked()) Quotes.refreshAll();
     }, 5 * 60 * 1000);
   }
@@ -356,20 +359,20 @@ const App = (() => {
     if (last && tsStr) last.textContent = tsStr;
     if (lastInv && tsStr) lastInv.textContent = tsStr;
 
-    const d = Portfolio.getData().carta;
+    const d = Portfolio.getCartaAttiva();
     const fields = {
-      ccHolderInput:    d.holder,
-      ccLastInput:      d.lastDigits,
-      ccExpiryInput:    d.expiry,
-      ccPlafondInput:   d.plafond,
-      ccGiornoAddebito: d.giornoAddebito,
+      ccHolderInput:    d ? d.holder        : '',
+      ccLastInput:      d ? d.lastDigits     : '',
+      ccExpiryInput:    d ? d.expiry         : '',
+      ccPlafondInput:   d ? d.plafond        : '',
+      ccGiornoAddebito: d ? d.giornoAddebito : '',
     };
     Object.entries(fields).forEach(([id, val]) => {
       const el = $(id); if (el) el.value = val || '';
     });
 
     const si = $('contoSaldoIniziale');
-    if (si) si.value = Portfolio.getData().conto.saldoIniziale || 0;
+    if (si) si.value = (Portfolio.getContoAttivo() || {}).saldoIniziale || 0;
   }
 
   // ---- Toast ----
@@ -707,8 +710,8 @@ const Modals = (() => {
       const imp = $('cartaImporto'); if (imp) imp.value = '';
       const desc = $('cartaDescrizione'); if (desc) desc.value = '';
       Portfolio.populateCategorieSelect('cartaCategoria', 'shopping');
-      const d = Portfolio.getData().carta;
-      const giorno = d.giornoAddebito || 15;
+      const d = Portfolio.getCartaAttiva();
+      const giorno = (d && d.giornoAddebito) || 15;
       const now = new Date();
       let addebito = new Date(now.getFullYear(), now.getMonth(), giorno);
       if (addebito <= now) addebito = new Date(now.getFullYear(), now.getMonth() + 1, giorno);
@@ -737,17 +740,17 @@ const Modals = (() => {
 
     if (id === 'impostazioniConto') {
       const si = $('contoSaldoIniziale');
-      if (si) si.value = Portfolio.getData().conto.saldoIniziale || 0;
+      if (si) si.value = (Portfolio.getContoAttivo() || {}).saldoIniziale || 0;
     }
 
     if (id === 'impostazioniCarta') {
-      const d = Portfolio.getData().carta;
+      const d = Portfolio.getCartaAttiva();
       const map = {
-        ccHolderInput:    d.holder,
-        ccLastInput:      d.lastDigits,
-        ccExpiryInput:    d.expiry,
-        ccPlafondInput:   d.plafond,
-        ccGiornoAddebito: d.giornoAddebito,
+        ccHolderInput:    d ? d.holder        : '',
+        ccLastInput:      d ? d.lastDigits     : '',
+        ccExpiryInput:    d ? d.expiry         : '',
+        ccPlafondInput:   d ? d.plafond        : '',
+        ccGiornoAddebito: d ? d.giornoAddebito : '',
       };
       Object.entries(map).forEach(([k, v]) => {
         const e = $(k); if (e) e.value = v || '';
