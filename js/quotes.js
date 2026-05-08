@@ -35,11 +35,6 @@ const Quotes = (() => {
 
   function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  // Restituisce true se il codeZB è in realtà un ticker Yahoo (fondi con .F o 0P*)
-  function isYahooFondo(codeZB) {
-    return !!codeZB && (codeZB.endsWith('.F') || codeZB.startsWith('0P'));
-  }
-
   // =============================================
   // YAHOO FINANCE
   // =============================================
@@ -322,8 +317,11 @@ const Quotes = (() => {
     // Aggiorna timestamp — salva in localStorage cosi renderImpostazioni() lo legge correttamente
     const tsNow = Date.now();
     localStorage.setItem('pp_last_quote_ts', tsNow);
+    const tsStr = 'Ultimo aggiornamento: ' + new Date(tsNow).toLocaleString('it-IT');
     const el = document.getElementById('lastQuoteUpdate');
-    if (el) el.textContent = 'Ultimo aggiornamento: ' + new Date(tsNow).toLocaleString('it-IT');
+    if (el) el.textContent = tsStr;
+    const elInv = document.getElementById('lastQuoteUpdateInv');
+    if (elInv) elInv.textContent = tsStr;
 
     App.showToast(`${updated}/${titoli.length} quotazioni aggiornate`, updated > 0 ? 'success' : 'warning');
   }
@@ -338,12 +336,30 @@ const Quotes = (() => {
       if (titolo.codeZB) {
         return await fetchZonebourseHistory(titolo.codeZB);
       } else if (titolo.ticker) {
-        const map = { '1M': '1mo', '3M': '3mo', '6M': '6mo', '1A': '1y' };
+        const map = { '1G': '1d', '1S': '5d', '1M': '1mo', '3M': '3mo', '6M': '6mo', '1A': '1y', '5A': '5y', 'Max': 'max' };
         return await fetchYahooHistory(titolo.ticker, map[range] || '1y');
       }
       return [];
     } catch (err) {
       console.warn('History error:', err.message);
+      return [];
+    }
+  }
+
+  /**
+   * Recupera storico con range già in formato Yahoo/ZoneBourse (es. '5d','1mo','1y').
+   * Usato dal grafico dettaglio titolo che ha i propri pulsanti di periodo.
+   */
+  async function fetchHistoryRaw(titolo, yahooRange) {
+    try {
+      if (titolo.codeZB) {
+        return await fetchZonebourseHistory(titolo.codeZB);
+      } else if (titolo.ticker) {
+        return await fetchYahooHistory(titolo.ticker, yahooRange || '1mo');
+      }
+      return [];
+    } catch (err) {
+      console.warn('HistoryRaw error:', err.message);
       return [];
     }
   }
@@ -456,6 +472,7 @@ const Quotes = (() => {
   return {
     fetchQuote,
     fetchHistory,
+    fetchHistoryRaw,
     fetchIntraday,
     fetchSincePMC,
     refreshAll,
